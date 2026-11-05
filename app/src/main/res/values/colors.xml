@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Light palette (dark one is in values-night/). Background is white; every text colour is
+  >= 7:1 against it (WCAG AAA) and every graphic colour is >= 3:1 (WCAG 1.4.11).
+  Light-blue buttons and countdown keep dark navy text, which works in both modes.
+-->
+<resources>
+    <color name="bg">#FFFFFFFF</color>
+    <color name="tile">#FFF1EFE8</color>
+    <color name="track">#FFD3D1C7</color>
+    <color name="text">#FF0B0B0B</color>
+    <color name="text_secondary">#FF444441</color>
+
+    <color name="watts_in_range">#FF27500A</color>
+    <color name="watts_under">#FF0C447C</color>
+    <color name="watts_over">#FF791F1F</color>
+
+    <color name="power_icon">#FF854F0B</color>
+    <color name="heart_icon">#FFC62F3A</color>
+    <color name="paused">#FF633806</color>
+
+    <color name="skip_bg">#FF85B7EB</color>
+    <color name="skip_fg">#FF042C53</color>
+    <color name="countdown_bg">#FFB5D4F4</color>
+    <color name="countdown_fg">#FF042C53</color>
+    <color name="land">#FF185FA5</color>
+
+    <color name="done">#FF888780</color>
+    <!-- Workout zone colours (intervals.icu style). All >= 3:1 against white. -->
+    <color name="z1">#FF1D9E75</color>
+    <color name="z2">#FF639922</color>
+    <color name="z3">#FFBA7517</color>
+    <color name="z4">#FFD85A30</color>
+    <color name="z5">#FFE24B4A</color>
+    <!-- Lap icon purple (Karoo lap icon), >= 3:1 on the tile -->
+    <color name="lap_icon">#FF7F77DD</color>
+    <!-- Corner icons (gear, pause): muted grey, >= 3:1 against the page -->
+    <color name="icon_muted">#FF888780</color>
+</resources>
