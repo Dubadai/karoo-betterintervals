@@ -13,11 +13,21 @@
         android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:paddingStart="8dp"
-        android:paddingTop="8dp"
-        android:paddingEnd="8dp"
-        android:paddingBottom="1dp">
+        android:orientation="vertical">
+
+        <!-- Upper part: watts, interval, progress and tiles. Its background is the optional
+             target-range tint (third watts mode), which reaches the field's top and side edges and
+             fades out halfway between the tiles and the Next box. -->
+        <LinearLayout
+            android:id="@+id/upper"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingStart="8dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="3dp">
 
         <!-- Watts, centred (heart rate, settings and pause sit in the top row, see below) -->
         <FrameLayout
@@ -88,7 +98,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
             android:orientation="horizontal">
 
             <LinearLayout
@@ -96,12 +105,13 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="3dp"
                 android:layout_weight="1"
-                android:background="@drawable/bg_tile"
+                android:background="@drawable/bg_tile_tonal"
                 android:orientation="vertical"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="4dp">
 
                 <TextView
+                    android:id="@+id/lap_avg_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/lap_avg"
@@ -123,12 +133,13 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="3dp"
                 android:layout_weight="1"
-                android:background="@drawable/bg_tile"
+                android:background="@drawable/bg_tile_tonal"
                 android:orientation="vertical"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="4dp">
 
                 <TextView
+                    android:id="@+id/target_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/target"
@@ -163,6 +174,18 @@
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Lower part: next interval / countdown and the chart -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="8dp"
+            android:paddingTop="3dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="1dp">
 
         <!-- Next interval + previous / next buttons -->
         <LinearLayout
@@ -275,6 +298,7 @@
             android:layout_height="56dp"
             android:contentDescription="@string/cd_chart"
             android:scaleType="fitXY" />
+        </LinearLayout>
 
     </LinearLayout>
 

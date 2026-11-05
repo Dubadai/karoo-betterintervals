@@ -33,6 +33,17 @@ class PlanStore private constructor(context: Context) {
 
     val hasCredentials: Boolean get() = apiKey.isNotBlank()
 
+    /** How the watts show the target range (remembered between rides). */
+    var wattsMode: WattsMode
+        get() {
+            prefs.getString(KEY_WATTS_MODE, null)?.let { name ->
+                return WattsMode.entries.firstOrNull { it.name == name } ?: WattsMode.PLAIN
+            }
+            // Earlier versions stored an on/off setting for coloured numbers.
+            return if (prefs.getBoolean(KEY_WATTS_COLORED, false)) WattsMode.TEXT else WattsMode.PLAIN
+        }
+        set(value) = prefs.edit().putString(KEY_WATTS_MODE, value.name).remove(KEY_WATTS_COLORED).apply()
+
     fun select(workout: PlannedWorkout) {
         prefs.edit()
             .putString(KEY_SELECTED_JSON, workout.json)
@@ -119,6 +130,8 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_SELECTED_JSON = "selected_json"
         private const val KEY_SELECTED_DATE = "selected_date"
         private const val KEY_PROGRESS = "progress"
+        private const val KEY_WATTS_COLORED = "watts_colored"
+        private const val KEY_WATTS_MODE = "watts_mode"
         private const val KEY_WEEK_JSON = "week_json"
         private const val KEY_WEEK_SYNCED = "week_synced"
 

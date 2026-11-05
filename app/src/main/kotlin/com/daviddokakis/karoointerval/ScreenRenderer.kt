@@ -28,6 +28,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     private val previousIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_PREVIOUS, 3) }
     private val chartIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_CHART, 5) }
     private val cancelJumpIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_CANCEL_JUMP, 6) }
+    private val wattsColorIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_WATTS_COLOR, 7) }
     private val settingsIntent: PendingIntent by lazy {
         PendingIntent.getActivity(
             context,
@@ -39,7 +40,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         )
     }
 
-    fun render(s: ScreenState): RemoteViews {
+    fun render(state: ScreenState): RemoteViews {
+        // Debug builds show demo data; in release builds this returns the real state unchanged.
+        val s = DemoData.apply(state)
         val plan = s.plan ?: return renderFree(s)
         val v = RemoteViews(context.packageName, R.layout.field_interval)
         applyTextSizes(v)
@@ -49,9 +52,35 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setViewVisibility(R.id.btn_pause, View.VISIBLE)
         v.setOnClickPendingIntent(R.id.btn_settings, settingsIntent)
 
-        // 3 s average power, always in the plain text colour (white in dark mode, black in light).
+        // 3 s average power. Tap to cycle how the target range shows: plain, coloured number,
+        // coloured background behind the top of the screen, or both.
+        val range = rangeState(s)
         v.setTextViewText(R.id.watts, s.power3s?.toString() ?: "--")
-        v.setTextColor(R.id.watts, color(R.color.text))
+        val wattsColor = if (s.wattsMode.colorsText && range != null) {
+            when (range) {
+                RangeState.UNDER -> R.color.watts_under
+                RangeState.IN -> R.color.watts_in_range
+                RangeState.OVER -> R.color.watts_over
+            }
+        } else {
+            R.color.text
+        }
+        v.setTextColor(R.id.watts, color(wattsColor))
+        val upperBg = if (s.wattsMode.colorsBackground && range != null) {
+            when (range) {
+                RangeState.UNDER -> R.drawable.bg_range_under
+                RangeState.IN -> R.drawable.bg_range_in
+                RangeState.OVER -> R.drawable.bg_range_over
+            }
+        } else {
+            0 // no background
+        }
+        v.setInt(R.id.upper, "setBackgroundResource", upperBg)
+        // On a tint, the tile labels use the full text colour so they stay readable (>= 7:1).
+        val labelColor = color(if (upperBg != 0) R.color.text else R.color.text_secondary)
+        v.setTextColor(R.id.lap_avg_label, labelColor)
+        v.setTextColor(R.id.target_label, labelColor)
+        v.setOnClickPendingIntent(R.id.watts, wattsColorIntent)
         v.setTextViewText(R.id.hr, s.heartRate?.toString() ?: "--")
 
         // Pause / resume the workout (top right); the ride keeps recording
@@ -127,6 +156,23 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setOnClickPendingIntent(R.id.chart, chartIntent)
 
         return v
+    }
+
+    private enum class RangeState { UNDER, IN, OVER }
+
+    /**
+     * Where 3 s power sits against the target range, or null when the colours shouldn't show:
+     * workout or ride paused, workout finished, or no power or target.
+     */
+    private fun rangeState(s: ScreenState): RangeState? {
+        if (s.finished || s.workoutPaused || s.paused) return null
+        val p = s.power3s ?: return null
+        val range = s.targetRange ?: return null
+        return when {
+            p < range.first -> RangeState.UNDER
+            p > range.last -> RangeState.OVER
+            else -> RangeState.IN
+        }
     }
 
     /**

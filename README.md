@@ -5,7 +5,9 @@ It loads your planned workouts from [intervals.icu](https://intervals.icu) and r
 can jump forward **and back** between intervals.
 
 **During a workout**
-- Big 3-second power, with heart rate above it.
+- Big 3-second power, with heart rate above it. Tap the watts to cycle how the target range
+  shows: plain → coloured number → coloured background → both. Blue is below the range, green in
+  it, red above it. The range is the interval's own range from intervals.icu (±2.5% by default).
 - Interval number, time left with a progress bar, lap average and target watts.
 - The next interval, with ⏮ / ⏭ buttons. A jump starts a 5-second countdown with beeps (tap the
   countdown to cancel), so you can get ready.
@@ -47,6 +49,14 @@ interval change, which would move Karoo's player along too.
    ```
    If Gradle can't find Java, use Android Studio's: on macOS
    `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"`.
+
+Debug builds (what Android Studio's Run button installs) show **demo data**: made-up power, heart
+rate and laps that change every 3 seconds, around a 300 W target, so the screens can be checked
+without riding. It lives in `app/src/debug/`; release builds use `app/src/release/`, which passes
+real data straight through, so demo data never ships.
+
+Build output goes to `build.nosync/` folders, which iCloud Drive skips, since a synced Documents
+folder otherwise creates "file 2" copies that break the build.
 
 Only install while no ride is recording: Karoo doesn't restart a field's view mid-ride, so the
 screen freezes until the ride screen is reopened.

@@ -61,6 +61,16 @@ class WorkoutSession(
         scope.launch { beep(TICK_TONE) }
     }
 
+    /** Tapping the watts cycles plain → coloured number → coloured background → both. */
+    fun toggleWattsColor() {
+        scope.launch {
+            val mode = _state.value.wattsMode.next()
+            store.wattsMode = mode
+            _state.update { it.copy(wattsMode = mode) }
+            Timber.i("Watts mode -> $mode")
+        }
+    }
+
     /** Tapping the chart toggles between the whole workout and a zoom on the current interval. */
     fun toggleChartZoom() {
         scope.launch { _state.update { it.copy(chartZoomed = !it.chartZoomed) } }
@@ -114,6 +124,7 @@ class WorkoutSession(
             store.plan.collect { plan -> loadPlan(plan) }
         }
         scope.launch { tickLoop() }
+        _state.update { it.copy(wattsMode = store.wattsMode) }
     }
 
     fun stop() {

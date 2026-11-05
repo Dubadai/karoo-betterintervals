@@ -21,6 +21,8 @@ data class ScreenState(
     val countdown: Int? = null,
     /** Step the pending jump will land on. */
     val jumpTarget: Int? = null,
+    /** How the target range is shown (tap the watts to cycle). */
+    val wattsMode: WattsMode = WattsMode.PLAIN,
     /** Chart shows the current interval zoomed in (with the edges of its neighbours) instead of the whole workout. */
     val chartZoomed: Boolean = false,
     // Karoo's own lap data, shown when no workout is loaded (free ride).
@@ -63,4 +65,22 @@ data class ScreenState(
 
     val target: Int? get() = currentStep?.targetAt(elapsedInStepSec)
     val targetRange: IntRange? get() = currentStep?.rangeAt(elapsedInStepSec)
+}
+
+/** Tap the watts to cycle: plain → coloured number → coloured background → both → plain. */
+enum class WattsMode {
+    /** White (dark mode) or black (light mode). */
+    PLAIN,
+    /** The watts number turns blue / green / red below / in / above the target range. */
+    TEXT,
+    /** The top of the screen gets a blue / green / red tint; the number stays plain. */
+    BACKGROUND,
+    /** Both: coloured number on the tinted background. */
+    BOTH,
+    ;
+
+    val colorsText: Boolean get() = this == TEXT || this == BOTH
+    val colorsBackground: Boolean get() = this == BACKGROUND || this == BOTH
+
+    fun next(): WattsMode = entries[(ordinal + 1) % entries.size]
 }

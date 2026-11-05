@@ -14,6 +14,7 @@ class ActionReceiver : BroadcastReceiver() {
             ACTION_PAUSE -> session.togglePause()
             ACTION_TOGGLE_CHART -> session.toggleChartZoom()
             ACTION_CANCEL_JUMP -> session.cancelJump()
+            ACTION_TOGGLE_WATTS_COLOR -> session.toggleWattsColor()
         }
     }
 
@@ -23,5 +24,6 @@ class ActionReceiver : BroadcastReceiver() {
         const val ACTION_PAUSE = "com.daviddokakis.karoointerval.PAUSE"
         const val ACTION_TOGGLE_CHART = "com.daviddokakis.karoointerval.TOGGLE_CHART"
         const val ACTION_CANCEL_JUMP = "com.daviddokakis.karoointerval.CANCEL_JUMP"
+        const val ACTION_TOGGLE_WATTS_COLOR = "com.daviddokakis.karoointerval.TOGGLE_WATTS_COLOR"
     }
 }

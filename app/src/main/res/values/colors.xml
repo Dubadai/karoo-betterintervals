@@ -36,4 +36,6 @@
     <color name="lap_icon">#FF7F77DD</color>
     <!-- Corner icons (gear, pause): muted grey, >= 3:1 against the page -->
     <color name="icon_muted">#FF888780</color>
+    <!-- Tonal tile (black at 8%): lets the range tint show through the Lap avg / Target tiles -->
+    <color name="tile_tonal">#14000000</color>
 </resources>
