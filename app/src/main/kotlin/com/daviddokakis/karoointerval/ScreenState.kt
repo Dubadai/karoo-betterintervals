@@ -13,22 +13,38 @@ data class ScreenState(
     val elapsedInStepSec: Int = 0,
     val finished: Boolean = false,
     val lapAvg: Int? = null,
+    /** Normalised power of the current interval lap (null in its first 30 s). */
+    val lapNp: Int? = null,
+    /** Lap tile shows NP instead of the lap average (tap to toggle, remembered). */
+    val lapShowsNp: Boolean = false,
     /** The ride is paused (Karoo's own pause). */
     val paused: Boolean = false,
     /** The workout is paused from this screen: interval clock and lap average stop, ride keeps recording. */
     val workoutPaused: Boolean = false,
     /** Seconds left before jumping, or null when no jump is pending. */
     val countdown: Int? = null,
+    /** Interval being chosen with ⏮/⏭ (before the countdown), or null. */
+    val selectTarget: Int? = null,
+    /** The choice is "restart the current interval". */
+    val selectRestart: Boolean = false,
+    /** Confirmation fill, 1..4 (0 = not choosing). */
+    val selectProgress: Int = 0,
     /** Step the pending jump will land on. */
     val jumpTarget: Int? = null,
     /** How the target range is shown (tap the watts to cycle). */
     val wattsMode: WattsMode = WattsMode.PLAIN,
+    /** Target tile shows the target range instead of the single target (tap to toggle). */
+    val targetShowsRange: Boolean = false,
+    /** "Move cancelled" is showing (after ✕ on the countdown). */
+    val moveCancelled: Boolean = false,
     /** Chart shows the current interval zoomed in (with the edges of its neighbours) instead of the whole workout. */
     val chartZoomed: Boolean = false,
     // Karoo's own lap data, shown when no workout is loaded (free ride).
     val lapNumber: Int? = null,
     val lapTimeSec: Int? = null,
     val lapPowerAvg: Int? = null,
+    /** Normalised power of Karoo's current lap (free ride). */
+    val freeLapNp: Int? = null,
     val lastLapTimeSec: Int? = null,
     val lastLapPowerAvg: Int? = null,
     /** Heart rate zones from the Karoo rider profile (min..max bpm), Z1 first. */
@@ -41,6 +57,9 @@ data class ScreenState(
     val currentStep: PlanStep? get() = plan?.steps?.getOrNull(stepIndex)
     val nextStep: PlanStep? get() = plan?.steps?.getOrNull(stepIndex + 1)
     val jumpStep: PlanStep? get() = jumpTarget?.let { plan?.steps?.getOrNull(it) }
+    /** Where a jump would land: the countdown's target, else the one being chosen. */
+    val landTarget: Int? get() = jumpTarget ?: selectTarget
+    val landStep: PlanStep? get() = landTarget?.let { plan?.steps?.getOrNull(it) }
     val hasNext: Boolean get() = stepIndex < stepCount - 1
     val hasPrevious: Boolean get() = stepIndex > 0
     val ftp: Int? get() = plan?.ftp ?: profileFtp

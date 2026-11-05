@@ -3,7 +3,6 @@ package com.daviddokakis.karoointerval
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Path
 import androidx.core.content.ContextCompat
@@ -14,7 +13,7 @@ import kotlin.math.ceil
  * (width = duration, height = watts).
  *
  * - [Style.SCREEN] (interval screen): watt guide lines, finished steps grey, the current step
- *   outlined, a "now" marker, a dashed outline on the step a jump lands on, time labels.
+ *   outlined, a "now" marker, the step a jump lands on in solid blue with a ▼, time labels.
  *   Supports zooming into the current step.
  * - [Style.CARD] (workout list thumbnail): bars only, transparent background.
  */
@@ -46,7 +45,8 @@ class ChartRenderer(private val context: Context) {
         // Time window: the whole workout, or (zoomed) the current interval plus a little of the
         // intervals either side for context.
         val current = plan.steps.getOrNull(state.stepIndex)
-        val zoomed = !card && state.chartZoomed && current != null
+        // While a jump is being chosen or counted down, show the whole workout so the target is visible.
+        val zoomed = !card && state.chartZoomed && current != null && state.landTarget == null
         val (winStart, winEnd) = if (zoomed && current != null) {
             val start = plan.startSecOf(state.stepIndex)
             val end = start + current.durationSec
@@ -92,12 +92,6 @@ class ChartRenderer(private val context: Context) {
             strokeWidth = 2f * d
             color = color(R.color.text)
         }
-        val land = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            this.style = Paint.Style.STROKE
-            strokeWidth = 2.5f * d
-            color = color(R.color.land)
-            pathEffect = DashPathEffect(floatArrayOf(4f * d, 2f * d), 0f)
-        }
         val gap = if (card) 0.5f * d else 0.75f * d
         var t = 0f
         plan.steps.forEachIndexed { i, step ->
@@ -113,10 +107,17 @@ class ChartRenderer(private val context: Context) {
                 close()
             }
             val bar = Zones.barStyle(step.avgWatts, ftp)
-            // Finished steps turn grey.
+            // Finished steps turn grey; the jump target is solid blue.
             val done = !card && i < state.stepIndex
+            val isTarget = !card && i == state.landTarget
             val alpha = 255
-            fill.color = color(if (done) R.color.done else bar.fill)
+            fill.color = color(
+                when {
+                    isTarget -> R.color.land
+                    done -> R.color.done
+                    else -> bar.fill
+                },
+            )
             canvas.drawPath(path, fill)
             bar.edge?.let { edge ->
                 // Karoo draws easy bars with a bright outline, just inside the bar.
@@ -132,7 +133,18 @@ class ChartRenderer(private val context: Context) {
                 canvas.drawPath(edgePath, edgePaint)
             }
             if (!card && i == state.stepIndex) canvas.drawPath(path, outline)
-            if (!card && i == state.jumpTarget) canvas.drawPath(path, land)
+            if (isTarget) {
+                // ▼ above the target bar
+                val cx = (x0 + x1) / 2
+                val tipY = maxOf(minOf(ys.first, ys.second) - 2f * d, 13f * d) // stays inside the chart
+                val tri = Path().apply {
+                    moveTo(cx - 8f * d, tipY - 12f * d)
+                    lineTo(cx + 8f * d, tipY - 12f * d)
+                    lineTo(cx, tipY)
+                    close()
+                }
+                canvas.drawPath(tri, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = color(R.color.land) })
+            }
             t += step.durationSec
         }
 

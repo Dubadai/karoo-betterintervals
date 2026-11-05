@@ -35,6 +35,19 @@
     <color name="lap_icon">#FFAFA9EC</color>
     <!-- Corner icons (gear, pause): muted grey, >= 3:1 against the page -->
     <color name="icon_muted">#FF888780</color>
+    <!-- Info messages ("Move cancelled"): inverted, solid -->
+    <color name="info_bg">#FFEBEBEB</color>
+    <color name="info_fg">#FF0B0B0B</color>
     <!-- Tonal tile (white at 12%): lets the range tint show through the Lap avg / Target tiles -->
     <color name="tile_tonal">#1FFFFFFF</color>
+    <!-- Paused box (yellow, both modes; text 10:1) and resume button (green) -->
+    <color name="paused_bg">#FFFAC775</color>
+    <color name="paused_fg">#FF412402</color>
+    <color name="resume_bg">#FF97C459</color>
+    <color name="resume_fg">#FF173404</color>
+    <!-- Pulse step: deeper green (dark symbol still >= 3:1) -->
+    <color name="resume_bg_alt">#FF639922</color>
+    <!-- Fill while choosing a jump (blue) or a restart (grey); text on it stays >= 7:1 -->
+    <color name="select_fill_jump">#FF1F3A57</color>
+    <color name="select_fill_restart">#FF444441</color>
 </resources>

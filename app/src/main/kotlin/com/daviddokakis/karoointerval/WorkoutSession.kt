@@ -44,7 +44,13 @@ class WorkoutSession(
     private var lastTick = 0L
     private var lapSum = 0.0
     private var lapSamples = 0
+    private val lapNp = LapNp()
+    private val freeLapNp = LapNp()
     private var countdownJob: Job? = null
+    /** Jump being chosen (3 s confirmation), see [jumpStops]. */
+    private var selectionPos: Int? = null
+    private var selectJob: Job? = null
+    private var moveCancelledJob: Job? = null
     private var started = false
 
     /** Interval screens currently showing. While one is, it plays the countdown beeps (see [onCountdownShown]). */
@@ -115,7 +121,10 @@ class WorkoutSession(
             }
         }
         // Karoo's lap data for the free-ride screen (times come in milliseconds).
-        collectInt(DataType.Type.LAP_NUMBER) { v -> _state.update { it.copy(lapNumber = v) } }
+        collectInt(DataType.Type.LAP_NUMBER) { v ->
+            if (v != _state.value.lapNumber) freeLapNp.reset()
+            _state.update { it.copy(lapNumber = v, freeLapNp = freeLapNp.value) }
+        }
         collectInt(DataType.Type.ELAPSED_TIME_LAP, divideBy = 1000) { v -> _state.update { it.copy(lapTimeSec = v) } }
         collectInt(DataType.Type.POWER_LAP) { v -> _state.update { it.copy(lapPowerAvg = v) } }
         collectInt(DataType.Type.ELAPSED_TIME_LAST_LAP, divideBy = 1000) { v -> _state.update { it.copy(lastLapTimeSec = v) } }
@@ -124,7 +133,7 @@ class WorkoutSession(
             store.plan.collect { plan -> loadPlan(plan) }
         }
         scope.launch { tickLoop() }
-        _state.update { it.copy(wattsMode = store.wattsMode) }
+        _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapShowsNp = store.lapShowsNp) }
     }
 
     fun stop() {
@@ -132,22 +141,136 @@ class WorkoutSession(
         scope.cancel()
     }
 
-    /** Ask to go [delta] steps (+1 next, -1 previous). Pressing the same direction again cancels. */
+    /**
+     * ⏭ ([delta] +1) / ⏮ (-1): move the jump target one stop. Stops, in order:
+     * …, previous intervals, "restart the current interval", "stay" (current, nothing happens),
+     * next intervals, …  Nothing moves until "Confirm move" (the choice cancels itself after
+     * [SELECT_TIMEOUT_MS]); then the 5 s countdown runs. A tap on the countdown starts the chosen
+     * interval right away, its ✕ cancels.
+     */
     fun requestJump(delta: Int) {
         scope.launch {
             val st = _state.value
-            val pending = st.jumpTarget
-            if (countdownJob?.isActive == true && pending != null) {
-                val pendingDelta = pending - st.stepIndex
-                cancelCountdown()
-                if (pendingDelta == delta) {
-                    beep(CANCEL_TONE)
-                    return@launch
-                }
+            if (st.plan == null) return@launch
+            if (countdownJob?.isActive == true) {
+                jumpNow()
+                return@launch
             }
-            val target = st.stepIndex + delta
-            if (st.plan == null || target !in 0 until st.stepCount) return@launch
+            val stops = jumpStops(st.stepIndex, st.stepCount)
+            val stay = stops.indexOf(st.stepIndex * 2)
+            val from = selectionPos?.let { stops.indexOf(it) }?.takeIf { it >= 0 } ?: stay
+            val to = (from + delta).coerceIn(0, stops.lastIndex)
+            Timber.i("Jump tap delta=$delta current=${st.stepIndex} selection=$selectionPos from=${stops[from]} to=${stops[to]}")
+            if (to == stay) {
+                cancelSelection() // back where we are: nothing happens
+            } else if (to != from || selectionPos == null) {
+                select(stops[to])
+            }
+        }
+    }
+
+    /** Tap on the middle of the box while choosing: never mind, stay where we are. */
+    fun cancelSelection() {
+        scope.launch {
+            Timber.i("Selection cancelled")
+            selectJob?.cancel()
+            selectJob = null
+            selectionPos = null
+            _state.update { it.copy(selectTarget = null, selectRestart = false, selectProgress = 0) }
+        }
+    }
+
+    /** Tap on the countdown: skip the rest of it and start the chosen interval now. */
+    fun jumpNow() {
+        scope.launch {
+            Timber.i("Jump now tapped (countdown running: ${countdownJob?.isActive})")
+            val target = _state.value.jumpTarget ?: return@launch
+            if (countdownJob?.isActive != true) return@launch
+            countdownJob?.cancel()
+            countdownJob = null
+            goToStep(target, natural = false)
+        }
+    }
+
+    /** Positions: interval i is 2·i; "restart current" is 2·current − 1. */
+    private fun jumpStops(current: Int, count: Int): List<Int> =
+        (0 until count).flatMap { i -> if (i == current) listOf(2 * i - 1, 2 * i) else listOf(2 * i) }
+
+    private fun select(pos: Int) {
+        Timber.i("Select pos=$pos")
+        moveCancelledJob?.cancel()
+        moveCancelledJob = null
+        _state.update { it.copy(moveCancelled = false) }
+        selectionPos = pos
+        val target = (pos + 1) / 2
+        val restart = pos % 2 != 0
+        _state.update { it.copy(selectTarget = target, selectRestart = restart, selectProgress = 1) }
+        // Nothing moves until "Confirm move". Untouched, the choice quietly cancels.
+        selectJob?.cancel()
+        selectJob = scope.launch {
+            delay(SELECT_TIMEOUT_MS)
+            Timber.i("Selection timed out")
+            selectJob = null
+            selectionPos = null
+            _state.update { it.copy(selectTarget = null, selectRestart = false, selectProgress = 0) }
+        }
+    }
+
+    /** "Confirm move": lock in the chosen interval and start the 5 s countdown. */
+    fun confirmSelection() {
+        scope.launch {
+            val target = _state.value.selectTarget ?: return@launch
+            Timber.i("Selection confirmed -> countdown to ${target + 1}")
+            clearSelection()
             startCountdown(target)
+        }
+    }
+
+    /** ✕ next to "Confirm move": drop the choice, nothing moves, show "Move cancelled" for a moment. */
+    fun cancelMove() {
+        scope.launch {
+            if (_state.value.selectTarget == null) return@launch
+            Timber.i("Move cancelled")
+            clearSelection()
+            beep(CANCEL_TONE)
+            showMoveCancelled()
+        }
+    }
+
+    /** Tap on "Move cancelled": hide it right away. */
+    fun dismissMoveCancelled() {
+        scope.launch {
+            moveCancelledJob?.cancel()
+            moveCancelledJob = null
+            _state.update { it.copy(moveCancelled = false) }
+        }
+    }
+
+    /** Tap on the lap tile: switch between the lap average and lap NP. */
+    fun toggleLapNp() {
+        scope.launch {
+            val np = !_state.value.lapShowsNp
+            store.lapShowsNp = np
+            _state.update { it.copy(lapShowsNp = np) }
+        }
+    }
+
+    /** Tap on the Target tile: switch between the target and the target range. */
+    fun toggleTargetView() {
+        scope.launch {
+            val range = !_state.value.targetShowsRange
+            store.targetShowsRange = range
+            _state.update { it.copy(targetShowsRange = range) }
+        }
+    }
+
+    private fun showMoveCancelled() {
+        moveCancelledJob?.cancel()
+        _state.update { it.copy(moveCancelled = true) }
+        moveCancelledJob = scope.launch {
+            delay(MOVE_CANCELLED_MS)
+            moveCancelledJob = null
+            _state.update { it.copy(moveCancelled = false) }
         }
     }
 
@@ -156,20 +279,13 @@ class WorkoutSession(
      * is kept. The ride keeps recording and the lap average keeps counting. Pausing the ride
      * itself (Karoo's own pause) also stops the interval timer.
      */
-    /** Cancels a pending jump (tap on the countdown box). */
-    fun cancelJump() {
-        scope.launch {
-            if (countdownJob?.isActive == true) {
-                cancelCountdown()
-                beep(CANCEL_TONE)
-            }
-        }
-    }
-
     fun togglePause() {
         scope.launch {
             val nowPaused = !_state.value.workoutPaused
-            if (nowPaused) cancelCountdown()
+            if (nowPaused) {
+                cancelCountdown()
+                clearSelection()
+            }
             _state.update { it.copy(workoutPaused = nowPaused) }
             beep(if (nowPaused) CANCEL_TONE else GO_TONE)
             Timber.i("Workout ${if (nowPaused) "paused" else "resumed"}")
@@ -255,7 +371,10 @@ class WorkoutSession(
     private fun goToStep(index: Int, natural: Boolean) {
         // A step change (natural or not) clears any pending jump, so a forward jump that was
         // counting down when the interval ended doesn't skip the interval we just entered.
-        if (natural) cancelCountdown()
+        if (natural) {
+            cancelCountdown()
+            clearSelection()
+        }
         Timber.i("Step ${_state.value.stepIndex + 1} -> ${index + 1} (natural=$natural)")
         elapsedInStepMs = 0
         resetLap()
@@ -267,6 +386,13 @@ class WorkoutSession(
         saveProgress()
     }
 
+    private fun clearSelection() {
+        selectJob?.cancel()
+        selectJob = null
+        selectionPos = null
+        _state.update { it.copy(selectTarget = null, selectRestart = false, selectProgress = 0) }
+    }
+
     private fun cancelCountdown() {
         countdownJob?.cancel()
         countdownJob = null
@@ -276,6 +402,8 @@ class WorkoutSession(
     private fun resetLap() {
         lapSum = 0.0
         lapSamples = 0
+        lapNp.reset()
+        _state.update { it.copy(lapNp = null) }
     }
 
     private fun onPower(watts: Double?) {
@@ -284,11 +412,15 @@ class WorkoutSession(
         if (watts != null && recording && st.workoutLoaded && !st.finished) {
             lapSum += watts
             lapSamples++
+            lapNp.add(SystemClock.elapsedRealtime(), watts)
         }
+        if (watts != null && recording) freeLapNp.add(SystemClock.elapsedRealtime(), watts)
         _state.update {
             it.copy(
                 power = watts?.roundToInt(),
                 lapAvg = if (lapSamples > 0) (lapSum / lapSamples).roundToInt() else it.lapAvg,
+                lapNp = lapNp.value,
+                freeLapNp = freeLapNp.value,
             )
         }
     }
@@ -311,6 +443,10 @@ class WorkoutSession(
 
     companion object {
         const val COUNTDOWN_SECONDS = 5
+        /** An unconfirmed jump choice cancels itself after this long. */
+        private const val SELECT_TIMEOUT_MS = 10_000L
+        /** How long "Move cancelled" shows. */
+        private const val MOVE_CANCELLED_MS = 3_000L
         private const val TICK_MS = 250L
         private const val SAVE_EVERY_MS = 15_000L
 

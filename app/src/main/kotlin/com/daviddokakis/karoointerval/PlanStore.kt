@@ -33,6 +33,16 @@ class PlanStore private constructor(context: Context) {
 
     val hasCredentials: Boolean get() = apiKey.isNotBlank()
 
+    /** Target tile shows the range instead of the single target (remembered between rides). */
+    var targetShowsRange: Boolean
+        get() = prefs.getBoolean(KEY_TARGET_RANGE, false)
+        set(value) = prefs.edit().putBoolean(KEY_TARGET_RANGE, value).apply()
+
+    /** Lap tile shows NP instead of the lap average (remembered between rides). */
+    var lapShowsNp: Boolean
+        get() = prefs.getBoolean(KEY_LAP_NP, false)
+        set(value) = prefs.edit().putBoolean(KEY_LAP_NP, value).apply()
+
     /** How the watts show the target range (remembered between rides). */
     var wattsMode: WattsMode
         get() {
@@ -132,6 +142,8 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_PROGRESS = "progress"
         private const val KEY_WATTS_COLORED = "watts_colored"
         private const val KEY_WATTS_MODE = "watts_mode"
+        private const val KEY_TARGET_RANGE = "target_shows_range"
+        private const val KEY_LAP_NP = "lap_shows_np"
         private const val KEY_WEEK_JSON = "week_json"
         private const val KEY_WEEK_SYNCED = "week_synced"
 

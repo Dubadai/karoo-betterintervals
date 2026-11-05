@@ -45,6 +45,9 @@ object DemoData {
             power3s = watts,
             heartRate = hr,
             lapAvg = lapAvg,
+            // NP a bit above the average, as with surging power; "--" in the lap's first 30 s.
+            lapNp = if (lapSec % 600 < 30) null else lapAvg + 7,
+            freeLapNp = if (lapSec % 600 < 30) null else lapAvg + 7,
             lapNumber = 3 + lapSec / 600,
             lapTimeSec = lapSec % 600,
             lapPowerAvg = lapAvg,
