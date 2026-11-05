@@ -22,6 +22,8 @@ lap number, lap time and the last lap.
 
 Light and dark mode follow the Karoo's theme. Values show `--` when a sensor isn't connected.
 
+There's a step-by-step [guide with pictures](docs/guide/README.md) for every feature.
+
 ## Install on your Karoo
 
 1. On your phone, open the latest [release](../../releases/latest) and share the `.apk` download
