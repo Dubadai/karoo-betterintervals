@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@android:id/background">
-        <shape><solid android:color="@color/track" /><corners android:radius="4dp" /></shape>
+        <!-- Same tonal wash as the tiles, so it takes the watts range tint behind it -->
+        <shape><solid android:color="@color/tile_tonal" /><corners android:radius="4dp" /></shape>
     </item>
     <item android:id="@android:id/progress">
         <clip><shape><solid android:color="@color/text" /><corners android:radius="4dp" /></shape></clip>

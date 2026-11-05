@@ -54,7 +54,10 @@ class IntervalDataType(
             var shown: Key? = null
             while (isActive) {
                 val s = session.state.value
-                val key = Key(s.countdown, s.stepIndex, s.workoutPaused, s.chartZoomed, s.plan?.id)
+                val key = Key(
+                    s.countdown, s.stepIndex, s.workoutPaused, s.chartZoomed, s.plan?.id, s.selectTarget,
+                    s.selectProgress, s.moveCancelled, s.targetShowsRange, s.wattsMode, s.lapShowsNp,
+                )
                 val since = SystemClock.elapsedRealtime() - lastRender
                 val changed = key != shown
                 val counting = s.countdown != null || shown?.countdown != null
@@ -80,7 +83,19 @@ class IntervalDataType(
     }
 
     /** What triggers an immediate redraw when it changes. */
-    private data class Key(val countdown: Int?, val step: Int, val paused: Boolean, val zoomed: Boolean, val plan: String?)
+    private data class Key(
+        val countdown: Int?,
+        val step: Int,
+        val paused: Boolean,
+        val zoomed: Boolean,
+        val plan: String?,
+        val selectTarget: Int?,
+        val selectProgress: Int,
+        val moveCancelled: Boolean,
+        val targetRange: Boolean,
+        val wattsMode: WattsMode,
+        val lapNp: Boolean,
+    )
 
     companion object {
         const val TYPE_ID = "interval-screen"

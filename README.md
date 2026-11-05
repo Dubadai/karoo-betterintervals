@@ -8,7 +8,8 @@ can jump forward **and back** between intervals.
 - Big 3-second power, with heart rate above it. Tap the watts to cycle how the target range
   shows: plain → coloured number → coloured background → both. Blue is below the range, green in
   it, red above it. The range is the interval's own range from intervals.icu (±2.5% by default).
-- Interval number, time left with a progress bar, lap average and target watts.
+- Interval number, time left with a progress bar, lap average and target watts. Tap the lap
+  average to switch to the lap's normalised power (Lap NP); tap Target to see the target range.
 - The next interval, with ⏮ / ⏭ buttons. A jump starts a 5-second countdown with beeps (tap the
   countdown to cancel), so you can get ready.
 - The whole workout as a chart in zone colours, with a "now" marker. Tap it to zoom into the

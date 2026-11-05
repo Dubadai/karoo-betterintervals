@@ -43,6 +43,7 @@
             android:orientation="horizontal">
 
             <LinearLayout
+                android:id="@+id/free_lap_tile"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_marginEnd="4dp"
@@ -194,6 +195,7 @@
             android:layout_marginEnd="4dp"
             android:contentDescription="@string/cd_settings"
             android:src="@drawable/ic_settings"
-            android:tint="@color/icon_muted" />
+            android:alpha="0.55"
+            android:tint="@color/text" />
     </FrameLayout>
 </FrameLayout>

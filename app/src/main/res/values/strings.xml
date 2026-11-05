@@ -14,6 +14,7 @@
     <string name="next_label">Next · Interval %1$d / %2$d</string>
     <string name="next_last">Last interval</string>
     <string name="lap_avg">Lap avg</string>
+    <string name="np">Lap NP</string>
     <string name="target">Target</string>
     <string name="left">%1$s left</string>
     <string name="lands_at">Lands at %1$s</string>
@@ -60,4 +61,20 @@
     <string name="lap_number">Lap %1$d</string>
     <string name="last_lap">Last lap %1$s · %2$d W</string>
     <string name="last_lap_no_power">Last lap %1$s</string>
+    <string name="workout_paused">Workout paused</string>
+    <string name="workout_auto_paused">Workout auto-paused</string>
+    <string name="next_up">Next up</string>
+    <string name="restarting_interval">Restarting interval</string>
+    <plurals name="jumping_ahead">
+        <item quantity="one">Jumping %d ahead</item>
+        <item quantity="other">Jumping %d ahead</item>
+    </plurals>
+    <plurals name="jumping_back">
+        <item quantity="one">Jumping %d back</item>
+        <item quantity="other">Jumping %d back</item>
+    </plurals>
+    <string name="confirm_move">Confirm move</string>
+    <string name="cd_cancel_jump">Cancel jump</string>
+    <string name="move_cancelled">Move cancelled</string>
+    <string name="target_range">Target range</string>
 </resources>

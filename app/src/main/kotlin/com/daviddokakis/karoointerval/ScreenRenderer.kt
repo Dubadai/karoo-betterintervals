@@ -21,13 +21,20 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         val (w, h) = config.viewSize
         if (w <= 0 || h <= 0) 1f else minOf(w / (REF_W_DP * density), h / (REF_H_DP * density)).coerceIn(0.5f, 1.6f)
     }
+    private var blinkOn = true
     private val chartHeightPx = (CHART_DP * density * scale).toInt()
 
     private val nextIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_NEXT, 1) }
     private val pauseIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_PAUSE, 2) }
     private val previousIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_PREVIOUS, 3) }
     private val chartIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_CHART, 5) }
-    private val cancelJumpIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_CANCEL_JUMP, 6) }
+    private val jumpNowIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_JUMP_NOW, 6) }
+    private val cancelSelectionIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_CANCEL_SELECTION, 8) }
+    private val confirmIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_CONFIRM_SELECTION, 9) }
+    private val cancelMoveIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_CANCEL_MOVE, 10) }
+    private val dismissCancelledIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_DISMISS_MOVE_CANCELLED, 11) }
+    private val targetToggleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_TARGET, 12) }
+    private val lapNpToggleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_LAP_NP, 13) }
     private val wattsColorIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_WATTS_COLOR, 7) }
     private val settingsIntent: PendingIntent by lazy {
         PendingIntent.getActivity(
@@ -83,25 +90,49 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setOnClickPendingIntent(R.id.watts, wattsColorIntent)
         v.setTextViewText(R.id.hr, s.heartRate?.toString() ?: "--")
 
-        // Pause / resume the workout (top right); the ride keeps recording
-        v.setImageViewResource(R.id.btn_pause_icon, if (s.workoutPaused) R.drawable.ic_play else R.drawable.ic_pause)
-        v.setContentDescription(
-            R.id.btn_pause_icon,
-            context.getString(if (s.workoutPaused) R.string.cd_resume else R.string.cd_pause),
+        // Pause / resume (top right). Paused by you: green half-pill with a filled play symbol.
+        // Ride paused by Karoo: hidden, since the workout resumes with the ride.
+        val ridePaused = s.paused
+        val resumeShown = s.workoutPaused && !ridePaused
+        // Small grey pause button normally; the big green resume half-pill while you've paused.
+        v.setViewVisibility(
+            R.id.btn_pause,
+            when {
+                resumeShown -> View.GONE
+                ridePaused -> View.INVISIBLE
+                else -> View.VISIBLE
+            },
         )
+        v.setViewVisibility(R.id.btn_resume, if (resumeShown) View.VISIBLE else View.GONE)
+        // Tonal: the text colour at 55%, so a range tint shows through (a translucent tint colour
+        // alone comes out solid on the Karoo).
+        v.setInt(R.id.btn_pause_icon, "setColorFilter", color(R.color.text))
+        v.setInt(R.id.btn_pause_icon, "setImageAlpha", ICON_ALPHA)
         v.setOnClickPendingIntent(R.id.btn_pause, pauseIntent)
+        v.setOnClickPendingIntent(R.id.btn_resume, pauseIntent)
 
-        // Interval number (or "Paused" / "Workout complete"), time left and progress
-        when {
-            s.paused || s.workoutPaused -> {
-                v.setTextViewText(R.id.interval_label, context.getString(R.string.paused))
-                v.setTextColor(R.id.interval_label, color(R.color.paused))
+        // Interval number, or a yellow box while paused, or "Workout complete"
+        if (ridePaused || s.workoutPaused) {
+            v.setViewVisibility(R.id.interval_label, View.GONE)
+            v.setViewVisibility(R.id.paused_box, View.VISIBLE)
+            v.setTextViewText(
+                R.id.paused_text,
+                context.getString(if (ridePaused) R.string.workout_auto_paused else R.string.workout_paused),
+            )
+            // Blink the pause icon: flip on every redraw (Karoo redraws a field about once a second).
+            blinkOn = !blinkOn
+            v.setInt(R.id.paused_icon, "setImageAlpha", if (blinkOn) 255 else 70)
+            // The resume button pulses in step, between its two greens.
+            if (resumeShown) {
+                v.setInt(R.id.btn_resume, "setBackgroundResource", if (blinkOn) R.drawable.bg_resume else R.drawable.bg_resume_alt)
             }
-            s.finished -> {
+        } else {
+            v.setViewVisibility(R.id.interval_label, View.VISIBLE)
+            v.setViewVisibility(R.id.paused_box, View.GONE)
+            if (s.finished) {
                 v.setTextViewText(R.id.interval_label, context.getString(R.string.workout_complete))
                 v.setTextColor(R.id.interval_label, color(R.color.watts_in_range))
-            }
-            else -> {
+            } else {
                 v.setTextViewText(R.id.interval_label, context.getString(R.string.interval_of, s.stepIndex + 1, s.stepCount))
                 v.setTextColor(R.id.interval_label, color(R.color.text_secondary))
             }
@@ -112,40 +143,91 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setProgressBar(R.id.interval_progress, 1000, progress, false)
 
         // Tiles
-        v.setTextViewText(R.id.lap_avg, s.lapAvg?.toString() ?: "--")
-        v.setTextViewText(R.id.target, s.target?.toString() ?: "--")
-        val jump = s.jumpStep
-        if (s.countdown != null && jump != null) {
-            v.setTextViewText(R.id.target_next, "→ ${jump.targetAt(0)}")
+        // Lap tile: tap to switch between the lap average and lap NP.
+        v.setTextViewText(R.id.lap_avg_label, context.getString(if (s.lapShowsNp) R.string.np else R.string.lap_avg))
+        v.setTextViewText(R.id.lap_avg, (if (s.lapShowsNp) s.lapNp else s.lapAvg)?.toString() ?: "--")
+        v.setOnClickPendingIntent(R.id.lap_tile, lapNpToggleIntent)
+        // Target tile: tap to switch between the target and the target range.
+        val band = s.targetRange
+        if (s.targetShowsRange && band != null) {
+            v.setTextViewText(R.id.target_label, context.getString(R.string.target_range))
+            v.setTextViewText(R.id.target, "${band.first}–${band.last}")
+        } else {
+            v.setTextViewText(R.id.target_label, context.getString(R.string.target))
+            v.setTextViewText(R.id.target, s.target?.toString() ?: "--")
+        }
+        v.setOnClickPendingIntent(R.id.target_tile, targetToggleIntent)
+        // Where a jump would land (being chosen or counting down): shown in the Target tile too.
+        val land = s.landStep
+        if (land != null) {
+            v.setTextViewText(R.id.target_next, "→ ${land.targetAt(0)}")
             v.setViewVisibility(R.id.target_next, View.VISIBLE)
         } else {
             v.setViewVisibility(R.id.target_next, View.GONE)
         }
 
-        // Next box / countdown box
+        // Next up box / countdown box
+        val jump = s.jumpStep
         if (s.countdown != null && jump != null) {
             v.setViewVisibility(R.id.next_box, View.GONE)
             v.setViewVisibility(R.id.countdown_box, View.VISIBLE)
+            v.setViewVisibility(R.id.tiles_row, View.VISIBLE)
+            v.setViewVisibility(R.id.confirm_row, View.GONE)
+            v.setViewVisibility(R.id.move_cancelled, View.GONE)
             v.setTextViewText(R.id.countdown, s.countdown.toString())
             v.setTextViewText(R.id.countdown_value, summary(jump))
         } else {
             v.setViewVisibility(R.id.next_box, View.VISIBLE)
             v.setViewVisibility(R.id.countdown_box, View.GONE)
+            val choosing = s.selectTarget?.let { s.plan?.steps?.getOrNull(it) }
             val next = s.nextStep
-            if (next != null) {
-                v.setTextViewText(R.id.next_label, context.getString(R.string.next_label, s.stepIndex + 2, s.stepCount))
-                v.setTextViewText(R.id.next_value, summaryWithZone(next, s.ftp))
-            } else {
-                v.setTextViewText(R.id.next_label, context.getString(R.string.next_last))
-                v.setTextViewText(R.id.next_value, "")
+            when {
+                choosing != null -> {
+                    // How far the jump goes, counted in intervals from where you are.
+                    val distance = (s.selectTarget ?: s.stepIndex) - s.stepIndex
+                    val label = when {
+                        s.selectRestart -> context.getString(R.string.restarting_interval)
+                        distance > 0 -> context.resources.getQuantityString(R.plurals.jumping_ahead, distance, distance)
+                        else -> context.resources.getQuantityString(R.plurals.jumping_back, -distance, -distance)
+                    }
+                    v.setTextViewText(R.id.next_label, label)
+                    v.setViewVisibility(R.id.next_label, View.VISIBLE)
+                    v.setTextViewText(R.id.next_value, summary(choosing))
+                    v.setTextColor(R.id.next_value, color(R.color.text))
+                }
+                next != null -> {
+                    v.setTextViewText(R.id.next_label, context.getString(R.string.next_up))
+                    v.setViewVisibility(R.id.next_label, View.VISIBLE)
+                    v.setTextViewText(R.id.next_value, summary(next))
+                    v.setTextColor(R.id.next_value, color(R.color.text))
+                }
+                else -> {
+                    v.setViewVisibility(R.id.next_label, View.GONE)
+                    v.setTextViewText(R.id.next_value, context.getString(R.string.next_last))
+                    v.setTextColor(R.id.next_value, color(R.color.text_secondary))
+                }
             }
-            v.setViewVisibility(R.id.btn_skip, if (s.hasNext) View.VISIBLE else View.INVISIBLE)
-            v.setViewVisibility(R.id.btn_previous, if (s.hasPrevious) View.VISIBLE else View.INVISIBLE)
+            v.setViewVisibility(R.id.select_fill, View.GONE)
+            // One 52 dp row: "Confirm move" + ✕ while choosing, "Move cancelled" for a moment after
+            // its ✕, otherwise the Lap avg / Target tiles.
+            val showConfirm = choosing != null
+            val showCancelled = !showConfirm && s.moveCancelled
+            v.setViewVisibility(R.id.confirm_row, if (showConfirm) View.VISIBLE else View.GONE)
+            v.setViewVisibility(R.id.move_cancelled, if (showCancelled) View.VISIBLE else View.GONE)
+            v.setViewVisibility(R.id.tiles_row, if (showConfirm || showCancelled) View.GONE else View.VISIBLE)
+            // Buttons keep their space when hidden, so the text stays centred. While choosing,
+            // both stay available so you can tap back and forth.
+            v.setViewVisibility(R.id.btn_skip, if (s.hasNext || choosing != null) View.VISIBLE else View.INVISIBLE)
+            v.setViewVisibility(R.id.btn_previous, View.VISIBLE)
         }
         // Taps may or may not reach a data field on Karoo; the bonus actions (remote buttons) always work.
         v.setOnClickPendingIntent(R.id.btn_skip, nextIntent)
         v.setOnClickPendingIntent(R.id.btn_previous, previousIntent)
-        v.setOnClickPendingIntent(R.id.countdown_box, cancelJumpIntent)
+        v.setOnClickPendingIntent(R.id.next_mid, cancelSelectionIntent)
+        v.setOnClickPendingIntent(R.id.countdown_box, jumpNowIntent)
+        v.setOnClickPendingIntent(R.id.btn_confirm, confirmIntent)
+        v.setOnClickPendingIntent(R.id.btn_confirm_x, cancelMoveIntent)
+        v.setOnClickPendingIntent(R.id.move_cancelled, dismissCancelledIntent)
 
         // Chart
         val chartW = (config.viewSize.first - 16 * density).toInt()
@@ -189,7 +271,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         ).forEach { (id, sp) -> v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_PX, sp * density * scale) }
 
         v.setTextViewText(R.id.free_watts, s.power3s?.toString() ?: "--")
-        v.setTextViewText(R.id.free_lap_avg, s.lapPowerAvg?.toString() ?: "--")
+        v.setTextViewText(R.id.free_lap_label, context.getString(if (s.lapShowsNp) R.string.np else R.string.lap_avg))
+        v.setTextViewText(R.id.free_lap_avg, (if (s.lapShowsNp) s.freeLapNp else s.lapPowerAvg)?.toString() ?: "--")
+        v.setOnClickPendingIntent(R.id.free_lap_tile, lapNpToggleIntent)
         v.setTextViewText(R.id.free_hr, s.heartRate?.toString() ?: "--")
 
         val zoneBg = when (s.hrZone) {
@@ -230,9 +314,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     private fun applyTextSizes(v: RemoteViews) {
         // Must match the sp sizes in field_interval.xml (the reference size).
         listOf(
-            R.id.hr to 18f, R.id.interval_label to 13f, R.id.time_left to 30f,
+            R.id.hr to 18f, R.id.interval_label to 13f, R.id.paused_text to 13f, R.id.time_left to 30f,
             R.id.lap_avg to 22f, R.id.target to 22f, R.id.target_next to 16f,
-            R.id.next_label to 11f, R.id.next_value to 17f, R.id.countdown to 31f, R.id.countdown_value to 20f,
+            R.id.next_label to 11f, R.id.confirm_text to 17f, R.id.move_cancelled_text to 16f, R.id.countdown to 31f, R.id.countdown_value to 20f,
         ).forEach { (id, sp) ->
             v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_PX, sp * density * scale)
         }
@@ -251,6 +335,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     }
 
     companion object {
+        /** Gear and pause icons: 55% of the text colour. */
+        private const val ICON_ALPHA = 140
         private const val REF_W_DP = 255f
         private const val REF_H_DP = 385f
         private const val CHART_DP = 56f
