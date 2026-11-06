@@ -44,20 +44,21 @@
                 android:textScaleX="0.9" />
         </FrameLayout>
 
-        <!-- Lap row, like the workout screen's interval row: "LAP TIME" left, the time right, one baseline -->
+        <!-- Lap row: "LAP TIME" and its icon at the boxes' label size (15sp, 12dp icon), centred
+             on the lap time's height -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:baselineAligned="true"
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <ImageView
                 android:id="@+id/th_free_karoo_1"
                 android:layout_width="12dp"
                 android:layout_height="12dp"
-                android:layout_marginEnd="4dp"
-                android:baseline="10dp"
+                android:layout_marginEnd="3dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_lap"
                 android:tint="@color/karoo_green" />
@@ -73,7 +74,7 @@
                 android:text="@string/lap_time"
                 android:textAllCaps="true"
                 android:textColor="@color/text"
-                android:textSize="13sp" />
+                android:textSize="15sp" />
 
             <TextView
                 android:id="@+id/free_lap_time"
