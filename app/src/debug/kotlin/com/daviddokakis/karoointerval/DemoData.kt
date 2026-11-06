@@ -53,6 +53,9 @@ object DemoData {
             lapPowerAvg = lapAvg,
             lastLapTimeSec = 500,
             lastLapPowerAvg = 271,
+            // Lap average HR drifts a little below the current one; last lap 142 bpm.
+            lapHrAvg = 138 + (tick % 7),
+            lastLapHrAvg = 142,
             hrZones = s.hrZones.ifEmpty { DEFAULT_HR_ZONES },
         )
     }

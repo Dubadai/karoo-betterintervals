@@ -43,6 +43,11 @@ class PlanStore private constructor(context: Context) {
         get() = prefs.getBoolean(KEY_TARGET_RANGE, false)
         set(value) = prefs.edit().putBoolean(KEY_TARGET_RANGE, value).apply()
 
+    /** Free ride: the HR tile shows the lap's average heart rate instead of the current one (remembered). */
+    var hrShowsLap: Boolean
+        get() = prefs.getBoolean(KEY_HR_LAP, false)
+        set(value) = prefs.edit().putBoolean(KEY_HR_LAP, value).apply()
+
     /** Lap tile shows NP instead of the lap average (remembered between rides). */
     var lapShowsNp: Boolean
         get() = prefs.getBoolean(KEY_LAP_NP, false)
@@ -175,6 +180,7 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_WATTS_MODE = "watts_mode"
         private const val KEY_TARGET_RANGE = "target_shows_range"
         private const val KEY_LAP_NP = "lap_shows_np"
+        private const val KEY_HR_LAP = "hr_shows_lap"
         private const val KEY_KAROO_STYLE = "karoo_style"
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_WEEK_JSON = "week_json"
