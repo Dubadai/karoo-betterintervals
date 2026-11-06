@@ -404,12 +404,25 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
      * last lap. The gear opens the Workouts page to load a workout.
      */
     private fun renderFree(s: ScreenState): RemoteViews {
-        val v = RemoteViews(context.packageName, R.layout.field_free)
-        applyAppearance(v, R.layout.field_free)
-        listOf(
-            R.id.free_lap_avg to 36f, R.id.free_hr to 36f,
-            R.id.free_lap_label to 13f, R.id.free_hr_label to 13f,
-            R.id.free_lap_number to 15f, R.id.free_lap_time to 40f, R.id.free_last_lap to 14f,
+        // Karoo native styling: watts first, a LAP TIME row, Lap avg and HR as full-size Karoo data
+        // fields and Last lap at the bottom (field_free_karoo.xml).
+        val karoo = s.karooStyle
+        val layout = if (karoo) R.layout.field_free_karoo else R.layout.field_free
+        val v = RemoteViews(context.packageName, layout)
+        applyAppearance(v, layout)
+        (
+            if (karoo) {
+                listOf(
+                    R.id.free_lap_avg to 48f, R.id.free_hr to 48f, R.id.free_lap_label to 15f, R.id.free_hr_label to 15f,
+                    R.id.free_lap_time to 23f, R.id.free_last_lap to 19f,
+                )
+            } else {
+                listOf(
+                    R.id.free_lap_avg to 36f, R.id.free_hr to 36f,
+                    R.id.free_lap_label to 13f, R.id.free_hr_label to 13f,
+                    R.id.free_lap_number to 15f, R.id.free_lap_time to 40f, R.id.free_last_lap to 14f,
+                )
+            }
         ).forEach { (id, sp) -> v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_PX, sp * density * scale) }
 
         v.setTextViewText(R.id.free_watts, s.power3s?.toString() ?: "--")
@@ -427,13 +440,18 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             else -> null
         }
         // Soft tint of the HR zone colour; text keeps the normal colours and the heart stays red.
-        setBg(v, R.id.free_hr_tile, zoneBg ?: R.drawable.bg_tile)
+        setBg(v, R.id.free_hr_tile, zoneBg ?: if (karoo) R.drawable.bg_tile_tonal else R.drawable.bg_tile)
 
         v.setTextViewText(R.id.free_lap_number, s.lapNumber?.let { context.getString(R.string.lap_number, it) } ?: "")
         v.setTextViewText(R.id.free_lap_time, s.lapTimeSec?.let(::formatClock) ?: "--:--")
+        // Karoo style has its own "LAST LAP" label above, so only the value: "8:20 · 271 W".
         val last = s.lastLapTimeSec?.takeIf { it > 0 }?.let { time ->
-            s.lastLapPowerAvg?.let { context.getString(R.string.last_lap, formatClock(time), it) }
-                ?: context.getString(R.string.last_lap_no_power, formatClock(time))
+            if (karoo) {
+                s.lastLapPowerAvg?.let { context.getString(R.string.last_lap_value, formatClock(time), it) } ?: formatClock(time)
+            } else {
+                s.lastLapPowerAvg?.let { context.getString(R.string.last_lap, formatClock(time), it) }
+                    ?: context.getString(R.string.last_lap_no_power, formatClock(time))
+            }
         }
         v.setTextViewText(R.id.free_last_lap, last ?: "")
         v.setOnClickPendingIntent(R.id.free_btn_settings, settingsIntent)

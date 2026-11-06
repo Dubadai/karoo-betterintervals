@@ -14,6 +14,7 @@ internal object ThemeOverrides {
         R.layout.field_interval_karoo -> FIELD_INTERVAL_KAROO
         R.layout.field_interval_gauge_karoo -> FIELD_INTERVAL_GAUGE_KAROO
         R.layout.field_free -> FIELD_FREE
+        R.layout.field_free_karoo -> FIELD_FREE_KAROO
         else -> emptyList()
     }
 
@@ -248,5 +249,24 @@ internal object ThemeOverrides {
         Op(R.id.th_free_2, Kind.BG_COLOR, R.color.track),
         Op(R.id.free_last_lap, Kind.TEXT, R.color.text_secondary),
         Op(R.id.th_free_3, Kind.TINT, R.color.text),
+    )
+
+    private val FIELD_FREE_KAROO = listOf(
+        Op(R.id.free_watts, Kind.TEXT, R.color.text),
+        Op(R.id.th_free_karoo_1, Kind.TINT, R.color.karoo_green),
+        Op(R.id.th_free_karoo_2, Kind.TEXT, R.color.text),
+        Op(R.id.free_lap_time, Kind.TEXT, R.color.text),
+        Op(R.id.free_lap_tile, Kind.BG, R.color.tile_tonal),
+        Op(R.id.th_free_karoo_3, Kind.TINT, R.color.karoo_green),
+        Op(R.id.th_free_karoo_4, Kind.TINT, R.color.karoo_green),
+        Op(R.id.free_lap_label, Kind.TEXT, R.color.text),
+        Op(R.id.free_lap_avg, Kind.TEXT, R.color.text),
+        Op(R.id.free_hr_tile, Kind.BG, R.color.tile_tonal),
+        Op(R.id.free_hr_icon, Kind.TINT, R.color.heart_icon),
+        Op(R.id.free_hr_label, Kind.TEXT, R.color.text),
+        Op(R.id.free_hr, Kind.TEXT, R.color.text),
+        Op(R.id.th_free_karoo_5, Kind.TEXT, R.color.text_secondary),
+        Op(R.id.free_last_lap, Kind.TEXT, R.color.text),
+        Op(R.id.th_free_karoo_6, Kind.TINT, R.color.text),
     )
 }

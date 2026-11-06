@@ -12,3 +12,9 @@ With no workout picked, Interval Screen shows a free-ride screen instead.
 - **Lap number and lap time**, with the last lap's time and average below.
 
 Tap ⚙ to open the [Workouts page](workouts-and-account.md) and pick a workout.
+
+With [Karoo style](settings.md) on, the screen takes the Karoo's own look: the watts first, a
+**LAP TIME** row, Lap avg and HR as full-size Karoo data fields (the HR field tinted by its zone),
+and the last lap at the bottom.
+
+<img src="images/free-ride-karoo.png" width="240" alt="Free ride in Karoo style">
