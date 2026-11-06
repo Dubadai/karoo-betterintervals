@@ -143,7 +143,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (gaugeMode) {
             val gaugeW = (config.viewSize.first - 16 * density).toInt()
             if (gaugeW > 0) {
-                v.setImageViewBitmap(R.id.gauge, gauge.render(gaugeW, s.power3s, s.target, s.targetRange, color(wattsColor), karoo))
+                v.setImageViewBitmap(R.id.gauge, gauge.render(gaugeW, gaugeHeightPx(karoo, s.navigating), s.power3s, s.target, s.targetRange, color(wattsColor), karoo))
             }
         } else {
             v.setTextViewText(R.id.watts, s.power3s?.toString() ?: "--")
@@ -334,17 +334,18 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             v.setViewVisibility(R.id.btn_previous, View.VISIBLE)
         }
         // The skip button is grey and not tappable while the ride or workout is paused, so the play
-        // button (Karoo's, or our resume button) is the one to press. Blue normally, Karoo yellow
-        // with Karoo native styling.
+        // button (Karoo's, or our resume button) is the one to press. Blue normally; with Karoo
+        // native styling inverted (black in light mode, white in dark), so Karoo's yellow stays
+        // for its own navigation (route pill, page arrows).
         val skipEnabled = !(ridePaused || s.workoutPaused)
         val skipBg = when {
             !skipEnabled -> R.drawable.bg_btn_skip_disabled
-            karoo -> R.drawable.bg_btn_skip_karoo
+            karoo -> R.drawable.bg_btn_skip_inverted
             else -> R.drawable.bg_btn_skip
         }
         val skipFg = when {
             !skipEnabled -> R.color.skip_disabled_fg
-            karoo -> R.color.karoo_yellow_fg
+            karoo -> R.color.bg
             else -> R.color.skip_fg
         }
         setBg(v, R.id.skip_bg, skipBg)
@@ -441,14 +442,24 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         return "${summary(step)} · Z$zone"
     }
 
-    /** Karoo's number look: IBM Plex Sans Regular (sans-serif-light on the Karoo), 90% wide, tighter. */
+    /** Karoo-style cell values: IBM Plex Sans Medium (sans-serif on the Karoo), 90% wide, tighter. */
     private val numberPaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-        typeface = android.graphics.Typeface.create("sans-serif-light", android.graphics.Typeface.NORMAL)
+        typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL)
         textScaleX = 0.9f
         letterSpacing = -0.05f
     }
 
-    /** Largest size up to 48sp at which [text] fits in a Karoo-style cell. */
+    /**
+     * The gauge's space on screen (the ImageView's height). The Karoo doesn't tell the app when a
+     * route makes the field shorter, so it's worked out from the layout (measured on a Karoo 3)
+     * and the navigation state; the bitmap is drawn at that size so the arc can use all of it.
+     */
+    private fun gaugeHeightPx(karoo: Boolean, navigating: Boolean): Int {
+        val dp = (if (karoo) GAUGE_KAROO_DP else GAUGE_REGULAR_DP) - (if (navigating) ROUTE_DP else 0f)
+        return (dp * density * scale).toInt().coerceAtLeast(1)
+    }
+
+    /** Largest size up to [CELL_VALUE_SP] at which [text] fits in a Karoo-style cell. */
     private fun cellValueSp(text: String): Float {
         val cellPx = ((config.viewSize.first - 16 * density) / 2f - 3 * density - 12 * density).coerceAtLeast(1f)
         var sp = CELL_VALUE_SP
@@ -471,23 +482,16 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             R.id.move_cancelled_text to 16f, R.id.countdown to 31f, R.id.countdown_value to 20f,
         )
         if (karoo) {
-            // Karoo native styling: cells like Karoo's own data fields, values 48sp (smaller only
-            // when a value doesn't fit, e.g. a target range).
-            sizes += listOf(
-                R.id.lap_avg to cellValueSp(lapText), R.id.target to cellValueSp(targetText),
-                R.id.hr to cellValueSp(hrText),
-                R.id.lap_avg_label to 15f, R.id.target_label to 15f, R.id.interval_label to 15f, R.id.time_left to 27f,
-            )
-            if (gaugeMode) {
-                sizes += listOf(R.id.hr_label to 15f, R.id.target_next to 14f)
-                sizes.removeAll { it.first == R.id.target }
-                sizes += R.id.target to 20f   // top-row target range: same type as the top-row HR
+            // Karoo native styling: one compact block under the watts, the same on every screen:
+            // 13sp labels, 28sp values (smaller only if a value doesn't fit), 23sp time.
+            sizes += listOf(R.id.lap_avg to cellValueSp(lapText), R.id.lap_avg_label to 13f, R.id.interval_label to 13f, R.id.time_left to 23f)
+            sizes += if (gaugeMode) {
+                // top row: target range in the top-row HR's type; HR is a cell
+                listOf(R.id.hr to cellValueSp(hrText), R.id.hr_label to 13f, R.id.target to 20f, R.id.target_next to 14f)
             } else {
-                sizes.removeAll { it.first == R.id.hr }
-                sizes += R.id.hr to 20f   // top-row heart rate: Plex Sans SemiBold, like the regular style
+                // top row: heart rate (Plex Sans SemiBold); Target is a cell
+                listOf(R.id.hr to 20f, R.id.target to cellValueSp(targetText), R.id.target_label to 13f)
             }
-            // The Target label in the gauge sits in the top row: a step smaller than in a cell.
-            if (gaugeMode) sizes += R.id.target_label to 13f
         } else {
             sizes += listOf(R.id.interval_label to 13f, R.id.time_left to 30f, R.id.lap_avg to 22f)
             sizes += if (gaugeMode) {
@@ -508,7 +512,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         }
     }
 
-    /** How much higher a cell value at [sp] has to sit to share the 48sp value's baseline. */
+    /** How much higher a cell value at [sp] has to sit to share the full-size value's baseline. */
     private fun baselineLift(sp: Float): Int {
         numberPaint.textSize = CELL_VALUE_SP * density * scale
         val full = numberPaint.fontMetrics.descent
@@ -534,7 +538,11 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         private const val REF_W_DP = 255f
         private const val REF_H_DP = 385f
         private const val CHART_DP = 56f
-        private const val CELL_VALUE_SP = 48f
+        private const val CELL_VALUE_SP = 28f
+        /** Height of the gauge's space on a full page without a route (measured), and how much a route takes. */
+        private const val GAUGE_KAROO_DP = 128.7f   // 241 px on a Karoo 3 (162 px with a route)
+        private const val GAUGE_REGULAR_DP = 115.2f  // 216 px on a Karoo 3 (137 px with a route)
+        private const val ROUTE_DP = 42.1f          // a route makes the field 79 px shorter
 
 
     }

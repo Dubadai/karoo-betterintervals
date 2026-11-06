@@ -11,13 +11,18 @@ import android.graphics.Typeface
 import androidx.core.content.ContextCompat
 import kotlin.math.cos
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
  * Draws the power gauge: a grey arc with the target range in green, a needle at the current
- * watts, and the watts number inside the arc. Everything is one bitmap so it scales as a whole
- * (the ImageView uses fitCenter), which keeps the number inside the arc when Karoo makes the
- * field shorter (a loaded route) without telling the app.
+ * watts, and the watts number under the arc. Everything is one bitmap of the gauge's space.
+ *
+ * The gauge fills its space: it always uses the full width, and when the space is short (a route
+ * is loaded) the arc gets flatter (smaller sweep, larger radius) instead of the whole gauge
+ * shrinking. The watts take the biggest size that fits under the arc, and sit up level with the
+ * arc's ends when there's room.
  *
  * The arc spans the target ± 4 × the range's half width, and at least ± 10 % of the target, so
  * the green band takes about a quarter of the arc. The needle stops at the ends.
@@ -26,60 +31,111 @@ class GaugeRenderer(private val context: Context) {
 
     private fun color(id: Int) = ContextCompat.getColor(context, id)
 
+    private class Layout(val sweep: Float, val r: Float, val cy: Float, val sw: Float, val textSize: Float, val baseline: Float)
+
+    private val numberPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
+
+    private fun styleNumber(karooStyle: Boolean) {
+        if (karooStyle) {
+            // Karoo style: the watts in Plex Sans Medium (sans-serif on the Karoo), 90% wide, tighter.
+            numberPaint.typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+            numberPaint.textScaleX = 0.9f
+            numberPaint.letterSpacing = -0.05f
+        } else {
+            numberPaint.typeface = Typeface.DEFAULT_BOLD
+            numberPaint.textScaleX = 1f
+            numberPaint.letterSpacing = 0f
+        }
+    }
+
+    /** The arc that gives the watts the biggest size in a [w] × [h] space (flatter when short). */
+    private fun layout(w: Float, h: Float, text: String): Layout {
+        val sw = w * 0.07f
+        val gap = w * 0.014f
+        var best: Layout? = null
+        var sweep = 140f
+        while (sweep >= 70f) {
+            val half = Math.toRadians(sweep / 2.0)
+            val r = ((w - sw) / 2f / sin(half)).toFloat()
+            val cy = sw / 2f + r
+            val endY = (cy - r * cos(half) + sw / 2f).toFloat()   // bottom of the arc's rounded ends
+            if (endY <= h) {
+                val inner = r - sw / 2f - gap
+                var lo = 20f
+                var hi = w * 0.36f
+                repeat(18) {
+                    val f = (lo + hi) / 2f
+                    numberPaint.textSize = f
+                    val tw = numberPaint.measureText(text)
+                    val base = min(h - gap, endY + 0.22f * f)
+                    val top = base - CAP * f
+                    val x = min(tw / 2f, inner - 1f)
+                    val arcY = cy - sqrt(max(0f, inner * inner - x * x))
+                    if (tw / 2f < inner && top >= arcY) lo = f else hi = f
+                }
+                if (best == null || lo > best.textSize + 0.5f) {
+                    best = Layout(sweep, r, cy, sw, lo, min(h - gap, endY + 0.22f * lo))
+                }
+            }
+            sweep -= 2f
+        }
+        return best ?: Layout(140f, w * 0.4f, w * 0.43f, sw, w * 0.2f, h - gap)
+    }
+
     /**
-     * @param width bitmap width in px; the height follows from [ASPECT].
+     * @param width bitmap width in px.
+     * @param height bitmap height in px: the gauge's space on screen.
      * @param numberColor colour of the watts digits (plain text colour, or a range colour).
-     * @param karooStyle Karoo native styling: Karoo green band and Karoo's condensed font.
+     * @param karooStyle Karoo native styling: Karoo green band and Karoo's number font.
      */
-    fun render(width: Int, watts: Int?, target: Int?, range: IntRange?, numberColor: Int, karooStyle: Boolean = false): Bitmap {
+    fun render(
+        width: Int, height: Int, watts: Int?, target: Int?, range: IntRange?, numberColor: Int,
+        karooStyle: Boolean = false,
+    ): Bitmap {
         val w = width.coerceAtLeast(1)
-        val h = (w * ASPECT).toInt().coerceAtLeast(1)
+        val h = height.coerceAtLeast(1)
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
+        val text = watts?.toString() ?: "--"
+        styleNumber(karooStyle)
+        val g = layout(w.toFloat(), h.toFloat(), text)
 
-        // Geometry from the approved sketch (gauge-b4.html), in units of the width.
         val cx = w / 2f
-        val r = w * 0.4286f
-        val sw = w * 0.0759f
-        val cy = w * 0.491f
-        val oval = RectF(cx - r, cy - r, cx + r, cy + r)
-
+        val oval = RectF(cx - g.r, g.cy - g.r, cx + g.r, g.cy + g.r)
+        val start = 270f - g.sweep / 2f     // Android angles: clockwise from 3 o'clock; 270 = top
         val arc = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
-            strokeWidth = sw
+            strokeWidth = g.sw
             strokeCap = Paint.Cap.ROUND
         }
-        // Android angles run clockwise from 3 o'clock: the arc goes from 200° to 340° (160° → 20°
-        // in maths angles, i.e. a 140° bow over the top).
         arc.color = color(R.color.gauge_track)
-        c.drawArc(oval, START_DEG, SWEEP_DEG, false, arc)
+        c.drawArc(oval, start, g.sweep, false, arc)
 
         val center = target ?: range?.let { (it.first + it.last) / 2 }
         if (center != null && center > 0) {
             val bandHalf = range?.let { (it.last - it.first) / 2f } ?: 0f
             val half = max(center * 0.10f, bandHalf * 4f)
-            val min = center - half
-            val max = center + half
-            fun fraction(v: Float) = ((v - min) / (max - min)).coerceIn(0f, 1f)
+            val lo = center - half
+            val hi = center + half
+            fun fraction(v: Float) = ((v - lo) / (hi - lo)).coerceIn(0f, 1f)
 
             if (range != null) {
                 arc.color = color(if (karooStyle) R.color.karoo_green else R.color.gauge_band)
                 val a = fraction(range.first.toFloat())
                 val b = fraction(range.last.toFloat())
-                c.drawArc(oval, START_DEG + a * SWEEP_DEG, (b - a) * SWEEP_DEG, false, arc)
+                c.drawArc(oval, start + a * g.sweep, (b - a) * g.sweep, false, arc)
             }
 
             if (watts != null) {
                 // Needle across the arc: a transparent gap first (so whatever is behind the field
                 // shows through), then the solid bar.
-                val deg = START_DEG + fraction(watts.toFloat()) * SWEEP_DEG
-                val rad = Math.toRadians(deg.toDouble())
-                val r0 = r - sw / 2f - w * 0.0125f
-                val r1 = r + sw / 2f + w * 0.0125f
+                val rad = Math.toRadians((start + fraction(watts.toFloat()) * g.sweep).toDouble())
+                val r0 = g.r - g.sw / 2f - w * 0.0125f
+                val r1 = g.r + g.sw / 2f + w * 0.0125f
                 val x0 = cx + r0 * cos(rad).toFloat()
-                val y0 = cy + r0 * sin(rad).toFloat()
+                val y0 = g.cy + r0 * sin(rad).toFloat()
                 val x1 = cx + r1 * cos(rad).toFloat()
-                val y1 = cy + r1 * sin(rad).toFloat()
+                val y1 = g.cy + r1 * sin(rad).toFloat()
                 val needle = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     style = Paint.Style.STROKE
                     strokeCap = Paint.Cap.ROUND
@@ -94,33 +150,14 @@ class GaugeRenderer(private val context: Context) {
             }
         }
 
-        // Watts, centred, as big as fits inside the arc.
-        val text = watts?.toString() ?: "--"
-        val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            typeface = if (karooStyle) KAROO_TYPEFACE else Typeface.DEFAULT_BOLD
-            textAlign = Paint.Align.CENTER
-            color = numberColor
-            textSize = w * 0.335f
-            if (karooStyle) {
-                // Like Karoo's own numbers: 90% wide, letters a little closer.
-                textScaleX = 0.9f
-                letterSpacing = -0.05f
-            }
-        }
-        val maxWidth = (r - sw / 2f) * 2f * 0.82f
-        val measured = p.measureText(text)
-        if (measured > maxWidth) p.textSize *= maxWidth / measured
-        c.drawText(text, cx, w * 0.487f, p)
+        numberPaint.color = numberColor
+        numberPaint.textSize = g.textSize
+        c.drawText(text, cx, g.baseline, numberPaint)
         return bmp
     }
 
     companion object {
-        /** Height / width of the gauge bitmap (448 × 232 px in the sketch). */
-        const val ASPECT = 0.518f
-        private const val START_DEG = 200f
-        private const val SWEEP_DEG = 140f
-
-        /** Karoo's number font: on the Karoo, sans-serif-light is IBM Plex Sans Regular. */
-        private val KAROO_TYPEFACE: Typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
+        /** Digit height as a share of the text size (IBM Plex). */
+        private const val CAP = 0.71f
     }
 }

@@ -45,20 +45,23 @@
                  keeps the digits clear of the heart rate row, which sits in the icon row above (the
                  font's own space above the digits adds to it). The negative bottom margin lets the
                  empty space below the digits run under the interval row, so the digits can grow. -->
+            <!-- Karoo style: the watts a step thicker than the other numbers (sans-serif = Plex Sans
+                 Medium on the Karoo), capped at 107sp, centred between the HR row and the interval row
+                 (24dp top padding and -8dp bottom margin, measured on a Karoo 3). -->
             <TextView
-                android:fontFamily="sans-serif-light"
+                android:fontFamily="sans-serif"
                 android:id="@+id/watts"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginBottom="-12dp"
-                android:autoSizeMaxTextSize="120sp"
+                android:layout_marginBottom="-8dp"
+                android:autoSizeMaxTextSize="107sp"
                 android:autoSizeMinTextSize="32sp"
                 android:autoSizeStepGranularity="2sp"
                 android:autoSizeTextType="uniform"
                 android:gravity="center"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:paddingTop="20dp"
+                android:paddingTop="24dp"
                 android:textColor="@color/text"
                 android:letterSpacing="-0.05"
                 android:textScaleX="0.9" />
@@ -74,13 +77,13 @@
             android:baselineAligned="true"
             android:orientation="horizontal">
 
-            <!-- Timer icon on the label's capitals (14dp icon, baseline 12dp from its top) -->
+            <!-- Timer icon on the label's capitals (12dp icon, baseline 10dp from its top) -->
             <ImageView
                 android:id="@+id/icon_timer"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
                 android:layout_marginEnd="4dp"
-                android:baseline="12dp"
+                android:baseline="10dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_timer"
                 android:tint="@color/karoo_green" />
@@ -95,21 +98,21 @@
                 android:maxLines="1"
                 android:textAllCaps="true"
                 android:textColor="@color/text"
-                android:textSize="15sp" />
+                android:textSize="13sp" />
 
-            <!-- While paused: a yellow box sized to its text (baseline = its text's), then a spacer -->
+            <!-- While paused: a yellow box sized to its text, centred on the time's line, then a spacer -->
             <LinearLayout
                 android:id="@+id/paused_box"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
                 android:background="@drawable/bg_paused"
-                android:baselineAlignedChildIndex="1"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingStart="7dp"
-                android:paddingTop="4dp"
+                android:paddingTop="5dp"
                 android:paddingEnd="9dp"
-                android:paddingBottom="4dp"
+                android:paddingBottom="5dp"
                 android:visibility="gone">
 
                 <ImageView
@@ -128,6 +131,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:singleLine="true"
+                    android:textAllCaps="true"
                     android:textColor="@color/paused_fg"
                     android:textSize="13sp" />
             </LinearLayout>
@@ -140,17 +144,17 @@
                 android:importantForAccessibility="no"
                 android:visibility="gone" />
 
-            <!-- Time left, counting down ("−2:18"), in Karoo's number font -->
+            <!-- Time left, counting down ("−2:18"), Plex Sans Medium like the cell values -->
             <TextView
                 android:id="@+id/time_left"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-light"
+                android:fontFamily="sans-serif"
                 android:includeFontPadding="false"
                 android:letterSpacing="-0.05"
                 android:textColor="@color/text"
                 android:textScaleX="0.9"
-                android:textSize="27sp" />
+                android:textSize="23sp" />
         </LinearLayout>
 
         <ProgressBar
@@ -163,8 +167,7 @@
             android:max="1000"
             android:progressDrawable="@drawable/progress_interval" />
 
-        <!-- Lap avg and Target: cells the size of Karoo's own data fields (77dp ≈ 145 px tall, 6dp
-             insets). Header: green icons left, 15sp label right, icons centred on the capitals via
+        <!-- Lap avg and Target: one compact block, the same on every screen (54dp cells, 6dp insets). Header: green icons left, 15sp label right, icons centred on the capitals via
              android:baseline (12dp icon, baseline 11dp from its top). Value: Karoo's number font
              (Plex Sans Regular, 90% wide, tighter), 48sp (the code shrinks a value that's too wide); its box starts 30dp
              up (under the header's empty space) and hangs 7dp below the cell (the font's empty
@@ -172,7 +175,7 @@
         <LinearLayout
             android:id="@+id/tiles_row"
             android:layout_width="match_parent"
-            android:layout_height="77dp"
+            android:layout_height="54dp"
             android:orientation="horizontal">
 
             <FrameLayout
@@ -193,20 +196,20 @@
 
                     <ImageView
                         android:id="@+id/icon_lap"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
                         android:layout_marginEnd="3dp"
-                        android:baseline="11dp"
+                        android:baseline="10dp"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_lap"
                         android:tint="@color/karoo_green" />
 
                     <ImageView
                         android:id="@+id/icon_bolt"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
                         android:layout_marginEnd="3dp"
-                        android:baseline="11dp"
+                        android:baseline="10dp"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_bolt_filled"
                         android:tint="@color/karoo_green" />
@@ -223,7 +226,7 @@
                         android:text="@string/lap_avg"
                         android:textAllCaps="true"
                         android:textColor="@color/text"
-                        android:textSize="15sp" />
+                        android:textSize="13sp" />
                 </LinearLayout>
 
                 <TextView
@@ -231,15 +234,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="bottom|end"
-                    android:layout_marginBottom="-2dp"
-                    android:fontFamily="sans-serif-light"
+                    android:fontFamily="sans-serif"
                     android:includeFontPadding="false"
                     android:letterSpacing="-0.05"
                     android:textScaleX="0.9"
                     android:gravity="end|bottom"
                     android:maxLines="1"
                     android:textColor="@color/text"
-                    android:textSize="48sp" />
+                    android:textSize="28sp" />
             </FrameLayout>
 
             <FrameLayout
@@ -260,10 +262,10 @@
 
                     <ImageView
                         android:id="@+id/icon_target"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
                         android:layout_marginEnd="3dp"
-                        android:baseline="11dp"
+                        android:baseline="10dp"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_target"
                         android:tint="@color/karoo_green" />
@@ -280,14 +282,13 @@
                         android:text="@string/target"
                         android:textAllCaps="true"
                         android:textColor="@color/text"
-                        android:textSize="15sp" />
+                        android:textSize="13sp" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="bottom|end"
-                    android:layout_marginBottom="-2dp"
                     android:baselineAligned="true"
                     android:orientation="horizontal">
 
@@ -295,14 +296,14 @@
                         android:id="@+id/target"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif-light"
+                        android:fontFamily="sans-serif"
                         android:includeFontPadding="false"
                         android:letterSpacing="-0.05"
                         android:textScaleX="0.9"
                         android:gravity="end|bottom"
                         android:maxLines="1"
                         android:textColor="@color/text"
-                        android:textSize="48sp" />
+                        android:textSize="28sp" />
 
                     <TextView
                         android:id="@+id/target_next"
@@ -312,7 +313,7 @@
                         android:fontFamily="sans-serif-light"
                         android:includeFontPadding="false"
                         android:textColor="@color/land"
-                        android:textSize="20sp"
+                        android:textSize="16sp"
                         android:visibility="gone" />
                 </LinearLayout>
             </FrameLayout>
@@ -322,7 +323,7 @@
         <LinearLayout
             android:id="@+id/confirm_row"
             android:layout_width="match_parent"
-            android:layout_height="77dp"
+            android:layout_height="54dp"
             android:orientation="horizontal"
             android:visibility="gone">
 
@@ -392,7 +393,7 @@
         <LinearLayout
             android:id="@+id/move_cancelled"
             android:layout_width="match_parent"
-            android:layout_height="77dp"
+            android:layout_height="54dp"
             android:background="@drawable/bg_info"
             android:gravity="center"
             android:orientation="horizontal"
@@ -523,11 +524,11 @@
                         android:id="@+id/skip_bg"
                         android:layout_gravity="end|center_vertical"
                         android:layout_marginEnd="7dp"
-                        android:background="@drawable/bg_btn_skip_karoo">
+                        android:background="@drawable/bg_btn_skip_inverted">
 
                         <ImageView
                             android:id="@+id/skip_icon"
-                            android:tint="@color/karoo_yellow_fg"
+                            android:tint="@color/bg"
                             android:layout_width="18dp"
                             android:layout_height="18dp"
                             android:layout_gravity="center"
@@ -584,7 +585,7 @@
         <ImageView
             android:id="@+id/chart"
             android:layout_width="match_parent"
-            android:layout_height="77dp"
+            android:layout_height="54dp"
             android:contentDescription="@string/cd_chart"
             android:scaleType="fitXY" />
         </LinearLayout>
@@ -664,8 +665,7 @@
                     android:includeFontPadding="false"
                     android:textColor="@color/text"
                     android:textScaleX="0.9"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
+                    android:textSize="20sp" />
 
                 <ImageView
                     android:layout_width="20dp"

@@ -19,9 +19,12 @@ Open the **Workouts** page (⚙ on the ride screen), then tap ⚙ in its top rig
 **Off / On**. On makes the interval screen look like the Karoo's own data pages:
 
 - Karoo's fonts: condensed uppercase labels, and numbers in the same font as Karoo's fields.
-- Lap avg and Target (or HR on the gauge) are the size of a Karoo data field, with small green
-  icons. On the coloured background the icons turn black (white in dark mode).
-- The ⏭ button and the resume button are Karoo yellow.
+- Everything under the watts is one compact block that looks the same on every screen, so the
+  watts are always the biggest thing: Lap avg and Target (or HR on the gauge) with small green
+  icons, which turn black on the coloured background (white in dark mode).
+- All numbers share one weight; the watts are simply the biggest.
+- The resume button is Karoo yellow. ⏭ is black (white in dark mode), so the Karoo's own yellow
+  buttons and route pill stand out.
 
 <img src="images/karoo-style.png" width="240" alt="Karoo style: classic screen"> <img src="images/karoo-style-gauge.png" width="240" alt="Karoo style: power gauge">
 

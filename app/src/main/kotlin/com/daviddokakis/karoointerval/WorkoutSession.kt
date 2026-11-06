@@ -4,6 +4,7 @@ import android.os.SystemClock
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.DataType
 import io.hammerhead.karooext.models.MarkLap
+import io.hammerhead.karooext.models.OnNavigationState
 import io.hammerhead.karooext.models.PlayBeepPattern
 import io.hammerhead.karooext.models.RideState
 import io.hammerhead.karooext.models.UserProfile
@@ -109,6 +110,13 @@ class WorkoutSession(
                 // No ride (not started, finished or discarded): start the workout from the top
                 // next time. Progress is only kept while a ride is recording or paused.
                 if (ride is RideState.Idle) resetToStart()
+            }
+        }
+        // Navigating (a route or a destination): the Karoo shows its route pill and makes the field
+        // shorter without telling the app, so the gauge is sized for the shorter field.
+        scope.launch {
+            karoo.consumerFlow<OnNavigationState>().collect { nav ->
+                _state.update { it.copy(navigating = nav.state !is OnNavigationState.NavigationState.Idle) }
             }
         }
         scope.launch {
