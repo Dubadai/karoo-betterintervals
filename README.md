@@ -1,28 +1,31 @@
 # Interval Screen for Karoo 3
 
-A full-page data field for the Hammerhead Karoo 3 that makes structured workouts easier to follow.
-It loads your planned workouts from [intervals.icu](https://intervals.icu) and runs them itself, so you
-can jump forward **and back** between intervals.
+A full-page data field for the Hammerhead Karoo 3 that makes structured workouts easy to follow.
+It loads your planned workouts from [intervals.icu](https://intervals.icu) and runs them itself, so
+you can jump forward **and back** between intervals.
 
-**During a workout**
-- Big 3-second power, with heart rate above it. Tap the watts to cycle how the target range
-  shows: plain → coloured number → coloured background → both. Blue is below the range, green in
-  it, red above it. The range is the interval's own range from intervals.icu (±2.5% by default).
-- Interval number, time left with a progress bar, lap average and target watts. Tap the lap
-  average to switch to the lap's normalised power (Lap NP); tap Target to see the target range.
-- The next interval, with ⏮ / ⏭ buttons. A jump starts a 5-second countdown with beeps (tap the
-  countdown to cancel), so you can get ready.
-- The whole workout as a chart in zone colours, with a "now" marker. Tap it to zoom into the
-  current interval.
-- Pause (top right) stops the interval timer, for traffic for example. The ride keeps recording.
-- One lap per interval in your ride file, and short beeps before each interval ends.
+![Interval Screen in dark mode: workout screen, power gauge and free ride](docs/images/interval-screen-dark.webp)
+![Interval Screen in light mode](docs/images/interval-screen-light.webp)
 
-**Without a workout:** big watts, lap average and heart rate (the tile takes your HR zone colour),
-lap number, lap time and the last lap.
+- **Big 3-second power:** tap the watts to change how the target range shows: plain, coloured
+  number, coloured background, both, or a **power gauge**. Blue is below the range, green in it,
+  red above it.
+- **Interval, time left and progress bar,** with lap average and target (tap Lap avg for Lap NP,
+  tap Target for the range) and heart rate.
+- **Next up with ⏮ / ⏭:** a jump starts a 5-second countdown with beeps, so you can get ready.
+- **The whole workout as a chart** in zone colours with a "now" marker; tap it to zoom in.
+- **Pause** stops the interval timer (for traffic, say) while the ride keeps recording. One lap per
+  interval in your ride file, and short beeps before each interval ends.
+- **Without a workout:** big watts, lap time, lap average and heart rate (tap HR for the lap's
+  average), and the last lap.
+- **Karoo style** (Settings): the Karoo's own fonts, field sizes and colours. **Dark / Light / Auto**
+  follows the Karoo or stays fixed.
+- **Remote button actions:** next interval, previous interval, pause or resume the workout.
 
-Light and dark mode follow the Karoo's theme. Values show `--` when a sensor isn't connected.
+Values show `--` when a sensor isn't connected. There's a step-by-step
+[guide with pictures](docs/guide/README.md) for every feature.
 
-There's a step-by-step [guide with pictures](docs/guide/README.md) for every feature.
+Developers: read `../CLAUDE.md` (the Karoo playbook) first.
 
 ## Install on your Karoo
 
