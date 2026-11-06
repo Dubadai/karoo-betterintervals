@@ -71,3 +71,63 @@ fun Context.edit(value: String, type: Int) = EditText(this).apply {
     setHintTextColor(getColor(R.color.text_secondary))
     layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
 }
+
+// Settings-page pieces, shared by Settings and the first-run introduction.
+
+/** Icon + title, like Karoo's "In-Ride Appearance" heading. */
+fun Context.settingsHeading(iconRes: Int, title: String) = LinearLayout(this).apply {
+    orientation = LinearLayout.HORIZONTAL
+    gravity = Gravity.CENTER_VERTICAL
+    setPadding(0, dp(14), 0, dp(10))
+    addView(settingsIcon(iconRes))
+    addView(settingsRowTitle(title))
+}
+
+fun Context.settingsIcon(res: Int) = ImageView(this).apply {
+    setImageResource(res)
+    setColorFilter(getColor(R.color.settings_title))
+    importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+    layoutParams = LinearLayout.LayoutParams(dp(20), dp(20)).apply { marginEnd = dp(8) }
+}
+
+fun Context.settingsRowTitle(value: String) = TextView(this).apply {
+    text = value
+    setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+    setTextColor(getColor(R.color.settings_title))
+}
+
+fun Context.settingsHelp(value: String) = TextView(this).apply {
+    text = value
+    setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+    setTextColor(getColor(R.color.settings_help))
+    setPadding(0, dp(10), 0, dp(14))
+}
+
+fun Context.settingsDivider() = View(this).apply {
+    setBackgroundColor(getColor(R.color.settings_divider))
+    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(1))
+}
+
+/** Karoo's segmented control: a pale pill track, the selected option as a blue-grey pill. */
+fun <T> Context.segmented(options: List<Pair<Int, T>>, selected: T, onPick: (T) -> Unit) = LinearLayout(this).apply {
+    orientation = LinearLayout.HORIZONTAL
+    setBackgroundResource(R.drawable.bg_segment_track)
+    setPadding(dp(2), dp(2), dp(2), dp(2))
+    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(42))
+    options.forEach { (label, value) ->
+        addView(
+            TextView(context).apply {
+                text = getString(label)
+                gravity = Gravity.CENTER
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                setTextColor(getColor(R.color.segment_text))
+                if (value == selected) setBackgroundResource(R.drawable.bg_segment_selected)
+                contentDescription = getString(label)
+                isSelected = value == selected
+                isClickable = true
+                setOnClickListener { onPick(value) }
+            },
+            LinearLayout.LayoutParams(0, MATCH_PARENT, 1f),
+        )
+    }
+}
