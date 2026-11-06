@@ -56,13 +56,13 @@
             android:baselineAligned="true"
             android:orientation="horizontal">
 
-            <!-- Timer icon on the label's capitals (14dp icon, baseline 12dp from its top) -->
+            <!-- Timer icon on the label's capitals (12dp icon, baseline 10dp from its top) -->
             <ImageView
                 android:id="@+id/icon_timer"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
                 android:layout_marginEnd="4dp"
-                android:baseline="12dp"
+                android:baseline="10dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_timer"
                 android:tint="@color/karoo_green" />
@@ -77,21 +77,21 @@
                 android:maxLines="1"
                 android:textAllCaps="true"
                 android:textColor="@color/text"
-                android:textSize="15sp" />
+                android:textSize="13sp" />
 
-            <!-- While paused: a yellow box sized to its text (baseline = its text's), then a spacer -->
+            <!-- While paused: a yellow box sized to its text, centred on the time's line, then a spacer -->
             <LinearLayout
                 android:id="@+id/paused_box"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
                 android:background="@drawable/bg_paused"
-                android:baselineAlignedChildIndex="1"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingStart="7dp"
-                android:paddingTop="4dp"
+                android:paddingTop="5dp"
                 android:paddingEnd="9dp"
-                android:paddingBottom="4dp"
+                android:paddingBottom="5dp"
                 android:visibility="gone">
 
                 <ImageView
@@ -110,6 +110,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:singleLine="true"
+                    android:textAllCaps="true"
                     android:textColor="@color/paused_fg"
                     android:textSize="13sp" />
             </LinearLayout>
@@ -122,17 +123,17 @@
                 android:importantForAccessibility="no"
                 android:visibility="gone" />
 
-            <!-- Time left, counting down ("−2:18"), in Karoo's number font -->
+            <!-- Time left, counting down ("−2:18"), Plex Sans Medium like the cell values -->
             <TextView
                 android:id="@+id/time_left"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-light"
+                android:fontFamily="sans-serif"
                 android:includeFontPadding="false"
                 android:letterSpacing="-0.05"
                 android:textColor="@color/text"
                 android:textScaleX="0.9"
-                android:textSize="27sp" />
+                android:textSize="23sp" />
         </LinearLayout>
 
         <ProgressBar
@@ -145,8 +146,7 @@
             android:max="1000"
             android:progressDrawable="@drawable/progress_interval" />
 
-        <!-- Lap avg and HR: cells the size of Karoo's own data fields (77dp ≈ 145 px tall, 6dp
-             insets). Header: green icons left, 15sp label right, icons centred on the capitals via
+        <!-- Lap avg and HR: one compact block, the same on every screen (54dp cells, 6dp insets). Header: green icons left, 15sp label right, icons centred on the capitals via
              android:baseline (12dp icon, baseline 11dp from its top). Value: Karoo's number font
              (Plex Sans Regular, 90% wide, tighter), 48sp (the code shrinks a value that's too wide); its box starts 30dp
              up (under the header's empty space) and hangs 7dp below the cell (the font's empty
@@ -154,7 +154,7 @@
         <LinearLayout
             android:id="@+id/tiles_row"
             android:layout_width="match_parent"
-            android:layout_height="77dp"
+            android:layout_height="54dp"
             android:orientation="horizontal">
 
             <FrameLayout
@@ -175,20 +175,20 @@
 
                     <ImageView
                         android:id="@+id/icon_lap"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
                         android:layout_marginEnd="3dp"
-                        android:baseline="11dp"
+                        android:baseline="10dp"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_lap"
                         android:tint="@color/karoo_green" />
 
                     <ImageView
                         android:id="@+id/icon_bolt"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
                         android:layout_marginEnd="3dp"
-                        android:baseline="11dp"
+                        android:baseline="10dp"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_bolt_filled"
                         android:tint="@color/karoo_green" />
@@ -205,7 +205,7 @@
                         android:text="@string/lap_avg"
                         android:textAllCaps="true"
                         android:textColor="@color/text"
-                        android:textSize="15sp" />
+                        android:textSize="13sp" />
                 </LinearLayout>
 
                 <TextView
@@ -213,15 +213,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="bottom|end"
-                    android:layout_marginBottom="-2dp"
-                    android:fontFamily="sans-serif-light"
+                    android:fontFamily="sans-serif"
                     android:includeFontPadding="false"
                     android:letterSpacing="-0.05"
                     android:textScaleX="0.9"
                     android:gravity="end|bottom"
                     android:maxLines="1"
                     android:textColor="@color/text"
-                    android:textSize="48sp" />
+                    android:textSize="28sp" />
             </FrameLayout>
 
             <FrameLayout
@@ -242,10 +241,10 @@
 
                     <ImageView
                         android:id="@+id/th_interval_gauge_karoo_3"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
                         android:layout_marginEnd="3dp"
-                        android:baseline="11dp"
+                        android:baseline="10dp"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_heart" />
 
@@ -261,7 +260,7 @@
                         android:text="@string/hr"
                         android:textAllCaps="true"
                         android:textColor="@color/text"
-                        android:textSize="15sp" />
+                        android:textSize="13sp" />
                 </LinearLayout>
 
                 <TextView
@@ -269,15 +268,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="bottom|end"
-                    android:layout_marginBottom="-2dp"
-                    android:fontFamily="sans-serif-light"
+                    android:fontFamily="sans-serif"
                     android:includeFontPadding="false"
                     android:letterSpacing="-0.05"
                     android:textScaleX="0.9"
                     android:gravity="end|bottom"
                     android:maxLines="1"
                     android:textColor="@color/text"
-                    android:textSize="48sp" />
+                    android:textSize="28sp" />
             </FrameLayout>
         </LinearLayout>
 
@@ -285,7 +283,7 @@
         <LinearLayout
             android:id="@+id/confirm_row"
             android:layout_width="match_parent"
-            android:layout_height="77dp"
+            android:layout_height="54dp"
             android:orientation="horizontal"
             android:visibility="gone">
 
@@ -355,7 +353,7 @@
         <LinearLayout
             android:id="@+id/move_cancelled"
             android:layout_width="match_parent"
-            android:layout_height="77dp"
+            android:layout_height="54dp"
             android:background="@drawable/bg_info"
             android:gravity="center"
             android:orientation="horizontal"
@@ -487,11 +485,11 @@
                         android:id="@+id/skip_bg"
                         android:layout_gravity="end|center_vertical"
                         android:layout_marginEnd="7dp"
-                        android:background="@drawable/bg_btn_skip_karoo">
+                        android:background="@drawable/bg_btn_skip_inverted">
 
                         <ImageView
                             android:id="@+id/skip_icon"
-                            android:tint="@color/karoo_yellow_fg"
+                            android:tint="@color/bg"
                             android:layout_width="18dp"
                             android:layout_height="18dp"
                             android:layout_gravity="center"
@@ -548,7 +546,7 @@
         <ImageView
             android:id="@+id/chart"
             android:layout_width="match_parent"
-            android:layout_height="77dp"
+            android:layout_height="54dp"
             android:contentDescription="@string/cd_chart"
             android:scaleType="fitXY" />
         </LinearLayout>
@@ -595,63 +593,55 @@
             android:src="@drawable/ic_pause" />
     </FrameLayout>
 
-    <!-- Target, centred between the gear and pause: a small "Target" label with the range (or
-         the target, when the step has no range) under it. During a jump, "→ 250" shows where it
-         would land. -->
-    <LinearLayout
+    <!-- Target, centred between the gear and pause on one line: the target icon, then the range
+         (or the target, when the step has no range) in the top-row HR's type. During a jump,
+         "→ 250" shows where it would land. -->
+    <FrameLayout
         android:id="@+id/target_block"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="2dp"
-        android:gravity="center_horizontal"
-        android:orientation="vertical">
-
-        <TextView
-            android:fontFamily="ibm-plex-sans-condensed"
-            android:id="@+id/target_label"
-            android:textAllCaps="true"
-            android:drawableStart="@drawable/ic_target"
-            android:drawablePadding="3dp"
-            android:gravity="center_vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:includeFontPadding="false"
-            android:text="@string/target"
-            android:textColor="@color/text_secondary"
-            android:textSize="11sp" />
+        android:layout_height="40dp"
+        android:layout_gravity="top|center_horizontal">
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="1dp"
+            android:layout_gravity="center"
             android:baselineAligned="true"
             android:orientation="horizontal">
 
+            <!-- 14dp icon on 20sp capitals: baseline 14dp from its top -->
+            <ImageView
+                android:id="@+id/icon_target_top"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginEnd="5dp"
+                android:baseline="14dp"
+                android:contentDescription="@string/target"
+                android:src="@drawable/ic_target"
+                android:tint="@color/karoo_green" />
+
             <TextView
-                android:fontFamily="sans-serif"
                 android:id="@+id/target"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
                 android:includeFontPadding="false"
                 android:textColor="@color/text"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                                android:textScaleX="0.9" />
+                android:textScaleX="0.9"
+                android:textSize="20sp" />
 
             <TextView
-                android:fontFamily="ibm-plex-sans-condensed"
                 android:id="@+id/target_next"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
+                android:fontFamily="ibm-plex-sans-condensed"
                 android:includeFontPadding="false"
                 android:textColor="@color/land"
                 android:textSize="14sp"
-                android:textStyle="normal"
                 android:visibility="gone" />
         </LinearLayout>
-    </LinearLayout>
+    </FrameLayout>
 
     <!-- Resume button while you've paused the workout: a green half-pill, rounded on the left and
          flat against the screen edge. Replaces the small pause button. -->
