@@ -9,12 +9,12 @@ On your phone, open the latest [release](https://github.com/Dubadai/karoo-interv
 and share the `interval-screen.apk` download link to the **Hammerhead Companion** app. It installs
 the app on your paired Karoo.
 
-Updating works the same way. Your settings and API key are kept.
+Updating works the same way, and keeps your settings and API key: see [Updating the app](updating.md).
 
 ## 2. Connect intervals.icu
 
 1. On the Karoo, open **Interval Screen** from the app list.
-2. Tap the person icon to open **Account**.
+2. Tap ⚙ to open **Settings**, then **intervals.icu account**.
 3. Enter your intervals.icu API key. You find it on intervals.icu under **Settings → Developer
    settings**.
 4. Leave **Athlete ID** at `0`, which means your own account, and tap **Save**.
