@@ -35,6 +35,10 @@ data class ScreenState(
     val jumpTarget: Int? = null,
     /** How the target range is shown (tap the watts to cycle). */
     val wattsMode: WattsMode = WattsMode.PLAIN,
+    /** Dark / Light / Auto setting (Auto: follow the Karoo). */
+    val appearance: Appearance = Appearance.AUTO,
+    /** "Karoo native styling" setting: Karoo's font, labels and icons on the interval screen. */
+    val karooStyle: Boolean = false,
     /** Target tile shows the target range instead of the single target (tap to toggle). */
     val targetShowsRange: Boolean = false,
     /** "Move cancelled" is showing (after ✕ on the countdown). */
@@ -98,6 +102,11 @@ enum class WattsMode {
     BACKGROUND,
     /** Both: coloured number on the tinted background. */
     BOTH,
+    /**
+     * Power gauge: an arc with the target range in green and a needle at the watts. Uses its own
+     * layout (field_interval_gauge.xml): target on top, Lap avg / HR tiles under the gauge.
+     */
+    GAUGE,
     ;
 
     val colorsText: Boolean get() = this == TEXT || this == BOTH

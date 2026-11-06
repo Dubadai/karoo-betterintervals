@@ -11,7 +11,7 @@ From top to bottom:
 | ⏸ (top right) | [Pauses the workout](pausing.md) |
 | Big number | 3-second power. Tap it to [change the colours](watts-colours.md) |
 | Interval 1 / 16 | Which interval you're in, out of how many |
-| Time | Time left in this interval |
+| Time | Time left in this interval, counting down (−2:18) |
 | Bar | How much of the interval is done |
 | Left tile | Lap avg or [Lap NP](tiles.md) for this interval |
 | Right tile | Target or [Target range](tiles.md) for this interval |

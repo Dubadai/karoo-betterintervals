@@ -45,7 +45,7 @@ import kotlinx.coroutines.withContext
  * the current workout with a way to stop it, and this week's planned rides from intervals.icu
  * to pick from. The intervals.icu API key is entered once and kept; "Account" changes it.
  */
-class SetupActivity : Activity() {
+class SetupActivity : AppearanceActivity() {
 
     private lateinit var store: PlanStore
     private lateinit var content: LinearLayout
@@ -86,6 +86,10 @@ class SetupActivity : Activity() {
         super.onRestart()
         // Back from the Account page with a new key: sync with it.
         if (store.hasCredentials && store.apiKey != syncedKey) load() else render()
+    }
+
+    private fun openSettings() {
+        startActivity(Intent(this, SettingsActivity::class.java))
     }
 
     private fun openAccount() {
@@ -192,7 +196,7 @@ class SetupActivity : Activity() {
                 text(getString(R.string.workouts_title), 22f, bold = true).apply {
                     layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
                 },
-                iconButton(R.drawable.ic_person, getString(R.string.account)) { openAccount() },
+                iconButton(R.drawable.ic_settings, getString(R.string.settings_title)) { openSettings() },
             ),
         )
         content.addView(
