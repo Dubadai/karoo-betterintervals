@@ -33,6 +33,8 @@ class ChartRenderer(private val context: Context) {
         if (plan.steps.isEmpty() || plan.totalSec <= 0) return bmp
 
         val d = context.resources.displayMetrics.density * scale
+        // The step a jump lands on and its ▼: blue, or the Karoo's jump purple in Karoo style.
+        val landColor = if (state.karooStyle) R.color.karoo_purple else R.color.land
         val label = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = color(R.color.text_secondary)
             textSize = 10f * d
@@ -113,7 +115,7 @@ class ChartRenderer(private val context: Context) {
             val alpha = 255
             fill.color = color(
                 when {
-                    isTarget -> R.color.land
+                    isTarget -> landColor
                     done -> R.color.done
                     else -> bar.fill
                 },
@@ -143,7 +145,7 @@ class ChartRenderer(private val context: Context) {
                     lineTo(cx, tipY)
                     close()
                 }
-                canvas.drawPath(tri, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = color(R.color.land) })
+                canvas.drawPath(tri, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = color(landColor) })
             }
             t += step.durationSec
         }

@@ -11,8 +11,9 @@ Each tap on ⏭ or ⏮ moves your choice one step. The box tells you what will h
 - **Restarting interval**: one tap on ⏮ starts the current interval again
 - **Jumping 1 back**, …
 
-The chart shows the whole workout and marks your choice with a blue bar and a ▼. The Target tile
-shows the watts you'd land on.
+The chart shows the whole workout and marks your choice with a blue bar and a ▼ (purple with
+[Karoo style](settings.md)). The Target tile shows the watts you'd land on after an arrow
+(**300 → 181**).
 
 <img src="images/jump-choose.png" width="240" alt="Jumping 1 ahead, with Confirm move and a cancel button"> <img src="images/jump-restart.png" width="240" alt="Restarting interval">
 
@@ -32,7 +33,9 @@ You can also cancel by tapping ⏮ / ⏭ back to the interval you're in. If you 
 ## 3. Get ready
 
 After **Confirm move**, a 5-second countdown with beeps gives you time to get ready, then the new
-interval starts. Your lap is marked at that moment.
+interval starts. Your lap is marked at that moment. The box shows the seconds left on the left and
+the interval you're jumping to on the right, and fills up as the seconds run down (blue, or the
+Karoo's workout purple with Karoo style, where **Confirm move** is Karoo yellow).
 
 Can't wait? Tap the countdown, or press ⏭ / ⏮, to start right away. Once confirmed, the jump
 always happens.

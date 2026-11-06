@@ -38,7 +38,7 @@
             android:id="@+id/gauge"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="34dp"
+            android:layout_marginTop="30dp"
             android:layout_weight="1"
             android:contentDescription="@string/cd_gauge"
             android:scaleType="fitCenter" />
@@ -299,6 +299,7 @@
                 android:id="@+id/move_cancelled_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:includeFontPadding="false"
                 android:text="@string/move_cancelled"
                 android:textColor="@color/info_fg"
                 android:textSize="16sp"
@@ -422,46 +423,74 @@
             </LinearLayout>
         </FrameLayout>
 
-        <!-- Jump countdown (replaces the next box) -->
-        <LinearLayout
+        <!-- Jump countdown (replaces the Next up box): pale blue, filling with the darker blue as the
+             seconds run down (countdown_fill); the number left, "Jumping to" and the step right,
+             spaced like Next up (11sp label, 4dp gap, the step on a 20dp line up to 17sp). -->
+        <FrameLayout
             android:id="@+id/countdown_box"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginBottom="6dp"
-            android:background="@drawable/bg_countdown"
-            android:gravity="center_vertical"
-            android:minHeight="50dp"
-            android:orientation="horizontal"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="5dp"
             android:visibility="gone">
 
-            <TextView
-                android:id="@+id/countdown"
-                android:layout_width="28dp"
-                android:layout_height="wrap_content"
-                android:includeFontPadding="false"
-                android:textColor="@color/countdown_fg"
-                android:textSize="31sp"
-                android:textStyle="bold" />
+            <ProgressBar
+                android:id="@+id/countdown_fill"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:max="1000"
+                android:progressDrawable="@drawable/progress_countdown" />
 
-            <TextView
-                android:id="@+id/countdown_value"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:maxLines="1"
-                android:textColor="@color/countdown_fg"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp">
 
-            <!-- Invisible spacer as wide as the number, so the text is centred in the box -->
-            <ImageView
-                android:layout_width="28dp"
-                android:layout_height="1dp"
-                android:importantForAccessibility="no" />
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/countdown"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/countdown_fg"
+                    android:textSize="31sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="end|center_vertical"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/countdown_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:text="@string/jumping_to"
+                        android:textColor="@color/countdown_sub"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/countdown_value"
+                        android:layout_width="match_parent"
+                        android:layout_height="20dp"
+                        android:autoSizeMaxTextSize="17sp"
+                        android:autoSizeMinTextSize="11sp"
+                        android:autoSizeStepGranularity="1sp"
+                        android:autoSizeTextType="uniform"
+                        android:gravity="end|center_vertical"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:textColor="@color/countdown_fg"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </FrameLayout>
 
         <ImageView
             android:id="@+id/chart"
@@ -513,33 +542,30 @@
             android:src="@drawable/ic_pause" />
     </FrameLayout>
 
-    <!-- Target, centred between the gear and pause: a small "Target" label with the range (or
-         the target, when the step has no range) under it. During a jump, "→ 250" shows where it
-         would land. -->
-    <LinearLayout
+    <!-- Target, centred between the gear and pause on one line: "Target" then the range (or the
+         target, when the step has no range). During a jump, "→ 250" shows where it would land. -->
+    <FrameLayout
         android:id="@+id/target_block"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="2dp"
-        android:gravity="center_horizontal"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/target_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:includeFontPadding="false"
-            android:text="@string/target"
-            android:textColor="@color/text_secondary"
-            android:textSize="11sp" />
+        android:layout_height="40dp"
+        android:layout_gravity="top|center_horizontal">
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="1dp"
+            android:layout_gravity="center"
             android:baselineAligned="true"
             android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/target_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:includeFontPadding="false"
+                android:text="@string/target"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
 
             <TextView
                 android:id="@+id/target"
@@ -556,12 +582,12 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:includeFontPadding="false"
-                android:textColor="@color/land"
+                android:textColor="@color/text"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:visibility="gone" />
         </LinearLayout>
-    </LinearLayout>
+    </FrameLayout>
 
     <!-- Resume button while you've paused the workout: a green half-pill, rounded on the left and
          flat against the screen edge. Replaces the small pause button. -->
