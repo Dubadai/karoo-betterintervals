@@ -244,12 +244,26 @@
                     android:tint="@color/text" />
             </FrameLayout>
 
-            <LinearLayout
+            <FrameLayout
                 android:id="@+id/btn_confirm"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@drawable/bg_confirm"
+                android:background="@drawable/bg_confirm">
+
+            <!-- Fills up while a remote-made choice confirms itself -->
+            <ProgressBar
+                android:id="@+id/confirm_fill"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:max="1000"
+                android:progressDrawable="@drawable/progress_confirm"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:gravity="center"
                 android:orientation="horizontal">
 
@@ -270,6 +284,7 @@
                     android:textSize="17sp"
                     android:textStyle="bold" />
             </LinearLayout>
+            </FrameLayout>
         </LinearLayout>
 
         <!-- "Move cancelled" after the ✕ next to Confirm move: same 52 dp, tap to hide -->

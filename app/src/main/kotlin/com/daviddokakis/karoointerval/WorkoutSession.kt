@@ -50,6 +50,7 @@ class WorkoutSession(
     /** Jump being chosen (3 s confirmation), see [jumpStops]. */
     private var selectionPos: Int? = null
     private var selectJob: Job? = null
+    private var autoConfirmJob: Job? = null
     private var moveCancelledJob: Job? = null
     private var started = false
 
@@ -147,8 +148,11 @@ class WorkoutSession(
      * next intervals, …  Nothing moves until "Confirm move" (the choice cancels itself after
      * [SELECT_TIMEOUT_MS]); then the 5 s countdown runs. A tap on the countdown starts the chosen
      * interval right away, its ✕ cancels.
+     *
+     * [fromRemote]: a remote button press confirms by itself after [AUTO_CONFIRM_SECONDS] (each
+     * press starts the wait over). On-screen taps still need "Confirm move".
      */
-    fun requestJump(delta: Int) {
+    fun requestJump(delta: Int, fromRemote: Boolean = false) {
         scope.launch {
             val st = _state.value
             if (st.plan == null) return@launch
@@ -165,6 +169,9 @@ class WorkoutSession(
                 cancelSelection() // back where we are: nothing happens
             } else if (to != from || selectionPos == null) {
                 select(stops[to])
+                if (fromRemote) startAutoConfirm() else stopAutoConfirm()
+            } else if (fromRemote) {
+                startAutoConfirm() // pressed again at the end of the list: wait starts over
             }
         }
     }
@@ -173,6 +180,7 @@ class WorkoutSession(
     fun cancelSelection() {
         scope.launch {
             Timber.i("Selection cancelled")
+            stopAutoConfirm()
             selectJob?.cancel()
             selectJob = null
             selectionPos = null
@@ -210,10 +218,33 @@ class WorkoutSession(
         selectJob = scope.launch {
             delay(SELECT_TIMEOUT_MS)
             Timber.i("Selection timed out")
+            stopAutoConfirm()
             selectJob = null
             selectionPos = null
             _state.update { it.copy(selectTarget = null, selectRestart = false, selectProgress = 0) }
         }
+    }
+
+    /** Remote choice: fill "Confirm move" over [AUTO_CONFIRM_SECONDS], then confirm it. */
+    private fun startAutoConfirm() {
+        autoConfirmJob?.cancel()
+        autoConfirmJob = scope.launch {
+            for (n in AUTO_CONFIRM_SECONDS downTo 1) {
+                _state.update { it.copy(autoConfirmLeft = n) }
+                delay(1000)
+            }
+            autoConfirmJob = null
+            val target = _state.value.selectTarget ?: return@launch
+            Timber.i("Selection auto-confirmed -> countdown to ${target + 1}")
+            clearSelection()
+            startCountdown(target)
+        }
+    }
+
+    private fun stopAutoConfirm() {
+        autoConfirmJob?.cancel()
+        autoConfirmJob = null
+        _state.update { it.copy(autoConfirmLeft = null) }
     }
 
     /** "Confirm move": lock in the chosen interval and start the 5 s countdown. */
@@ -387,6 +418,7 @@ class WorkoutSession(
     }
 
     private fun clearSelection() {
+        stopAutoConfirm()
         selectJob?.cancel()
         selectJob = null
         selectionPos = null
@@ -443,6 +475,8 @@ class WorkoutSession(
 
     companion object {
         const val COUNTDOWN_SECONDS = 5
+        /** A choice made with a remote button confirms itself after this many seconds. */
+        const val AUTO_CONFIRM_SECONDS = 5
         /** An unconfirmed jump choice cancels itself after this long. */
         private const val SELECT_TIMEOUT_MS = 10_000L
         /** How long "Move cancelled" shows. */

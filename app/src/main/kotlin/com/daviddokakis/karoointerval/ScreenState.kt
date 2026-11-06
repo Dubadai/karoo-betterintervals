@@ -29,6 +29,8 @@ data class ScreenState(
     val selectRestart: Boolean = false,
     /** Confirmation fill, 1..4 (0 = not choosing). */
     val selectProgress: Int = 0,
+    /** Seconds until a remote-made choice confirms itself, or null (on-screen choice / none). */
+    val autoConfirmLeft: Int? = null,
     /** Step the pending jump will land on. */
     val jumpTarget: Int? = null,
     /** How the target range is shown (tap the watts to cycle). */

@@ -16,5 +16,6 @@ and screenshots from the Karoo 3 (`device/`). Newest work first.
 | `workouts-page/` | Workouts list, Account page, offline / Wi-Fi |
 | `route/` | Layout with Karoo's route pill (field gets shorter, watts auto-size) |
 | `interval-screen/` | The main workout screen, countdown and zoomed chart |
+| `remote-confirm/` | Remote-made jump choices confirm themselves after 5 s |
 
 `_wrap.py` turns a sketch snippet into a standalone HTML page.

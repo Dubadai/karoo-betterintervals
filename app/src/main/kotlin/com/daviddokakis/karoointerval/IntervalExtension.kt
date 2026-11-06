@@ -41,8 +41,8 @@ class IntervalExtension : KarooExtension(EXTENSION_ID, "1") {
 
     override fun onBonusAction(actionId: String) {
         when (actionId) {
-            ACTION_NEXT -> workout.requestJump(+1)
-            ACTION_PREVIOUS -> workout.requestJump(-1)
+            ACTION_NEXT -> workout.requestJump(+1, fromRemote = true)
+            ACTION_PREVIOUS -> workout.requestJump(-1, fromRemote = true)
             ACTION_PAUSE -> workout.togglePause()
             else -> Timber.w("Unknown action $actionId")
         }

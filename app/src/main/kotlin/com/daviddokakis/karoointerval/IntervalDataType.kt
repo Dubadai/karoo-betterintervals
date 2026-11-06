@@ -57,6 +57,7 @@ class IntervalDataType(
                 val key = Key(
                     s.countdown, s.stepIndex, s.workoutPaused, s.chartZoomed, s.plan?.id, s.selectTarget,
                     s.selectProgress, s.moveCancelled, s.targetShowsRange, s.wattsMode, s.lapShowsNp,
+                    s.autoConfirmLeft,
                 )
                 val since = SystemClock.elapsedRealtime() - lastRender
                 val changed = key != shown
@@ -95,6 +96,7 @@ class IntervalDataType(
         val targetRange: Boolean,
         val wattsMode: WattsMode,
         val lapNp: Boolean,
+        val autoConfirmLeft: Int?,
     )
 
     companion object {
