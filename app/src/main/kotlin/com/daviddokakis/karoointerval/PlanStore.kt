@@ -33,6 +33,11 @@ class PlanStore private constructor(context: Context) {
 
     val hasCredentials: Boolean get() = apiKey.isNotBlank()
 
+    /** The first-run introduction was finished or skipped (Settings can show it again). */
+    var introDone: Boolean
+        get() = prefs.getBoolean(KEY_INTRO_DONE, false)
+        set(value) = prefs.edit().putBoolean(KEY_INTRO_DONE, value).apply()
+
     /** Target tile shows the range instead of the single target (remembered between rides). */
     var targetShowsRange: Boolean
         get() = prefs.getBoolean(KEY_TARGET_RANGE, false)
@@ -174,6 +179,7 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_WEEK_JSON = "week_json"
         private const val KEY_WEEK_SYNCED = "week_synced"
+        private const val KEY_INTRO_DONE = "intro_done"
 
         @Volatile
         private var instance: PlanStore? = null
