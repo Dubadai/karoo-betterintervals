@@ -9,7 +9,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 
 /** intervals.icu account: athlete ID and API key. Back (top left) discards, Save (bottom) keeps. */
-class AccountActivity : Activity() {
+class AccountActivity : AppearanceActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

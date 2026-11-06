@@ -1,7 +1,7 @@
 # Workouts and Account
 
 Open the **Workouts** page with ⚙ on the ride screen, or open **Interval Screen** from the Karoo's
-app list.
+app list. ⚙ on the Workouts page opens [Settings](settings.md).
 
 ## Workouts
 
@@ -27,7 +27,8 @@ last synced week stays available offline.
 
 ## Account
 
-Tap the person icon on the Workouts page.
+On the Workouts page, tap ⚙, then **intervals.icu account**. The row says **Connected** once a
+key is saved.
 
 - **API key**: from intervals.icu under **Settings → Developer settings**. It's hidden as you
   type and stored only on the Karoo.

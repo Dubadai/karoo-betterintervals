@@ -7,14 +7,16 @@ pictures from a real Karoo.
 | --- | --- |
 | [Getting started](getting-started.md) | Install, connect intervals.icu, pick a workout, add the screen to a ride profile |
 | [The workout screen](workout-screen.md) | What everything on the screen means, the chart, laps and beeps |
-| [Watts colours](watts-colours.md) | Tap the watts to show if you're below, in or above the target |
+| [Watts colours and the power gauge](watts-colours.md) | Tap the watts to show if you're below, in or above the target, or to switch to the gauge |
 | [Jumping between intervals](jumping.md) | Skip ahead, go back or restart an interval with ⏭ / ⏮ |
 | [Lap NP and Target range](tiles.md) | Tap the tiles to switch what they show |
 | [Pausing the workout](pausing.md) | Stop the interval timer without stopping the ride |
 | [Riding without a workout](free-ride.md) | The free-ride screen |
 | [Workouts and Account](workouts-and-account.md) | Syncing, choosing and removing workouts, your API key |
+| [Settings](settings.md) | Dark / Light / Auto, Karoo style, your intervals.icu account |
 
-Light and dark mode follow the Karoo's own theme. Anything showing `--` is waiting for data, for
+Light and dark mode follow the Karoo's own theme, unless you pick Dark or Light in
+[Settings](settings.md). Anything showing `--` is waiting for data, for
 example a sensor that isn't connected.
 
 ## Pictures

@@ -43,6 +43,32 @@ class PlanStore private constructor(context: Context) {
         get() = prefs.getBoolean(KEY_LAP_NP, false)
         set(value) = prefs.edit().putBoolean(KEY_LAP_NP, value).apply()
 
+    private val _karooStyle = MutableStateFlow(prefs.getBoolean(KEY_KAROO_STYLE, false))
+
+    /**
+     * "Karoo native styling" (Account page): Karoo's condensed font, uppercase labels with green
+     * icons and no tile backgrounds on the interval screen. A flow, so a ride already showing the
+     * screen picks up the change.
+     */
+    val karooStyle: StateFlow<Boolean> = _karooStyle
+
+    fun setKarooStyle(on: Boolean) {
+        prefs.edit().putBoolean(KEY_KAROO_STYLE, on).apply()
+        _karooStyle.value = on
+    }
+
+    private val _appearance = MutableStateFlow(
+        Appearance.entries.firstOrNull { it.name == prefs.getString(KEY_APPEARANCE, null) } ?: Appearance.AUTO,
+    )
+
+    /** Dark / Light / Auto (Settings page). Auto follows the Karoo's own In-Ride Appearance. */
+    val appearance: StateFlow<Appearance> = _appearance
+
+    fun setAppearance(value: Appearance) {
+        prefs.edit().putString(KEY_APPEARANCE, value.name).apply()
+        _appearance.value = value
+    }
+
     /** How the watts show the target range (remembered between rides). */
     var wattsMode: WattsMode
         get() {
@@ -144,6 +170,8 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_WATTS_MODE = "watts_mode"
         private const val KEY_TARGET_RANGE = "target_shows_range"
         private const val KEY_LAP_NP = "lap_shows_np"
+        private const val KEY_KAROO_STYLE = "karoo_style"
+        private const val KEY_APPEARANCE = "appearance"
         private const val KEY_WEEK_JSON = "week_json"
         private const val KEY_WEEK_SYNCED = "week_synced"
 

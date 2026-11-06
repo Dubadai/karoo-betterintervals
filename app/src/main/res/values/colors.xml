@@ -52,4 +52,22 @@
     <!-- Fill while choosing a jump (blue) or a restart (grey); text on it stays >= 7:1 -->
     <color name="select_fill_jump">#FFB5D4F4</color>
     <color name="select_fill_restart">#FFD3D1C7</color>
+    <!-- Power gauge: grey arc, target range in green (>= 3:1 against the page) -->
+    <color name="gauge_track">#FFE3E1DA</color>
+    <color name="gauge_band">#FF639922</color>
+    <!-- Karoo native styling: Karoo's icon green, Karoo's button yellow (both modes, black symbol),
+         and a grey, disabled skip button while paused -->
+    <color name="karoo_green">#FF129A5E</color>
+    <color name="karoo_yellow">#FFFFE900</color>
+    <color name="karoo_yellow_alt">#FFFFF27A</color>
+    <color name="karoo_yellow_fg">#FF0B0B0B</color>
+    <color name="skip_disabled_bg">#FFE3E1DA</color>
+    <color name="skip_disabled_fg">#FF888780</color>
+    <!-- Settings page: Karoo's own segmented control (Settings → Display) and row text -->
+    <color name="segment_track">#FFF4F4F4</color>
+    <color name="segment_selected">#FF9FB3BD</color>
+    <color name="segment_text">#FF243535</color>
+    <color name="settings_title">#FF1C2E2E</color>
+    <color name="settings_help">#FF6F6F6F</color>
+    <color name="settings_divider">#FFDDDDDD</color>
 </resources>

@@ -5,6 +5,8 @@ and screenshots from the Karoo 3 (`device/`). Newest work first.
 
 | Folder | Feature |
 | --- | --- |
+| `karoo-style/` | Karoo style setting (Karoo fonts, native-size cells, icons, yellow buttons), Settings page, Dark / Light / Auto |
+| `power-gauge/` | 5th watts option: gauge arc, target range on top, Lap avg / HR tiles |
 | `jump-flow/` | "Next up" box, choosing a jump, Confirm move (right), countdown |
 | `target-toggle/` | Tap the Target tile: Target ↔ Target range |
 | `lap-np-toggle/` | Tap the Lap avg tile: Lap avg ↔ Lap NP (normalised power) |
