@@ -70,4 +70,16 @@
     <color name="settings_title">#FF1C2E2E</color>
     <color name="settings_help">#FF6F6F6F</color>
     <color name="settings_divider">#FFDDDDDD</color>
+    <!-- Karoo style jumps, in the Karoo's own colours (from its ride app): its workout / lap purple
+         (purple_600, night purple_400) for the countdown, the next target's arrow and the chart's
+         jump marker; the countdown fills with the darker purple. Confirm move is Karoo yellow,
+         filling darker yellow (yellow_700) when a remote chose the jump. -->
+    <color name="karoo_purple">#FF590D80</color>
+    <color name="karoo_purple_dark">#FF36084D</color>
+    <color name="karoo_purple_fg">#FFFFFFFF</color>
+    <color name="karoo_purple_sub">#FFD9B8F0</color>
+    <color name="karoo_yellow_dark">#FFCBBA00</color>
+    <!-- Countdown (regular style): the darker blue it fills with, and "Jumping to" on the pale blue -->
+    <color name="countdown_fill">#FF85B7EB</color>
+    <color name="countdown_sub">#FF2E5A85</color>
 </resources>
