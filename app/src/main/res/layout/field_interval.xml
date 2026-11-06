@@ -559,10 +559,6 @@
                     android:textColor="@color/text"
                     android:textSize="18sp"
                     android:textStyle="bold" />
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="1dp" />
             </LinearLayout>
     </FrameLayout>
 

@@ -666,10 +666,6 @@
                     android:textColor="@color/text"
                     android:textScaleX="0.9"
                     android:textSize="20sp" />
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="1dp" />
             </LinearLayout>
     </FrameLayout>
 
