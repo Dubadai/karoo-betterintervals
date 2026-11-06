@@ -79,7 +79,13 @@ class SetupActivity : AppearanceActivity() {
             },
         )
         render()
-        if (store.hasCredentials) load() else openAccount()
+        when {
+            store.hasCredentials -> load()
+            // First run: the introduction (connect, look, add to a profile, tap the watts).
+            // Riders who already have a key (updating from an earlier version) never see it.
+            !store.introDone -> startActivity(Intent(this, IntroActivity::class.java))
+            else -> openAccount()
+        }
     }
 
     override fun onRestart() {

@@ -5,6 +5,7 @@ and screenshots from the Karoo 3 (`device/`). Newest work first.
 
 | Folder | Feature |
 | --- | --- |
+| `onboarding/` | First-run introduction: connect, look, add to a ride profile, tap the watts |
 | `karoo-style/` | Karoo style setting (round 5: inverted countdown, centred "Move cancelled") (Karoo fonts, native-size cells, icons, yellow buttons), Settings page, Dark / Light / Auto |
 | `power-gauge/` | 5th watts option: gauge arc, target range on top, Lap avg / HR tiles |
 | `jump-flow/` | "Next up" box, choosing a jump, Confirm move (right), countdown |

@@ -33,3 +33,10 @@ Both settings apply right away, also during a ride.
 ## intervals.icu account
 
 Opens the [Account page](workouts-and-account.md#account) with your API key and athlete ID.
+
+## Show introduction
+
+Shows the four introduction pages again (connect, look, adding the screen to a ride profile,
+tapping the watts). **Done** on the last page brings you back here.
+
+<img src="images/settings-show-introduction.png" width="240" alt="Settings: intervals.icu account and Show introduction">

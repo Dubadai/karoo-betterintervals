@@ -53,7 +53,7 @@ class SettingsActivity : AppearanceActivity() {
         form.removeAllViews()
 
         // Appearance: Dark / Light / Auto. The page itself switches right away.
-        form.addView(heading(R.drawable.ic_appearance, getString(R.string.appearance)))
+        form.addView(settingsHeading(R.drawable.ic_appearance, getString(R.string.appearance)))
         val current = store.appearance.value
         form.addView(
             segmented(
@@ -66,19 +66,19 @@ class SettingsActivity : AppearanceActivity() {
                 }
             },
         )
-        form.addView(help(getString(R.string.appearance_help)))
-        form.addView(divider())
+        form.addView(settingsHelp(getString(R.string.appearance_help)))
+        form.addView(settingsDivider())
 
         // Karoo style: Off / On
-        form.addView(heading(R.drawable.ic_style, getString(R.string.karoo_style)))
+        form.addView(settingsHeading(R.drawable.ic_style, getString(R.string.karoo_style)))
         form.addView(
             segmented(listOf(R.string.off to false, R.string.on to true), store.karooStyle.value) { on ->
                 store.setKarooStyle(on)
                 render()
             },
         )
-        form.addView(help(getString(R.string.karoo_style_help)))
-        form.addView(divider())
+        form.addView(settingsHelp(getString(R.string.karoo_style_help)))
+        form.addView(settingsDivider())
 
         // intervals.icu: one row, opens the Account page
         val status = getString(if (store.hasCredentials) R.string.connected else R.string.not_connected)
@@ -89,74 +89,32 @@ class SettingsActivity : AppearanceActivity() {
                 minimumHeight = dp(56)
                 isClickable = true
                 setOnClickListener { startActivity(Intent(this@SettingsActivity, AccountActivity::class.java)) }
-                addView(icon(R.drawable.ic_person))
+                addView(settingsIcon(R.drawable.ic_person))
                 addView(
                     LinearLayout(this@SettingsActivity).apply {
                         orientation = LinearLayout.VERTICAL
-                        addView(rowTitle(getString(R.string.intervals_account)))
-                        addView(help(status).apply { setPadding(0, 0, 0, 0) })
+                        addView(settingsRowTitle(getString(R.string.intervals_account)))
+                        addView(settingsHelp(status).apply { setPadding(0, 0, 0, 0) })
                     },
                     LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f),
                 )
-                addView(icon(R.drawable.ic_chevron))
+                addView(settingsIcon(R.drawable.ic_chevron))
             },
         )
-    }
+        form.addView(settingsDivider())
 
-    /** Icon + title, like Karoo's "In-Ride Appearance" heading. */
-    private fun heading(iconRes: Int, title: String) = LinearLayout(this).apply {
-        orientation = LinearLayout.HORIZONTAL
-        gravity = Gravity.CENTER_VERTICAL
-        setPadding(0, dp(14), 0, dp(10))
-        addView(icon(iconRes))
-        addView(rowTitle(title))
-    }
-
-    private fun icon(res: Int) = ImageView(this).apply {
-        setImageResource(res)
-        setColorFilter(getColor(R.color.settings_title))
-        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-        layoutParams = LinearLayout.LayoutParams(dp(20), dp(20)).apply { marginEnd = dp(8) }
-    }
-
-    private fun rowTitle(value: String) = TextView(this).apply {
-        text = value
-        setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
-        setTextColor(getColor(R.color.settings_title))
-    }
-
-    private fun help(value: String) = TextView(this).apply {
-        text = value
-        setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-        setTextColor(getColor(R.color.settings_help))
-        setPadding(0, dp(10), 0, dp(14))
-    }
-
-    private fun divider() = View(this).apply {
-        setBackgroundColor(getColor(R.color.settings_divider))
-        layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(1))
-    }
-
-    /** Karoo's segmented control: a pale pill track, the selected option as a blue-grey pill. */
-    private fun <T> segmented(options: List<Pair<Int, T>>, selected: T, onPick: (T) -> Unit) = LinearLayout(this).apply {
-        orientation = LinearLayout.HORIZONTAL
-        setBackgroundResource(R.drawable.bg_segment_track)
-        setPadding(dp(2), dp(2), dp(2), dp(2))
-        layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(42))
-        options.forEach { (label, value) ->
-            addView(
-                TextView(this@SettingsActivity).apply {
-                    text = getString(label)
-                    gravity = Gravity.CENTER
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-                    setTextColor(getColor(R.color.segment_text))
-                    if (value == selected) setBackgroundResource(R.drawable.bg_segment_selected)
-                    contentDescription = getString(label)
-                    isClickable = true
-                    setOnClickListener { onPick(value) }
-                },
-                LinearLayout.LayoutParams(0, MATCH_PARENT, 1f),
-            )
-        }
+        // The first-run introduction, again (e.g. to see how to add the field to a profile)
+        form.addView(
+            LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                minimumHeight = dp(56)
+                isClickable = true
+                setOnClickListener { startActivity(Intent(this@SettingsActivity, IntroActivity::class.java).putExtra(IntroActivity.EXTRA_AGAIN, true)) }
+                addView(settingsIcon(R.drawable.ic_info))
+                addView(settingsRowTitle(getString(R.string.intro_again)), LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+                addView(settingsIcon(R.drawable.ic_chevron))
+            },
+        )
     }
 }
