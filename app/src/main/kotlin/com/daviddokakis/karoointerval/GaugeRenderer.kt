@@ -52,12 +52,15 @@ class GaugeRenderer(private val context: Context) {
     private fun layout(w: Float, h: Float, text: String): Layout {
         val sw = w * 0.07f
         val gap = w * 0.014f
+        // Room around the arc for the needle, which sticks out past the arc's edge (plus its
+        // see-through outline); without it the needle is cut off at the top and the ends.
+        val m = NEEDLE_OVERHANG * w
         var best: Layout? = null
         var sweep = 140f
         while (sweep >= 70f) {
             val half = Math.toRadians(sweep / 2.0)
-            val r = ((w - sw) / 2f / sin(half)).toFloat()
-            val cy = sw / 2f + r
+            val r = ((w - sw - 2f * m) / 2f / sin(half)).toFloat()
+            val cy = m + sw / 2f + r
             val endY = (cy - r * cos(half) + sw / 2f).toFloat()   // bottom of the arc's rounded ends
             if (endY <= h) {
                 val inner = r - sw / 2f - gap
@@ -79,7 +82,7 @@ class GaugeRenderer(private val context: Context) {
             }
             sweep -= 2f
         }
-        return best ?: Layout(140f, w * 0.4f, w * 0.43f, sw, w * 0.2f, h - gap)
+        return best ?: Layout(140f, w * 0.4f, m + w * 0.43f, sw, w * 0.2f, h - gap)
     }
 
     /**
@@ -159,5 +162,11 @@ class GaugeRenderer(private val context: Context) {
     companion object {
         /** Digit height as a share of the text size (IBM Plex). */
         private const val CAP = 0.71f
+
+        /**
+         * How far the needle reaches past the arc's outer edge, as a share of the width: its
+         * length past the edge (0.0125) plus half its see-through outline (0.018).
+         */
+        private const val NEEDLE_OVERHANG = 0.0125f + 0.018f
     }
 }

@@ -27,6 +27,8 @@
     <string name="lap_time">Lap time</string>
     <string name="last_lap_label">Last lap</string>
     <string name="last_lap_value">%1$s · %2$d W</string>
+    <string name="lap_hr">Lap HR</string>
+    <string name="bpm_value">%1$d bpm</string>
     <string name="settings_title">Settings</string>
     <string name="appearance">Appearance</string>
     <string name="appearance_dark">Dark</string>

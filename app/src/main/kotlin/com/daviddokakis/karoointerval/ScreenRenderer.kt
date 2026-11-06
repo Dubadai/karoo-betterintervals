@@ -85,6 +85,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     private val cancelMoveIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_CANCEL_MOVE, 10) }
     private val dismissCancelledIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_DISMISS_MOVE_CANCELLED, 11) }
     private val targetToggleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_TARGET, 12) }
+    private val lapHrToggleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_LAP_HR, 14) }
     private val lapNpToggleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_LAP_NP, 13) }
     private val wattsColorIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_WATTS_COLOR, 7) }
     private val settingsIntent: PendingIntent by lazy {
@@ -414,7 +415,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             if (karoo) {
                 listOf(
                     R.id.free_lap_avg to 48f, R.id.free_hr to 48f, R.id.free_lap_label to 15f, R.id.free_hr_label to 15f,
-                    R.id.free_lap_time to 23f, R.id.free_last_lap to 19f,
+                    R.id.free_lap_time to 23f,
                 )
             } else {
                 listOf(
@@ -429,9 +430,16 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setTextViewText(R.id.free_lap_label, context.getString(if (s.lapShowsNp) R.string.np else R.string.lap_avg))
         v.setTextViewText(R.id.free_lap_avg, (if (s.lapShowsNp) s.freeLapNp else s.lapPowerAvg)?.toString() ?: "--")
         v.setOnClickPendingIntent(R.id.free_lap_tile, lapNpToggleIntent)
-        v.setTextViewText(R.id.free_hr, s.heartRate?.toString() ?: "--")
+        // HR tile: tap to switch between the current heart rate and the lap's average ("LAP HR").
+        v.setTextViewText(R.id.free_hr, s.shownHr?.toString() ?: "--")
+        v.setTextViewText(
+            R.id.free_hr_label,
+            context.getString(if (s.hrShowsLap) R.string.lap_hr else if (karoo) R.string.hr else R.string.heart_rate),
+        )
+        v.setOnClickPendingIntent(R.id.free_hr_tile, lapHrToggleIntent)
 
-        val zoneBg = when (s.hrZone) {
+        // The tile's tint follows the heart rate it shows.
+        val zoneBg = when (s.zoneOf(s.shownHr)) {
             1 -> R.drawable.bg_hr_z1
             2 -> R.drawable.bg_hr_z2
             3 -> R.drawable.bg_hr_z3
@@ -444,14 +452,15 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
 
         v.setTextViewText(R.id.free_lap_number, s.lapNumber?.let { context.getString(R.string.lap_number, it) } ?: "")
         v.setTextViewText(R.id.free_lap_time, s.lapTimeSec?.let(::formatClock) ?: "--:--")
-        // Karoo style has its own "LAST LAP" label above, so only the value: "8:20 · 271 W".
+        // Last lap: time, average watts and average heart rate ("8:20 · 271 W · 142 bpm"). Karoo
+        // style has its own "LAST LAP" label above, so only the values.
         val last = s.lastLapTimeSec?.takeIf { it > 0 }?.let { time ->
-            if (karoo) {
-                s.lastLapPowerAvg?.let { context.getString(R.string.last_lap_value, formatClock(time), it) } ?: formatClock(time)
-            } else {
-                s.lastLapPowerAvg?.let { context.getString(R.string.last_lap, formatClock(time), it) }
-                    ?: context.getString(R.string.last_lap_no_power, formatClock(time))
-            }
+            val parts = listOfNotNull(
+                formatClock(time),
+                s.lastLapPowerAvg?.let { "$it W" },
+                s.lastLapHrAvg?.takeIf { it > 0 }?.let { context.getString(R.string.bpm_value, it) },
+            ).joinToString(" · ")
+            if (karoo) parts else context.getString(R.string.last_lap_no_power, parts)
         }
         v.setTextViewText(R.id.free_last_lap, last ?: "")
         v.setOnClickPendingIntent(R.id.free_btn_settings, settingsIntent)

@@ -245,16 +245,21 @@
                 android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
 
+            <!-- Fits between the Karoo's back and next buttons (150dp), shrinking if needed -->
             <TextView
                 android:id="@+id/free_last_lap"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="150dp"
+                android:layout_height="24dp"
                 android:layout_marginTop="3dp"
+                android:autoSizeMaxTextSize="19sp"
+                android:autoSizeMinTextSize="11sp"
+                android:autoSizeStepGranularity="1sp"
+                android:autoSizeTextType="uniform"
                 android:fontFamily="ibm-plex-sans-condensed"
+                android:gravity="center"
                 android:includeFontPadding="false"
                 android:maxLines="1"
                 android:textColor="@color/text"
-                android:textSize="19sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>

@@ -17,4 +17,8 @@ With [Karoo style](settings.md) on, the screen takes the Karoo's own look: the w
 **LAP TIME** row, Lap avg and HR as full-size Karoo data fields (the HR field tinted by its zone),
 and the last lap at the bottom.
 
+Tap the heart rate tile to switch between your current heart rate and the lap's average
+(**Lap HR**); the app remembers your choice. The last lap shows its time, average watts and
+average heart rate.
+
 <img src="images/free-ride-karoo.png" width="240" alt="Free ride in Karoo style">

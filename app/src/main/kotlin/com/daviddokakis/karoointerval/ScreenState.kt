@@ -17,6 +17,11 @@ data class ScreenState(
     val lapNp: Int? = null,
     /** Lap tile shows NP instead of the lap average (tap to toggle, remembered). */
     val lapShowsNp: Boolean = false,
+    /** Free ride: the HR tile shows the lap's average heart rate (tap to toggle, remembered). */
+    val hrShowsLap: Boolean = false,
+    /** Karoo's average heart rate this lap, and in the last lap (free ride). */
+    val lapHrAvg: Int? = null,
+    val lastLapHrAvg: Int? = null,
     /** The ride is paused (Karoo's own pause). */
     val paused: Boolean = false,
     /** The workout is paused from this screen: interval clock and lap average stop, ride keeps recording. */
@@ -78,17 +83,21 @@ data class ScreenState(
         get() = plan?.let { (it.totalSec - it.startSecOf(stepIndex) - elapsedInStepSec).coerceAtLeast(0) }
 
     /** 1-based heart rate zone, or null when unknown or below Z1. */
-    val hrZone: Int?
-        get() {
-            val hr = heartRate ?: return null
-            if (hrZones.isEmpty()) return null
-            val i = hrZones.indexOfFirst { hr in it }
-            return when {
-                i >= 0 -> i + 1
-                hr > hrZones.last().last -> hrZones.size
-                else -> null
-            }
+    val hrZone: Int? get() = zoneOf(heartRate)
+
+    /** Free ride: the heart rate the HR tile shows (current, or the lap's average). */
+    val shownHr: Int? get() = if (hrShowsLap) lapHrAvg else heartRate
+
+    /** 1-based zone of [hr], or null when unknown or below Z1. */
+    fun zoneOf(hr: Int?): Int? {
+        if (hr == null || hrZones.isEmpty()) return null
+        val i = hrZones.indexOfFirst { hr in it }
+        return when {
+            i >= 0 -> i + 1
+            hr > hrZones.last().last -> hrZones.size
+            else -> null
         }
+    }
 
     val target: Int? get() = currentStep?.targetAt(elapsedInStepSec)
     val targetRange: IntRange? get() = currentStep?.rangeAt(elapsedInStepSec)

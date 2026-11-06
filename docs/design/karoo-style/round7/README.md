@@ -40,3 +40,24 @@ label and the value ("8:20 · 271 W") at the bottom between the Karoo's buttons.
 
 Testing note: after a reinstall the Karoo once more showed a frozen frame (the view was started
 and stopped right away, then not started again); restarting the ride app fixed it, as before.
+
+## HR ↔ Lap HR, and HR in the last lap
+
+- Free ride (both styles): tap the HR tile to switch between the current heart rate and the lap's
+  average ("LAP HR", Karoo's `AVERAGE_LAP_HR`); remembered between rides. The tile's zone tint
+  follows the value it shows.
+- The last lap line adds the lap's average heart rate (`AVERAGE_HR_LAST_LAP`):
+  "8:20 · 271 W · 142 bpm". In Karoo style it fits the 150dp between the Karoo's buttons and
+  shrinks if needed.
+
+`device/`: `03-free-ride-hr-last-lap-hr-light`, `04-free-ride-lap-hr-light`. Regular style uses
+the same code ("Heart rate" ↔ "Lap HR"); not screenshotted.
+
+## Gauge needle cut off at the top
+
+At the top of the arc the needle's end was cut flat: the gauge image ended at the arc's outer
+edge, and the needle sticks out past it. The gauge now keeps a small margin around the arc
+(`NEEDLE_OVERHANG` in `GaugeRenderer`), so the needle always fits.
+
+`device/`: `05-gauge-needle-before-zoom` (cut flat), `05-gauge-needle-fixed-zoom`,
+`05-gauge-needle-fixed`.

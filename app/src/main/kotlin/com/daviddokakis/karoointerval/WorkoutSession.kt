@@ -138,13 +138,15 @@ class WorkoutSession(
         collectInt(DataType.Type.POWER_LAP) { v -> _state.update { it.copy(lapPowerAvg = v) } }
         collectInt(DataType.Type.ELAPSED_TIME_LAST_LAP, divideBy = 1000) { v -> _state.update { it.copy(lastLapTimeSec = v) } }
         collectInt(DataType.Type.AVERAGE_POWER_LAST_LAP) { v -> _state.update { it.copy(lastLapPowerAvg = v) } }
+        collectInt(DataType.Type.AVERAGE_LAP_HR) { v -> _state.update { it.copy(lapHrAvg = v) } }
+        collectInt(DataType.Type.AVERAGE_HR_LAST_LAP) { v -> _state.update { it.copy(lastLapHrAvg = v) } }
         scope.launch {
             store.plan.collect { plan -> loadPlan(plan) }
         }
         scope.launch { tickLoop() }
         scope.launch { store.karooStyle.collect { on -> _state.update { it.copy(karooStyle = on) } } }
         scope.launch { store.appearance.collect { a -> _state.update { it.copy(appearance = a) } } }
-        _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapShowsNp = store.lapShowsNp) }
+        _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapShowsNp = store.lapShowsNp, hrShowsLap = store.hrShowsLap) }
     }
 
     fun stop() {
@@ -293,6 +295,15 @@ class WorkoutSession(
             val np = !_state.value.lapShowsNp
             store.lapShowsNp = np
             _state.update { it.copy(lapShowsNp = np) }
+        }
+    }
+
+    /** Free ride: tap on the HR tile switches between the current heart rate and the lap's average. */
+    fun toggleLapHr() {
+        scope.launch {
+            val lap = !_state.value.hrShowsLap
+            store.hrShowsLap = lap
+            _state.update { it.copy(hrShowsLap = lap) }
         }
     }
 
