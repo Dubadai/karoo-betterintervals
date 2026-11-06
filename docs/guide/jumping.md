@@ -42,4 +42,12 @@ always happens.
 ## Remote buttons
 
 **Next interval** and **Previous interval** on a remote work like ⏭ and ⏮: they choose where to
-go. Tap **Confirm move** on the screen to go.
+go. You don't need to touch the screen:
+
+- **Confirm move** fills up and counts down from 5 (**Confirming… 5**). When it's full, the move
+  is confirmed by itself and the usual 5-second countdown starts.
+- Press again to go further. The fill starts over.
+- To cancel, press the opposite button until you're back where you are, or tap ✕.
+- While the countdown runs, a press on either button jumps right away.
+
+Choices made by tapping ⏭ / ⏮ on the screen don't confirm themselves: tap **Confirm move**.

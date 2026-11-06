@@ -41,7 +41,8 @@ the watts shrink to fit.
 In the Karoo's controller settings you can assign these to remote buttons:
 
 - **Next interval** and **Previous interval**: the same as tapping ⏭ / ⏮ on the screen. See
-  [Jumping between intervals](jumping.md). You still need to tap **Confirm move** on the screen.
+  [Jumping between intervals](jumping.md). A choice made with a remote confirms itself after
+  5 seconds, so you don't need to touch the screen.
 - **Pause or resume workout**: see [Pausing the workout](pausing.md).
 
 ## Good to know

@@ -44,6 +44,7 @@
     <color name="paused_bg">#FFFAC775</color>
     <color name="paused_fg">#FF412402</color>
     <color name="resume_bg">#FF97C459</color>
+    <color name="confirm_wait_bg">#FF6A9A33</color>
     <color name="resume_fg">#FF173404</color>
     <!-- Pulse step: deeper green (dark symbol still >= 3:1) -->
     <color name="resume_bg_alt">#FF639922</color>

@@ -213,6 +213,17 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             val showConfirm = choosing != null
             val showCancelled = !showConfirm && s.moveCancelled
             v.setViewVisibility(R.id.confirm_row, if (showConfirm) View.VISIBLE else View.GONE)
+            // Chosen with a remote button: the button fills and confirms itself.
+            val left = s.autoConfirmLeft
+            if (showConfirm && left != null) {
+                val total = WorkoutSession.AUTO_CONFIRM_SECONDS
+                v.setViewVisibility(R.id.confirm_fill, View.VISIBLE)
+                v.setProgressBar(R.id.confirm_fill, 1000, (total - left + 1) * 1000 / total, false)
+                v.setTextViewText(R.id.confirm_text, context.getString(R.string.confirming, left))
+            } else {
+                v.setViewVisibility(R.id.confirm_fill, View.GONE)
+                v.setTextViewText(R.id.confirm_text, context.getString(R.string.confirm_move))
+            }
             v.setViewVisibility(R.id.move_cancelled, if (showCancelled) View.VISIBLE else View.GONE)
             v.setViewVisibility(R.id.tiles_row, if (showConfirm || showCancelled) View.GONE else View.VISIBLE)
             // Buttons keep their space when hidden, so the text stays centred. While choosing,
