@@ -310,9 +310,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="3dp"
-                        android:fontFamily="sans-serif-light"
+                        android:fontFamily="sans-serif"
                         android:includeFontPadding="false"
-                        android:textColor="@color/land"
+                        android:textColor="@color/text"
                         android:textSize="16sp"
                         android:visibility="gone" />
                 </LinearLayout>
@@ -349,7 +349,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@drawable/bg_confirm">
+                android:background="@drawable/bg_confirm_karoo">
 
             <!-- Fills up while a remote-made choice confirms itself -->
             <ProgressBar
@@ -358,7 +358,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:max="1000"
-                android:progressDrawable="@drawable/progress_confirm"
+                android:progressDrawable="@drawable/progress_confirm_karoo"
                 android:visibility="gone" />
 
             <LinearLayout
@@ -374,7 +374,7 @@
                     android:layout_marginEnd="8dp"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_check"
-                    android:tint="@color/resume_fg" />
+                    android:tint="@color/karoo_yellow_fg" />
 
                 <TextView
                     android:fontFamily="ibm-plex-sans-condensed"
@@ -382,7 +382,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/confirm_move"
-                    android:textColor="@color/resume_fg"
+                    android:textColor="@color/karoo_yellow_fg"
+                    android:textAllCaps="true"
                     android:textSize="17sp"
                     android:textStyle="normal" />
             </LinearLayout>
@@ -413,6 +414,8 @@
                 android:id="@+id/move_cancelled_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:textAllCaps="true"
                 android:text="@string/move_cancelled"
                 android:textColor="@color/info_fg"
                 android:textSize="16sp"
@@ -539,48 +542,80 @@
             </LinearLayout>
         </FrameLayout>
 
-        <!-- Jump countdown (replaces the next box) -->
-        <LinearLayout
+        <!-- Jump countdown (replaces the Next up box). Karoo style: the Karoo's workout purple,
+             filling with its darker purple as the seconds run down (countdown_fill); the number
+             left, "JUMPING TO" and the step right, spaced like Next up. -->
+        <FrameLayout
             android:id="@+id/countdown_box"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginBottom="6dp"
-            android:background="@drawable/bg_countdown"
-            android:gravity="center_vertical"
-            android:minHeight="50dp"
-            android:orientation="horizontal"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="5dp"
             android:visibility="gone">
 
-            <TextView
-                android:fontFamily="ibm-plex-sans-condensed"
-                android:id="@+id/countdown"
-                android:layout_width="28dp"
-                android:layout_height="wrap_content"
-                android:includeFontPadding="false"
-                android:textColor="@color/countdown_fg"
-                android:textSize="31sp"
-                android:textStyle="normal" />
+            <ProgressBar
+                android:id="@+id/countdown_fill"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:max="1000"
+                android:progressDrawable="@drawable/progress_countdown_karoo" />
 
-            <TextView
-                android:fontFamily="ibm-plex-sans-condensed"
-                android:id="@+id/countdown_value"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:maxLines="1"
-                android:textColor="@color/countdown_fg"
-                android:textSize="20sp"
-                android:textStyle="normal" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp">
 
-            <!-- Invisible spacer as wide as the number, so the text is centred in the box -->
-            <ImageView
-                android:layout_width="28dp"
-                android:layout_height="1dp"
-                android:importantForAccessibility="no" />
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/countdown"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/karoo_purple_fg"
+                    android:textScaleX="0.9"
+                    android:textSize="31sp" />
+
+                <!-- Same text block as Next up: 11sp label, 1dp gap, the step on a 24dp line (up to 20sp),
+                     centred in the 48dp box; here aligned right. -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="end|center_vertical"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/countdown_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="1dp"
+                        android:fontFamily="ibm-plex-sans-condensed"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:text="@string/jumping_to"
+                        android:textAllCaps="true"
+                        android:textColor="@color/karoo_purple_sub"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/countdown_value"
+                        android:layout_width="match_parent"
+                        android:layout_height="24dp"
+                        android:autoSizeMaxTextSize="20sp"
+                        android:autoSizeMinTextSize="11sp"
+                        android:autoSizeStepGranularity="1sp"
+                        android:autoSizeTextType="uniform"
+                        android:fontFamily="ibm-plex-sans-condensed"
+                        android:gravity="end|center_vertical"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:textColor="@color/karoo_purple_fg"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </FrameLayout>
 
         <ImageView
             android:id="@+id/chart"

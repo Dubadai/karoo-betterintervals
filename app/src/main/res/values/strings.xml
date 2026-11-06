@@ -23,6 +23,7 @@
     <string name="cd_power">Power</string>
     <string name="cd_heart_rate">Heart rate</string>
     <string name="hr">HR</string>
+    <string name="jumping_to">Jumping to</string>
     <string name="settings_title">Settings</string>
     <string name="appearance">Appearance</string>
     <string name="appearance_dark">Dark</string>

@@ -262,7 +262,15 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // Where a jump would land (being chosen or counting down): shown next to the target.
         val land = s.landStep
         if (land != null) {
-            v.setTextViewText(R.id.target_next, "→ ${land.targetAt(0)}")
+            val next = "→ ${land.targetAt(0)}"
+            v.setTextViewText(
+                R.id.target_next,
+                // The number in the text colour; only the arrow in the jump colour (Karoo purple, or blue).
+                android.text.SpannableString(next).apply {
+                    val arrow = color(if (karoo) R.color.karoo_purple else R.color.land)
+                    setSpan(android.text.style.ForegroundColorSpan(arrow), 0, 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                },
+            )
             v.setViewVisibility(R.id.target_next, View.VISIBLE)
         } else {
             v.setViewVisibility(R.id.target_next, View.GONE)
@@ -278,6 +286,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             v.setViewVisibility(R.id.move_cancelled, View.GONE)
             v.setTextViewText(R.id.countdown, s.countdown.toString())
             v.setTextViewText(R.id.countdown_value, summary(jump))
+            // The box fills with its darker colour as the seconds run down.
+            val total = WorkoutSession.COUNTDOWN_SECONDS
+            v.setProgressBar(R.id.countdown_fill, 1000, ((total - s.countdown + 1) * 1000 / total).coerceIn(0, 1000), false)
         } else {
             v.setViewVisibility(R.id.next_box, View.VISIBLE)
             v.setViewVisibility(R.id.countdown_box, View.GONE)
@@ -479,7 +490,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // Must match the sp sizes in the layouts (the reference size).
         val sizes = mutableListOf(
             R.id.paused_text to 13f, R.id.next_label to 11f, R.id.confirm_text to 17f,
-            R.id.move_cancelled_text to 16f, R.id.countdown to 31f, R.id.countdown_value to 20f,
+            R.id.move_cancelled_text to 16f, R.id.countdown to 31f,
         )
         if (karoo) {
             // Karoo native styling: one compact block under the watts, the same on every screen:
@@ -541,7 +552,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         private const val CELL_VALUE_SP = 28f
         /** Height of the gauge's space on a full page without a route (measured), and how much a route takes. */
         private const val GAUGE_KAROO_DP = 128.7f   // 241 px on a Karoo 3 (162 px with a route)
-        private const val GAUGE_REGULAR_DP = 115.2f  // 216 px on a Karoo 3 (137 px with a route)
+        private const val GAUGE_REGULAR_DP = 119.2f  // 224 px on a Karoo 3 (145 px with a route)
         private const val ROUTE_DP = 42.1f          // a route makes the field 79 px shorter
 
 
