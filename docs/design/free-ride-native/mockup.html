@@ -187,7 +187,7 @@ function fit(ctx, s, font, size, maxW, sx = 1) {        // largest size <= [size
   for (; size > 10; size -= 1) { ctx.font = font(size); if (ctx.measureText(s).width * sx <= maxW) break; }
   return size;
 }
-function after(theme, nat, shot, route) {
+function after(theme, nat, shot, route, noLastLap = false) {
   const t = T[theme], L = route ? LAYOUT.route : LAYOUT.full;
   return ctx => {
     statusBar(ctx, null, t);
@@ -220,6 +220,7 @@ function after(theme, nat, shot, route) {
     field(ctx, 246, L.tiles, 218, 145, HR_ZONES[HR_ZONE - 1], (x, y) => heartOutline(ctx, x, y - 2, 27, '#000000'), 'HR', '132', '#000000');
     // Last lap: the same design as before (small grey label, bold condensed values), a step
     // bigger: label 11 → 12sp, values ~15% bigger, shrinking to fit the space they have.
+    if (noLastLap) return;   // first lap: no last lap yet, so nothing (its space stays, nothing moves)
     txt(ctx, 'LAST LAP', 240, L.last - 34, '500 23px PlexCond', t.sub, 'center');
     const ls = fit(ctx, '8:20 · 271 W · 142 bpm', f => `bold ${f}px PlexCond`, 34, L.lastW);
     txt(ctx, '8:20 · 271 W · 142 bpm', 240, L.last, `bold ${ls}px PlexCond`, t.ink, 'center');
@@ -245,9 +246,9 @@ const img = src => new Promise(ok => { const i = new Image(); i.onload = () => o
   for (const theme of ['light', 'dark']) {
     const shot = await img(SHOTS[theme]);
     const dev = await KarooDevice.load({ frame: FRAME, screen: SHOTS[theme] });
-    for (const [cap, draw] of [['Now', before(theme, shot)], ['Karoo native', after(theme, nat, shot, false)], ['Karoo native, route loaded', after(theme, nat, shot, true)]]) {
+    for (const [cap, draw] of [['Now', before(theme, shot)], ['Karoo native', after(theme, nat, shot, false)], ['Karoo native, route loaded', after(theme, nat, shot, true)], ['First lap: no last lap yet', after(theme, nat, shot, false, true)]]) {
       const scr = dev.screen({ draw });
-      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 260));
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 230));
       const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${theme})`; el.append(c);
       document.getElementById(theme).append(el);
     }

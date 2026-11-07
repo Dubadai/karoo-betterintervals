@@ -32,3 +32,5 @@ the lap row. "LAP TIME" and its icon now use exactly the tiles' label font, size
 with the tiles' icons. Label and icon are centred on
 the clock's digits.
 Lap avg tile darker in light mode: `#DDDDDD`, the Karoo's own page grey (was `#EBEBEB`).
+No last lap yet (first lap): LAST LAP and its values are hidden; the space stays, so nothing moves
+when the first lap ends.
