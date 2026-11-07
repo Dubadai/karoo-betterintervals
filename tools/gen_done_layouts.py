@@ -89,10 +89,11 @@ BODY = '''<?xml version="1.0" encoding="utf-8"?>
 
         <ImageView
             android:id="@+id/done_check"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:adjustViewBounds="true"
+            android:minHeight="40dp"
             android:maxHeight="84dp"
             android:importantForAccessibility="no"
             android:scaleType="fitCenter"
@@ -109,7 +110,7 @@ BODY = '''<?xml version="1.0" encoding="utf-8"?>
             android:text="@string/workout_done"
             android:textAllCaps="{caps}"
             android:textColor="@color/text"
-            android:textSize="26sp"
+            android:textSize="24sp"
             android:textStyle="{label_style}" />
 
         <TextView
@@ -148,7 +149,7 @@ BODY = '''<?xml version="1.0" encoding="utf-8"?>
         <FrameLayout
             android:id="@+id/btn_done"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="52dp"
             android:layout_marginTop="10dp"
             android:background="{button_bg}"
             android:contentDescription="@string/done">
