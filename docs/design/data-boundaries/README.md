@@ -22,6 +22,12 @@ field paints the page grey inside that card; the Karoo keeps its border and corn
 Dark mode (measured): page `#484848`, the Karoo's own fields are black cards, same `#7D7D7D`
 border. Ours matches: `#484848` page, black tile cards, gauge track `#6E6E6A`.
 
+Round 3 (mockup, not decided): on the device the grey page made the whole screen hard to see.
+Back to the Karoo's own card colour for the field (white in light, black in dark), for full contrast:
+- **A · grey tiles**: tiles in the Karoo's page grey (`#DDDDDD` / `#484848`).
+- **B · outlined tiles**: tiles in the card colour with the same 2 px outline as Next up.
+
+- `mockup-round3.src.html`: round 3 options next to what was built.
 - `mockup.src.html` + `build.py`: the mockup, drawn on device screenshots (run `python3 build.py`).
 - `base-light.png`, `base-dark.png`: gauge screen, boundaries off (from `screens/`).
 - `device/00-stock-fields-light.png`: Karoo's own fields with boundaries on (white cards on grey).
