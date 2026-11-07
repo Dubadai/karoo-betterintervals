@@ -240,7 +240,7 @@
                     android:orientation="horizontal">
 
                     <ImageView
-                        android:id="@+id/th_interval_gauge_karoo_3"
+                        android:id="@+id/hr_icon"
                         android:layout_width="11dp"
                         android:layout_height="11dp"
                         android:layout_marginEnd="3dp"

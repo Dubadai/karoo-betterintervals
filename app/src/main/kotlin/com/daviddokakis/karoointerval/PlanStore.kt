@@ -67,6 +67,39 @@ class PlanStore private constructor(context: Context) {
         _karooStyle.value = on
     }
 
+    private fun <E : Enum<E>> enumPref(key: String, entries: List<E>, default: E): E =
+        entries.firstOrNull { it.name == prefs.getString(key, null) } ?: default
+
+    private val _powerSmoothing = MutableStateFlow(enumPref(KEY_POWER_SMOOTHING, Smoothing.entries, Smoothing.S3))
+
+    /** Settings › Power: the big watts instant or as the Karoo's 3 / 5 / 10 s average (default 3 s). */
+    val powerSmoothing: StateFlow<Smoothing> = _powerSmoothing
+
+    fun setPowerSmoothing(value: Smoothing) {
+        prefs.edit().putString(KEY_POWER_SMOOTHING, value.name).apply()
+        _powerSmoothing.value = value
+    }
+
+    private val _secondField = MutableStateFlow(enumPref(KEY_SECOND_FIELD, SecondField.entries, SecondField.HEART_RATE))
+
+    /** Settings › Heart rate or cadence: what the HR spots show. */
+    val secondField: StateFlow<SecondField> = _secondField
+
+    fun setSecondField(value: SecondField) {
+        prefs.edit().putString(KEY_SECOND_FIELD, value.name).apply()
+        _secondField.value = value
+    }
+
+    private val _cadenceSmoothing = MutableStateFlow(enumPref(KEY_CADENCE_SMOOTHING, Smoothing.entries, Smoothing.INSTANT))
+
+    /** Settings › Cadence: instant (default, like the Karoo's Cadence field) or a 3 / 5 / 10 s average. */
+    val cadenceSmoothing: StateFlow<Smoothing> = _cadenceSmoothing
+
+    fun setCadenceSmoothing(value: Smoothing) {
+        prefs.edit().putString(KEY_CADENCE_SMOOTHING, value.name).apply()
+        _cadenceSmoothing.value = value
+    }
+
     private val _tileOutline = MutableStateFlow(prefs.getBoolean(KEY_TILE_OUTLINE, false))
 
     /** Tiles (Settings page): Tonal (a grey fill) or Outline (a border like Next up, no fill). */
@@ -194,6 +227,9 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_KAROO_STYLE = "karoo_style"
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_TILE_OUTLINE = "tile_outline"
+        private const val KEY_POWER_SMOOTHING = "power_smoothing"
+        private const val KEY_SECOND_FIELD = "second_field"
+        private const val KEY_CADENCE_SMOOTHING = "cadence_smoothing"
         private const val KEY_WEEK_JSON = "week_json"
         private const val KEY_WEEK_SYNCED = "week_synced"
         private const val KEY_INTRO_DONE = "intro_done"

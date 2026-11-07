@@ -13,7 +13,8 @@ import android.widget.ScrollView
 import android.widget.TextView
 
 /**
- * Settings: Appearance (Dark / Light / Auto), Karoo style and Tiles (Tonal / Outline) first, both as Karoo's own segmented
+ * Settings: Appearance (Dark / Light / Auto), Karoo style, Tiles (Tonal / Outline), Power
+ * smoothing and Heart rate or cadence (with cadence smoothing) first, both as Karoo's own segmented
  * control (as in Karoo Settings → Display), then the intervals.icu account as one row that opens
  * the Account page.
  */
@@ -89,6 +90,41 @@ class SettingsActivity : AppearanceActivity() {
             },
         )
         form.addView(settingsHelp(getString(R.string.tiles_help)))
+        form.addView(settingsDivider())
+
+        // Power: how the big watts are smoothed
+        form.addView(settingsHeading(R.drawable.ic_bolt, getString(R.string.power_smoothing)))
+        form.addView(
+            segmented(Smoothing.entries.map { it.label to it }, store.powerSmoothing.value) { picked ->
+                store.setPowerSmoothing(picked)
+                render()
+            },
+        )
+        form.addView(settingsHelp(getString(R.string.power_smoothing_help)))
+        form.addView(settingsDivider())
+
+        // Heart rate or cadence in the HR spots, and (cadence) its smoothing
+        form.addView(settingsHeading(R.drawable.ic_heart_outline, getString(R.string.second_field)))
+        form.addView(
+            segmented(
+                listOf(R.string.heart_rate to SecondField.HEART_RATE, R.string.cadence to SecondField.CADENCE),
+                store.secondField.value,
+            ) { picked ->
+                store.setSecondField(picked)
+                render()
+            },
+        )
+        form.addView(settingsHelp(getString(R.string.second_field_help)))
+        if (store.secondField.value == SecondField.CADENCE) {
+            form.addView(settingsHeading(R.drawable.ic_cadence, getString(R.string.cadence_smoothing)))
+            form.addView(
+                segmented(Smoothing.entries.map { it.label to it }, store.cadenceSmoothing.value) { picked ->
+                    store.setCadenceSmoothing(picked)
+                    render()
+                },
+            )
+            form.addView(settingsHelp(getString(R.string.cadence_smoothing_help)))
+        }
         form.addView(settingsDivider())
 
         // intervals.icu: one row, opens the Account page

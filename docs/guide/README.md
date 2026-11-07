@@ -14,7 +14,7 @@ pictures from a real Karoo.
 | [Pausing the workout](pausing.md) | Stop the interval timer without stopping the ride |
 | [Riding without a workout](free-ride.md) | The free-ride screen |
 | [Workouts and Account](workouts-and-account.md) | Syncing, choosing and removing workouts, your API key |
-| [Settings](settings.md) | Dark / Light / Auto, Karoo style, Tiles (tonal or outline), your intervals.icu account, show the introduction again |
+| [Settings](settings.md) | Dark / Light / Auto, Karoo style, Tiles (tonal or outline), power smoothing, heart rate or cadence, your intervals.icu account, show the introduction again |
 
 Light and dark mode follow the Karoo's own theme, unless you pick Dark or Light in
 [Settings](settings.md). Anything showing `--` is waiting for data, for

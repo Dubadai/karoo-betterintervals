@@ -41,3 +41,4 @@ zones as % of the workout's FTP in the Karoo's 7 bands, and jump target **A · s
 with its ▼ in the same colour.
 - `device/02-zone-colours-dark.png`: workout screen in the Karoo zone colours.
 - `device/03-jump-target-dark.png`: choosing a jump (3 ahead): the target bar solid white.
+- `device/04-zone-colours-light.png`: workout screen in the Karoo zone colours, light.
