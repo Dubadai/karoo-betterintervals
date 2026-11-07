@@ -90,14 +90,16 @@ class SettingsLayout(
     init {
         orientation = VERTICAL
         setBackgroundColor(pageColor)
-        // The bar: back arrow left, "Settings" centred and big (26 sp, more than the app name under it)
+        // The bar: back arrow left, "Settings" centred, 18 sp
         addView(
             android.widget.FrameLayout(context).apply {
                 addView(back, android.widget.FrameLayout.LayoutParams(dp(48), dp(48), Gravity.START or Gravity.CENTER_VERTICAL).apply { marginStart = dp(4) })
                 addView(
                     TextView(context).apply {
                         text = barTitle
-                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 26f)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+                        // No extra font padding, so the text's middle lines up with the arrow's
+                        includeFontPadding = false
                         typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
                         setTextColor(textColor)
                     },
