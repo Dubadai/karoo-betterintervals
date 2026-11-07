@@ -79,3 +79,5 @@ Last lap: the values were 27 px under their label on the Karoo (the mockup has 1
 
 Chosen: C with "3S POWER" in the secondary grey (like LAST LAP), and Last lap 20 px above its
 values. Top rows of `watts-label.html`.
+The label follows Settings › Power, named like the Karoo's own fields: POWER (instant), 3S POWER,
+5S POWER, 10S POWER.

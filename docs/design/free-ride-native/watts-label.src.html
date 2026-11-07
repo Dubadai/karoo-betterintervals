@@ -136,7 +136,7 @@ function after(theme, nat, shot, route, noLastLap = false) {
     if (DECOR === 'icon') ctx.drawImage(bolt, 240 - half - 28, capTop - 1);
     if (DECOR === 'unit') txt(ctx, 'W', 240 + half + 8, capTop + 20, LABEL, t.ink);
     if (DECOR === 'title') txt(ctx, '3S POWER', 240, capTop - 22, LABEL, t.ink, 'center');
-    if (DECOR === 'title-grey') txt(ctx, '3S POWER', 240, capTop - 22, LABEL, t.sub, 'center');   // like LAST LAP
+    if (DECOR.startsWith('title-grey')) txt(ctx, ({ '': '3S POWER', i: 'POWER', 5: '5S POWER', 10: '10S POWER' })[DECOR.split(':')[1] || ''], 240, capTop - 22, LABEL, t.sub, 'center');   // like LAST LAP
     if (DECOR === '3s-icon') {
       ctx.font = LABEL; const tw = ctx.measureText('3S').width, gap = 6, iw = 17, x0 = 240 - (iw + gap + tw) / 2;
       ctx.drawImage(bolt, x0, capTop - 46);
@@ -166,7 +166,7 @@ function after(theme, nat, shot, route, noLastLap = false) {
     // Last lap: the same design as before (small grey label, bold condensed values), a step
     // bigger: label 11 → 12sp, values ~15% bigger, shrinking to fit the space they have.
     if (noLastLap) return;   // first lap: no last lap yet, so nothing (its space stays, nothing moves)
-    txt(ctx, 'LAST LAP', 240, L.last - (DECOR === 'title-grey' ? 44 : 34), '500 23px PlexCond', t.sub, 'center');   // 20 px above the values (C final), else 10
+    txt(ctx, 'LAST LAP', 240, L.last - (DECOR.startsWith('title-grey') ? 44 : 34), '500 23px PlexCond', t.sub, 'center');   // 20 px above the values (C final), else 10
     const ls = fit(ctx, '8:20 · 271 W · 142 bpm', f => `bold ${f}px PlexCond`, 34, L.lastW);
     txt(ctx, '8:20 · 271 W · 142 bpm', 240, L.last, `bold ${ls}px PlexCond`, t.ink, 'center');
   };
@@ -198,6 +198,9 @@ const img = src => new Promise(ok => { const i = new Image(); i.onload = () => o
   const screens = [
     ['C · "3S POWER" in grey, Last lap 20 px above its values', th => deco('title-grey', after(th, nat, shots[th], false))],
     ['The same with a route loaded', th => deco('title-grey', after(th, nat, shots[th], true))],
+    ['Settings › Power: Instant', th => deco('title-grey:i', after(th, nat, shots[th], false))],
+    ['Settings › Power: 5 s', th => deco('title-grey:5', after(th, nat, shots[th], false))],
+    ['Settings › Power: 10 s', th => deco('title-grey:10', after(th, nat, shots[th], false))],
     ['A · Green bolt top left of the number', th => deco('icon', after(th, nat, shots[th], false))],
     ['B · "W" top right of the number', th => deco('unit', after(th, nat, shots[th], false))],
     ['C · "3S POWER" above the number', th => deco('title', after(th, nat, shots[th], false))],
