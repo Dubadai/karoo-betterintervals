@@ -26,12 +26,14 @@
     <color name="land">#FF185FA5</color>
 
     <color name="done">#FF888780</color>
-    <!-- Workout zone colours (intervals.icu style). All >= 3:1 against white. -->
-    <color name="z1">#FF1D9E75</color>
-    <color name="z2">#FF639922</color>
-    <color name="z3">#FFBA7517</color>
-    <color name="z4">#FFD85A30</color>
-    <color name="z5">#FFE24B4A</color>
+    <!-- Workout zone colours: the Karoo's power zones, as in BigWatts (Z1 grey … Z7 purple). -->
+    <color name="z1">#FF8F8D86</color>
+    <color name="z2">#FF2F7FD8</color>
+    <color name="z3">#FF3FA34D</color>
+    <color name="z4">#FFE8B400</color>
+    <color name="z5">#FFF07A1A</color>
+    <color name="z6">#FFE0383E</color>
+    <color name="z7">#FF8B4FD8</color>
     <!-- Lap icon purple (Karoo lap icon), >= 3:1 on the tile -->
     <color name="lap_icon">#FF7F77DD</color>
     <!-- Corner icons (gear, pause): muted grey, >= 3:1 against the page -->

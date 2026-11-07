@@ -12,8 +12,9 @@ import kotlin.math.ceil
  * Draws the workout profile in zone colours: one bar per step
  * (width = duration, height = watts).
  *
- * - [Style.SCREEN] (interval screen): watt guide lines, finished steps grey, the current step
- *   outlined, a "now" marker, the step a jump lands on in solid blue with a ▼, time labels.
+ * - [Style.SCREEN] (interval screen): watt guide lines, the current step outlined, a "now"
+ *   marker, the step a jump lands on in solid black (white in dark mode) with a ▼, time labels.
+ *   Finished steps keep their zone colour, since you may jump back to them.
  *   Supports zooming into the current step.
  * - [Style.CARD] (workout list thumbnail): bars only, transparent background.
  */
@@ -33,8 +34,9 @@ class ChartRenderer(private val context: Context) {
         if (plan.steps.isEmpty() || plan.totalSec <= 0) return bmp
 
         val d = context.resources.displayMetrics.density * scale
-        // The step a jump lands on and its ▼: blue, or the Karoo's jump purple in Karoo style.
-        val landColor = if (state.karooStyle) R.color.karoo_purple else R.color.land
+        // The step a jump lands on and its ▼: the text colour, which no zone uses (Karoo zone
+        // colours include blue and purple, the old jump colours).
+        val landColor = R.color.text
         val label = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = color(R.color.text_secondary)
             textSize = 10f * d
@@ -109,17 +111,10 @@ class ChartRenderer(private val context: Context) {
                 close()
             }
             val bar = Zones.barStyle(step.avgWatts, ftp)
-            // Finished steps turn grey; the jump target is solid blue.
-            val done = !card && i < state.stepIndex
+            // Every step in its zone colour (finished ones too); the jump target solid black/white.
             val isTarget = !card && i == state.landTarget
             val alpha = 255
-            fill.color = color(
-                when {
-                    isTarget -> landColor
-                    done -> R.color.done
-                    else -> bar.fill
-                },
-            )
+            fill.color = color(if (isTarget) landColor else bar.fill)
             // Current step: its 2dp outline goes on the bar's edge, and the fill moves in to leave
             // a 1dp gap of page colour between them, so the zone colour and outline both read
             // (design: docs/design/karoo-zone-colours/, outline gap A). Too narrow: fill as usual.

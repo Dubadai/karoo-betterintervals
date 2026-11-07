@@ -11,8 +11,8 @@ Each tap on ⏭ or ⏮ moves your choice one step. The box tells you what will h
 - **Restarting interval**: one tap on ⏮ starts the current interval again
 - **Jumping 1 back**, …
 
-The chart shows the whole workout and marks your choice with a blue bar and a ▼ (purple with
-[Karoo style](settings.md)). The Target tile shows the watts you'd land on after an arrow
+The chart shows the whole workout and marks your choice with a solid black bar and a ▼ (white
+in dark mode), so it can't be mistaken for a zone colour. The Target tile shows the watts you'd land on after an arrow
 (**300 → 181**).
 
 <img src="images/jump-choose.png" width="240" alt="Jumping 1 ahead, with Confirm move and a cancel button"> <img src="images/jump-restart.png" width="240" alt="Restarting interval">

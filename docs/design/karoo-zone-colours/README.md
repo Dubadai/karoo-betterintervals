@@ -35,3 +35,9 @@ Jump target (mockup, not decided): `jump-target.src.html`. Today the step a jump
 blue (Karoo style: purple), which would read as Karoo Z2 (Z7). Options, each with today's ▼:
 A · solid black / white (the text colour), B · zone colour with stripes, C · zone colour with a
 dashed outline.
+
+Decided and built (7 Nov 2026): Karoo zone colours (round 2 B: finished steps keep their colour),
+zones as % of the workout's FTP in the Karoo's 7 bands, and jump target **A · solid black / white**
+with its ▼ in the same colour.
+- `device/02-zone-colours-dark.png`: workout screen in the Karoo zone colours.
+- `device/03-jump-target-dark.png`: choosing a jump (3 ahead): the target bar solid white.
