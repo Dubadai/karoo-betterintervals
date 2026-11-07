@@ -17,7 +17,7 @@ object GalleryFields {
 
     /** The workout screen's looks and the states the guide explains (Karoo style is the only style). */
     val variants = listOf(
-        "ready", "karoo", "karoo-number", "karoo-colours", "gauge", "free", "free-first-lap", "free-instant", "free-5s", "free-10s", "free-lap-np", "free-ride", "top-target", "top-cadence", "gauge-top-hr", "gauge-top-cadence", "gauge-top-target", "countdown-gauge", "done", "done-route",
+        "ready", "ready-countdown", "karoo", "karoo-number", "karoo-background", "karoo-colours", "karoo-colours-route", "gauge-countdown", "gauge-route", "gauge", "free", "free-first-lap", "free-instant", "free-5s", "free-10s", "free-lap-np", "free-ride", "top-target", "top-cadence", "gauge-top-hr", "gauge-top-cadence", "gauge-top-target", "countdown-gauge", "done", "done-route",
         "choose", "restart", "cancelled", "countdown", "paused", "zoomed", "target-range", "lap-np",
         "outline", "cadence",
     )
@@ -28,9 +28,18 @@ object GalleryFields {
         val s = when (variant) {
             // A workout loaded, waiting at the first interval for START WORKOUT
             "ready" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0)
+            // START WORKOUT tapped: the 5 s countdown in the button and the box
+            "ready-countdown" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0, countdown = 3)
             "karoo" -> k
             "karoo-number" -> ExampleScreen.state(wattsMode = WattsMode.TEXT)
             "karoo-colours" -> ExampleScreen.state(wattsMode = WattsMode.BOTH)
+            "karoo-background" -> ExampleScreen.state(wattsMode = WattsMode.BACKGROUND)
+            // With a route: the Karoo makes the field 79 px shorter (the route pill goes below it)
+            "karoo-colours-route" -> ExampleScreen.state(wattsMode = WattsMode.BOTH).copy(navigating = true)
+            // The gauge (the README's main look): counting down into the next interval, and with a route
+            // (an interval ending: 3 s left, the beeps; the next one starts after them)
+            "gauge-countdown" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(elapsedInStepSec = 297)
+            "gauge-route" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(navigating = true)
             "gauge" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE)
             // Five HR zones from a rider profile, so the HR tile shows the Karoo's zone colour (132: Z2)
             "free" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES)

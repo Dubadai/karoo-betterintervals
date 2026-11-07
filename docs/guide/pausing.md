@@ -10,7 +10,7 @@ Stopped at a traffic light or a café? Pause the workout so the interval doesn't
    carry on where you stopped.
 4. The ⏭ button turns grey and can't be tapped, so the play button is the one to press.
 
-<img src="images/paused.png" width="240" alt="Workout paused box and green resume button">
+<img src="images/paused.png" width="240" alt="Workout paused box and the yellow resume button">
 
 Pausing stops only the interval timer. **The ride keeps recording**, and the lap average keeps
 counting.

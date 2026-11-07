@@ -62,6 +62,8 @@ avg are always on the screen: whatever isn't at the top goes in the tile next to
 **Target** at the top, that tile shows heart rate (or cadence, if Heart rate or cadence says so).
 Until you pick one, heart rate (or cadence) is at the top on every style, the gauge too.
 
+<img src="images/settings-top-row.png" width="240" alt="Settings: Top row, Heart rate / Cadence / Target">
+
 All settings apply right away, also during a ride.
 
 ## Update notices
