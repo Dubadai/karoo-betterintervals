@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workout Karoo sizes</title>
+<style>
+  @font-face { font-family: PlexCond; src: url(__FONT_COND__); font-weight: 500; }
+  @font-face { font-family: PlexSemi; src: url(__FONT_SEMI__); font-weight: 600; }
+  @font-face { font-family: PlexReg; src: url(__FONT_REG__); font-weight: 400; }
+  :root { color-scheme: dark; }
+  body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
+  h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
+  p.d { color:#A9A6A0; margin:0 auto 22px; max-width:780px; text-align:center; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:24px; margin-bottom:34px; }
+  .dev { display:grid; justify-items:center; gap:8px; }
+  .cap { color:#A9A6A0; font-size:13px; max-width:380px; text-align:center; }
+</style>
+</head>
+<body>
+<h1>Workout screen with free ride's Karoo sizes</h1>
+<p class="d">What carries over from the screen without a workout: the Karoo's tile geometry (4 px gap, ink 8 px from the edge, the number 12 px above the bottom), the Karoo's label size (20 px capitals, was 17) and icon size (23 px, was 19), numbers as big as the tile allows (41 px, was 38; the tiles keep their height so Next up and the chart keep theirs), and the clock at free ride's size (37 px, was 30). Drawn on the app's own screens.</p>
+<div id="rows"></div>
+<script>/*__KAROO_DEVICE_JS__*/</script>
+<script>
+const FRAME = "__FRAME__";
+const B = /*__BASE__*/;
+const img = src => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
+const INK = { light: '#000000', dark: '#FFFFFF' }, TILE = { light: '#DDDDDD', dark: '#1F1F1F' };
+function txt(ctx, s, x, y, font, color, align = 'left', sx = 1) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(sx, 1); ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.fillText(s, 0, 0); ctx.restore();
+}
+const LABEL = '500 28px PlexCond', NUM = '400 58px PlexReg';
+// Old tiles: x 16–233 and 246–463, y 461–561. Icons in them: lap+bolt at x 29–70, the second at x 258–278, y 478–496.
+function karooSizes(shot, theme, second) {
+  return ctx => {
+    ctx.drawImage(shot, 0, 0);
+    const bg = (() => { const k = ctx.canvas.width / 480, d = ctx.getImageData(100 * k, 130 * k, 1, 1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; })();   // the card (an empty spot by the gear)
+    ctx.fillStyle = bg; ctx.fillRect(3, 457, 474, 110);
+    const T = 461, H = 101, tiles = [[6, 232, 'LAP AVG', '282', [28, 476, 44, 22]], [242, 231, second[0], second[1], [256, 476, 24, 22]]];
+    for (const [x, w, label, value, [ix, iy, iw, ih]] of tiles) {
+      ctx.fillStyle = TILE[theme]; ctx.beginPath(); ctx.roundRect(x, T, w, H, 15); ctx.fill();
+      ctx.drawImage(shot, ix, iy, iw, ih, x + 10, T + 17, iw * 23 / ih, 23);     // the screen's own icon, 23 px
+      txt(ctx, label, x + w - 7, T + 40, LABEL, INK[theme], 'right');
+      txt(ctx, value, x + w - 4, T + H - 12, NUM, INK[theme], 'right', 0.9);
+    }
+    // Interval clock at free ride's size; "INTERVAL 4 / 10" and its icon centred on the clock's
+    // digits (like CURRENT LAP TIME), in the Karoo's label size
+    const timer = document.createElement('canvas'); timer.width = 18; timer.height = 21;
+    timer.getContext('2d').drawImage(shot, 18, 403, 18, 21, 0, 0, 18, 21);
+    ctx.fillStyle = bg; ctx.fillRect(6, 384, 471, 44);
+    txt(ctx, '−1:33', 467, 424, '600 54px PlexSemi', INK[theme], 'right', 0.9);
+    const mid = 424 - 37 / 2;
+    ctx.drawImage(timer, 16, mid - 11.5, 20, 23);
+    txt(ctx, 'INTERVAL 4 / 10', 44, mid + 10, LABEL, INK[theme]);
+  };
+}
+// Free ride's HR tile on LAP HR: the lap arrow (black on the zone colour, like the heart) before the heart
+function freeLapHr(shot, theme) {
+  return ctx => {
+    ctx.drawImage(shot, 0, 0);
+    const zone = (() => { const k = ctx.canvas.width / 480, d = ctx.getImageData(400 * k, 640 * k, 1, 1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; })();
+    ctx.fillStyle = zone; ctx.fillRect(247, 540, 70, 32);
+    // The app's own vectors (ic_lap, ic_heart_outline), 24-unit boxes at 23 px, black as on the zone colour
+    const icon = (path, x, y) => {
+      ctx.save(); ctx.translate(x, y); ctx.scale(23 / 24, 23 / 24);
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.stroke(new Path2D(path)); ctx.restore();
+    };
+    icon('M12,4A8,8 0,1 0,17.66 6.34 M9.5,1.5L12,4L9.5,6.5', 250, 545);
+    icon('M19.5,12.572L12,20l-7.5,-7.428A5,5 0,1 1,12 6.006a5,5 0,1 1,7.5 6.572', 274, 545);
+  };
+}
+(async () => {
+  await Promise.all([LABEL, NUM, '600 54px PlexSemi'].map(f => document.fonts.load(f)));
+  const I = {}; for (const [k, v] of Object.entries(B)) I[k] = await img(v);
+  const rows = [
+    ['Number styles · now', t => ctx => ctx.drawImage(I['karoo-' + t], 0, 0)],
+    ['Number styles · Karoo sizes, INTERVAL centred on the clock', t => karooSizes(I['karoo-' + t], t, ['TARGET', '280'])],
+    ['Gauge · now', t => ctx => ctx.drawImage(I['gauge-' + t], 0, 0)],
+    ['Gauge · Karoo sizes, heart rate at the top and the target in the tile (like the number styles)', t => karooSizes(I['gauge-top-hr-' + t], t, ['TARGET', '273–287'])],
+    ['Free ride · LAP HR with the lap arrow, like LAP AVG', t => freeLapHr(I['free-lap-np-' + t], t)],
+  ];
+  for (const [cap, make] of rows) {
+    const row = document.createElement('div'); row.className = 'devices';
+    for (const t of ['light', 'dark']) {
+      const dev = await KarooDevice.load({ frame: FRAME, screen: B['karoo-' + t] });
+      const scr = dev.screen({ draw: make(t), scale: 2 });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 380));
+      const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${t})`; el.append(c);
+      row.append(el);
+    }
+    document.getElementById('rows').append(row);
+  }
+})();
+</script>
+</body>
+</html>

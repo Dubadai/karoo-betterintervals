@@ -190,6 +190,10 @@ class WorkoutSession(
         collectInt(DataType.Type.AVERAGE_HR_LAST_LAP) { v -> _state.update { it.copy(lastLapHrAvg = v) } }
         collectInt(DataType.Type.CADENCE_LAP) { v -> _state.update { it.copy(lapCadenceAvg = v) } }
         collectInt(DataType.Type.AVERAGE_CADENCE_LAST_LAP) { v -> _state.update { it.copy(lastLapCadenceAvg = v) } }
+        // The whole ride so far, for free ride's tiles
+        collectInt(DataType.Type.AVERAGE_POWER) { v -> _state.update { it.copy(rideAvgPower = v) } }
+        collectInt(DataType.Type.AVERAGE_HR) { v -> _state.update { it.copy(rideAvgHr = v) } }
+        collectInt(DataType.Type.AVERAGE_CADENCE) { v -> _state.update { it.copy(rideAvgCadence = v) } }
         scope.launch {
             store.plan.collect { plan -> loadPlan(plan) }
         }
@@ -198,7 +202,8 @@ class WorkoutSession(
         scope.launch { store.powerSmoothing.collect { p -> _state.update { it.copy(powerSmoothing = p) } } }
         scope.launch { store.tileOutline.collect { on -> _state.update { it.copy(tileOutline = on) } } }
         scope.launch { store.secondField.collect { f -> _state.update { it.copy(secondField = f) } } }
-        _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapShowsNp = store.lapShowsNp, hrShowsLap = store.hrShowsLap) }
+        scope.launch { store.topRow.collect { r -> _state.update { it.copy(topRow = r) } } }
+        _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapShowsNp = store.lapShowsNp, freePower = store.freePower, freeSecond = store.freeSecond) }
     }
 
     fun stop() {
@@ -360,11 +365,21 @@ class WorkoutSession(
     }
 
     /** Free ride: tap on the HR tile switches between the current heart rate and the lap's average. */
-    fun toggleLapHr() {
+    /** Free ride's HR tile: now → the lap's average → the ride's average → now. */
+    fun cycleFreeSecond() {
         scope.launch {
-            val lap = !_state.value.hrShowsLap
-            store.hrShowsLap = lap
-            _state.update { it.copy(hrShowsLap = lap) }
+            val next = _state.value.freeSecond.next()
+            store.freeSecond = next
+            _state.update { it.copy(freeSecond = next) }
+        }
+    }
+
+    /** Free ride's power tile: the lap's average → the lap's NP → the ride's average → back. */
+    fun cycleFreePower() {
+        scope.launch {
+            val next = _state.value.freePower.next()
+            store.freePower = next
+            _state.update { it.copy(freePower = next) }
         }
     }
 
@@ -464,6 +479,19 @@ class WorkoutSession(
         resetWorkoutStats()
         // Progress only carries over a restart mid-ride; with no ride active, start from the top.
         if (rideIdle) store.clearProgress()
+        // Finished earlier in this ride and not closed with DONE: back to the Workout done screen
+        val done = if (rideIdle) null else plan?.let { store.restoreFinished(it) }
+        if (plan != null && done != null) {
+            elapsedInStepMs = plan.steps.last().durationSec * 1000L
+            _state.update {
+                it.copy(
+                    plan = plan, stepIndex = plan.steps.lastIndex, elapsedInStepSec = plan.steps.last().durationSec,
+                    finished = true, summary = done, lapAvg = null, workoutPaused = false, notStarted = false,
+                )
+            }
+            Timber.i("Loaded workout ${plan.name}: finished earlier, showing Workout done")
+            return
+        }
         val restored = if (rideIdle) null else plan?.let { store.restoreProgress(it) }
         val (index, elapsedSec) = restored ?: (0 to 0)
         // A workout waits for START WORKOUT, unless it was already running (app restarted mid-ride).
@@ -516,10 +544,12 @@ class WorkoutSession(
                 if (st.hasNext) {
                     goToStep(st.stepIndex + 1, natural = true)
                 } else {
-                    _state.update { it.copy(finished = true, elapsedInStepSec = step.durationSec, summary = summary()) }
+                    val sum = summary()
+                    _state.update { it.copy(finished = true, elapsedInStepSec = step.durationSec, summary = sum) }
                     karoo.dispatch(MarkLap)
                     beep(GO_TONE)
-                    store.clearProgress()
+                    // Remember it, so a restart of the app shows Workout done again (not START WORKOUT)
+                    st.plan?.let { store.saveFinished(it, sum) }
                 }
             } else {
                 _state.update { it.copy(elapsedInStepSec = (elapsedInStepMs / 1000).toInt()) }

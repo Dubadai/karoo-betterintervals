@@ -52,23 +52,29 @@ class IntervalDataType(
             // so each number appears (and beeps) exactly one second after the previous one.
             var lastRender = 0L
             var shown: Key? = null
+            // New watts are drawn as soon as they arrive (once the gap allows), not on the next
+            // one-second tick: on a fixed tick they waited up to a second, so the big number lagged
+            // behind the Karoo's own power fields.
+            var shownPower: Int? = null
             while (isActive) {
                 val s = session.state.value
                 val key = Key(
                     s.countdown, s.stepIndex, s.workoutPaused, s.chartZoomed, s.plan?.id, s.selectTarget,
-                    s.selectProgress, s.moveCancelled, s.targetShowsRange, s.wattsMode, s.powerSmoothing, s.tileOutline, s.secondField, s.notStarted, s.appearance, s.navigating, s.hrShowsLap, s.lapShowsNp,
+                    s.selectProgress, s.moveCancelled, s.targetShowsRange, s.wattsMode, s.powerSmoothing, s.tileOutline, s.secondField, s.notStarted, s.appearance, s.navigating, s.freeSecond, s.freePower, s.topRow, s.lapShowsNp,
                     s.autoConfirmLeft,
                 )
                 val since = SystemClock.elapsedRealtime() - lastRender
                 val changed = key != shown
                 val counting = s.countdown != null || shown?.countdown != null
-                val due = if (counting) changed && since >= MIN_GAP_MS else since >= 1000 || (changed && since >= MIN_GAP_MS)
+                val newPower = s.powerShown != shownPower
+                val due = if (counting) changed && since >= MIN_GAP_MS else since >= 1000 || ((changed || newPower) && since >= MIN_GAP_MS)
                 if (due) {
                     try {
                         emitter.updateView(renderer.render(s))
                         lastRender = SystemClock.elapsedRealtime()
                         if (s.countdown != null && s.countdown != shown?.countdown) session.onCountdownShown()
                         shown = key
+                        shownPower = s.powerShown
                     } catch (e: Exception) {
                         Timber.e(e, "Interval screen render failed")
                         lastRender = SystemClock.elapsedRealtime()
@@ -101,7 +107,9 @@ class IntervalDataType(
         val notStarted: Boolean,
         val appearance: Appearance,
         val navigating: Boolean,
-        val hrShowsLap: Boolean,
+        val freeSecond: FreeSecond,
+        val freePower: FreePower,
+        val topRow: TopRow?,
         val lapNp: Boolean,
         val autoConfirmLeft: Int?,
     )

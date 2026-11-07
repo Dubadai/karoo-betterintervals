@@ -43,10 +43,26 @@ class PlanStore private constructor(context: Context) {
         get() = prefs.getBoolean(KEY_TARGET_RANGE, false)
         set(value) = prefs.edit().putBoolean(KEY_TARGET_RANGE, value).apply()
 
-    /** Free ride: the HR tile shows the lap's average heart rate instead of the current one (remembered). */
-    var hrShowsLap: Boolean
-        get() = prefs.getBoolean(KEY_HR_LAP, false)
-        set(value) = prefs.edit().putBoolean(KEY_HR_LAP, value).apply()
+    /** Free ride: what the HR tile shows (remembered). Earlier versions stored on/off for the lap's average. */
+    var freeSecond: FreeSecond
+        get() = prefs.getString(KEY_FREE_SECOND, null)?.let { n -> FreeSecond.entries.firstOrNull { it.name == n } }
+            ?: if (prefs.getBoolean(KEY_HR_LAP, false)) FreeSecond.LAP else FreeSecond.NOW
+        set(value) = prefs.edit().putString(KEY_FREE_SECOND, value.name).remove(KEY_HR_LAP).apply()
+
+    /** Free ride: what the power tile shows (remembered). */
+    var freePower: FreePower
+        get() = enumPref(KEY_FREE_POWER, FreePower.entries, FreePower.LAP_AVG)
+        set(value) = prefs.edit().putString(KEY_FREE_POWER, value.name).apply()
+
+    private val _topRow = MutableStateFlow(prefs.getString(KEY_TOP_ROW, null)?.let { n -> TopRow.entries.firstOrNull { it.name == n } })
+
+    /** Settings › Top row (null until picked: each layout as it was). */
+    val topRow: StateFlow<TopRow?> = _topRow
+
+    fun setTopRow(value: TopRow) {
+        prefs.edit().putString(KEY_TOP_ROW, value.name).apply()
+        _topRow.value = value
+    }
 
     /** Lap tile shows NP instead of the lap average (remembered between rides). */
     var lapShowsNp: Boolean
@@ -185,7 +201,27 @@ class PlanStore private constructor(context: Context) {
     }
 
     fun clearProgress() {
-        prefs.edit().remove(KEY_PROGRESS).apply()
+        prefs.edit().remove(KEY_PROGRESS).remove(KEY_FINISHED).apply()
+    }
+
+    /**
+     * The workout was finished today with [summary]: kept so the Workout done screen comes back
+     * if the app restarts (the Karoo can restart it, more likely with a route and the map busy)
+     * until DONE is pressed or the ride ends.
+     */
+    fun saveFinished(plan: WorkoutPlan, summary: WorkoutSummary?) {
+        val s = summary
+        prefs.edit()
+            .remove(KEY_PROGRESS)
+            .putString(KEY_FINISHED, "${LocalDate.now()}|${plan.id}|${s?.timeSec ?: 0}|${s?.avgPower ?: ""}|${s?.np ?: ""}|${s?.avgHr ?: ""}|${s?.avgCadence ?: ""}")
+            .apply()
+    }
+
+    /** The summary of [plan] if it was finished today and not closed yet (see [saveFinished]), else null. */
+    fun restoreFinished(plan: WorkoutPlan): WorkoutSummary? {
+        val p = prefs.getString(KEY_FINISHED, null)?.split("|") ?: return null
+        if (p.size != 7 || p[0] != LocalDate.now().toString() || p[1] != plan.id) return null
+        return WorkoutSummary(p[2].toIntOrNull() ?: 0, p[3].toIntOrNull(), p[4].toIntOrNull(), p[5].toIntOrNull(), p[6].toIntOrNull())
     }
 
     /** Only today's selection is restored, so yesterday's workout doesn't show up on today's ride. */
@@ -206,11 +242,15 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_SELECTED_JSON = "selected_json"
         private const val KEY_SELECTED_DATE = "selected_date"
         private const val KEY_PROGRESS = "progress"
+        private const val KEY_FINISHED = "finished"
         private const val KEY_WATTS_COLORED = "watts_colored"
         private const val KEY_WATTS_MODE = "watts_mode"
         private const val KEY_TARGET_RANGE = "target_shows_range"
         private const val KEY_LAP_NP = "lap_shows_np"
         private const val KEY_HR_LAP = "hr_shows_lap"
+        private const val KEY_FREE_SECOND = "free_second"
+        private const val KEY_FREE_POWER = "free_power"
+        private const val KEY_TOP_ROW = "top_row"
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_TILE_OUTLINE = "tile_outline"
         private const val KEY_POWER_SMOOTHING = "power_smoothing"

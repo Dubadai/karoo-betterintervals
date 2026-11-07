@@ -30,6 +30,7 @@ object ExampleScreen {
         tileOutline: Boolean = false,
         secondField: SecondField = SecondField.HEART_RATE,
         notStarted: Boolean = false,
+        topRow: TopRow? = null,
     ) = ScreenState(
         plan = plan,
         stepIndex = 3,
@@ -45,6 +46,7 @@ object ExampleScreen {
         tileOutline = tileOutline,
         secondField = secondField,
         notStarted = notStarted,
+        topRow = topRow,
     )
 
     /** No workout loaded (free ride): lap 4 at 4:21, lap average 282 W, last lap 8:20 at 271 W. */

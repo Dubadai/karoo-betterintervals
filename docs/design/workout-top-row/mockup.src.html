@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workout top row</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
+  h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
+  h2 { font-size:15px; font-weight:500; margin:10px 0 12px; text-align:center; color:#CFCCC6; }
+  p.d { color:#A9A6A0; margin:0 auto 22px; max-width:780px; text-align:center; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:24px; margin-bottom:34px; }
+  .dev { display:grid; justify-items:center; gap:8px; }
+  .cap { color:#A9A6A0; font-size:13px; max-width:380px; text-align:center; }
+</style>
+</head>
+<body>
+<h1>Workout screen: what the top row shows</h1>
+<p class="d">Target and Lap avg are always on the screen. Settings › Top row: Heart rate, Cadence or Target. Whatever isn't at the top goes in the second tile next to Lap avg (with Target at the top: heart rate, or cadence if Settings › Heart rate or cadence says so). Drawn from the app's own screens (field gallery).</p>
+<div id="rows"></div>
+<script>/*__KAROO_DEVICE_JS__*/</script>
+<script>
+const FRAME = "__FRAME__";
+const B = /*__BASE__*/;
+const img = src => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
+const TOP = [100, 66, 280, 60];        // the top row between the gear and pause (x, y, w, h)
+const TILE2 = [242, 458, 228, 106];    // the second tile
+const put = (ctx, src, [x, y, w, h]) => ctx.drawImage(src, x, y, w, h, x, y, w, h);
+function compose(base, top, tile) {
+  return ctx => { ctx.drawImage(base, 0, 0); if (top) put(ctx, top, TOP); if (tile) put(ctx, tile, TILE2); };
+}
+// Settings: the Power section becomes "Top row" (colours sampled from the screenshot)
+function settings(base, theme) {
+  return ctx => {
+    const c = document.createElement('canvas'); c.width = 480; c.height = 800; const x = c.getContext('2d'); x.drawImage(base, 0, 0);
+    const px = (X, Y) => { const d = x.getImageData(X, Y, 1, 1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; };
+    const bg = px(6, 470), seg = px(60, 545), sel = px(185, 545);   // page, segmented control, picked option
+    ctx.drawImage(base, 0, 0);
+    const ink = theme === 'light' ? '#1B2427' : '#E8ECEE', selInk = theme === 'light' ? '#FFFFFF' : '#0B0B0B', help = theme === 'light' ? '#6E6E6E' : '#A8A8A8';
+    ctx.fillStyle = bg; ctx.fillRect(0, 445, 480, 300);
+    // heading with a small "top bar" icon
+    ctx.strokeStyle = ink; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(27, 474, 26, 26, 4); ctx.stroke();
+    ctx.fillStyle = ink; ctx.fillRect(27, 474, 26, 8);
+    ctx.font = '400 31px -apple-system, "Helvetica Neue", Arial'; ctx.fillText('Top row', 74, 500);
+    ctx.fillStyle = seg; ctx.beginPath(); ctx.roundRect(22, 530, 436, 76, 38); ctx.fill();
+    ctx.fillStyle = sel; ctx.beginPath(); ctx.roundRect(26, 534, 140, 68, 34); ctx.fill();
+    ctx.font = '400 21px -apple-system, "Helvetica Neue", Arial'; ctx.textAlign = 'center';
+    [['Heart rate', 96, true], ['Cadence', 240, false], ['Target', 384, false]].forEach(([l, x, on]) => { ctx.fillStyle = on ? selInk : ink; ctx.fillText(l, x, 576); });
+    ctx.textAlign = 'left'; ctx.fillStyle = help; ctx.font = '400 22px -apple-system, "Helvetica Neue", Arial';
+    ['What the top of the workout screen shows.', 'Target and Lap avg are always there: with', 'Target at the top, the tile shows heart rate.'].forEach((l, i) => ctx.fillText(l, 22, 650 + i * 30));
+  };
+}
+(async () => {
+  const I = {}; for (const [k, v] of Object.entries(B)) I[k] = await img(v);
+  const rows = [
+    ['Number styles · Top row: Heart rate (as now)', t => compose(I['karoo-' + t])],
+    ['Number styles · Top row: Cadence', t => compose(I['cadence-' + t])],
+    ['Number styles · Top row: Target (heart rate goes to the tile)', t => compose(I['karoo-' + t], I['gauge-' + t], I['gauge-' + t])],
+    ['Gauge · Top row: Target (as now)', t => compose(I['gauge-' + t])],
+    ['Gauge · Top row: Heart rate (target goes to the tile)', t => compose(I['gauge-' + t], I['karoo-' + t], I['karoo-' + t])],
+    ['Gauge · Top row: Cadence (target goes to the tile)', t => compose(I['gauge-' + t], I['cadence-' + t], I['karoo-' + t])],
+    ['Settings › Top row (where Power sits in this shot; it goes after Heart rate or cadence)', t => settings(I['settings-' + t], t)],
+  ];
+  for (const [cap, make] of rows) {
+    const row = document.createElement('div'); row.className = 'devices';
+    for (const t of ['light', 'dark']) {
+      const dev = await KarooDevice.load({ frame: FRAME, screen: B['karoo-' + t] });
+      const scr = dev.screen({ draw: make(t), scale: 2 });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 380));
+      const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${t})`; el.append(c);
+      row.append(el);
+    }
+    document.getElementById('rows').append(row);
+  }
+})();
+</script>
+</body>
+</html>

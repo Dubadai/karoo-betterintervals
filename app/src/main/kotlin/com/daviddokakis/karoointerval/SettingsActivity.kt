@@ -59,7 +59,7 @@ class SettingsActivity : AppearanceActivity() {
     private fun showExample() {
         val s = ExampleScreen.state(
             store.wattsMode, store.appearance.value,
-            tileOutline = store.tileOutline.value, secondField = store.secondField.value,
+            tileOutline = store.tileOutline.value, secondField = store.secondField.value, topRow = store.topRow.value,
         )
         val full = ExampleScreen.draw(this, s, ExampleScreen.FULL_W, ExampleScreen.FULL_H)
         val h = dp(127)
@@ -132,6 +132,21 @@ class SettingsActivity : AppearanceActivity() {
             )
             form.addView(settingsHelp(getString(R.string.cadence_smoothing_help)))
         }
+        form.addView(settingsDivider())
+
+        // Top row of the workout screen: heart rate, cadence or the target (the other goes in the
+        // tile next to Lap avg). Not picked yet: shows what the number styles have at the top.
+        form.addView(settingsHeading(R.drawable.ic_top_row, getString(R.string.top_row)))
+        form.addView(
+            segmented(
+                listOf(R.string.heart_rate to TopRow.HEART_RATE, R.string.cadence to TopRow.CADENCE, R.string.target to TopRow.TARGET),
+                store.topRow.value ?: if (store.secondField.value == SecondField.CADENCE) TopRow.CADENCE else TopRow.HEART_RATE,
+            ) { picked ->
+                store.setTopRow(picked)
+                render()
+            },
+        )
+        form.addView(settingsHelp(getString(R.string.top_row_help)))
         form.addView(settingsDivider())
 
         // Update notices: Off / On (see UpdateCheck)

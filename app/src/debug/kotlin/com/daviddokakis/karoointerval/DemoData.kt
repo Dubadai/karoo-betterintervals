@@ -60,6 +60,10 @@ object DemoData {
             cadence = 88 + (tick % 5),
             lapCadenceAvg = 88,
             lastLapCadenceAvg = 87,
+            // The whole ride so far: a little under the lap's numbers
+            rideAvgPower = lapAvg - 33,
+            rideAvgHr = 131,
+            rideAvgCadence = 86,
             hrZones = s.hrZones.ifEmpty { DEFAULT_HR_ZONES },
         )
     }

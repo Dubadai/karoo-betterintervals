@@ -13,3 +13,15 @@ enum class Smoothing(val label: Int, val power: String, val cadence: String, val
 
 /** Settings › Heart rate or cadence: what the HR spots on the screens show. */
 enum class SecondField { HEART_RATE, CADENCE }
+
+/** Settings › Top row: what the top of the workout screen shows; the other one goes in the second tile. */
+enum class TopRow { HEART_RATE, CADENCE, TARGET }
+
+/** Free ride's power tile (tap to go on): the lap's average, the lap's NP, the ride's average. */
+enum class FreePower { LAP_AVG, LAP_NP, RIDE_AVG }
+
+/** Free ride's HR (or cadence) tile (tap to go on): now, the lap's average, the ride's average. */
+enum class FreeSecond { NOW, LAP, RIDE }
+
+/** The next value, back to the first after the last. */
+inline fun <reified E : Enum<E>> E.next(): E = enumValues<E>().let { it[(ordinal + 1) % it.size] }
