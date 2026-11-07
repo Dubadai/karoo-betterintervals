@@ -81,3 +81,7 @@ Chosen: C with "3S POWER" in the secondary grey (like LAST LAP), and Last lap 20
 values. Top rows of `watts-label.html`.
 The label follows Settings › Power, named like the Karoo's own fields: POWER (instant), 3S POWER,
 5S POWER, 10S POWER.
+
+Built (`device/11-power-label-built-dark.png`, David's Karoo, demo): 3S POWER 22 px above the
+digits, the number centred between the gear and the lap row (within 2.5 px), Last lap 20 px above
+its values. Every Power setting checked on the emulator (`gallery/screens/free-*`).
