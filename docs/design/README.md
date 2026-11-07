@@ -20,6 +20,7 @@ and screenshots from the Karoo 3 (`device/`). Newest work first.
 | `paused-workout/` | Yellow "Workout paused" box, green half-pill resume button |
 | `watts-range-modes/` | Tap the watts: plain / coloured number / coloured background / both |
 | `free-ride/` | Screen without a workout: watts, lap avg, HR zone tile, laps |
+| `free-ride-native/` | Free ride at the Karoo's own sizes and HR zone colours (round 1) |
 | `workouts-page/` | Workouts list, Account page, offline / Wi-Fi |
 | `route/` | Layout with Karoo's route pill (field gets shorter, watts auto-size) |
 | `interval-screen/` | The main workout screen, countdown and zoomed chart |
