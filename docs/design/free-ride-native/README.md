@@ -29,4 +29,5 @@ sits at the field's bottom edge above the turn pill and the watts get the space 
 
 Round 3: watts centred between the bottom of the visible gear (not its touch area) and the top of
 the lap row. "LAP TIME" and its icon now use exactly the tiles' label font, size and icon, lined up
-with the tiles' icons.
+with the tiles' icons. Label and icon are centred on
+the clock's digits.

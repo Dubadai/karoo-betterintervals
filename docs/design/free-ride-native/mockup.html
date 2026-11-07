@@ -209,8 +209,10 @@ function after(theme, nat, shot, route) {
     // Label and icon exactly like the tiles' (LAP AVG, HR): same font, size and icon, and the
     // icon lines up with the tiles' icons
     const lapIcon = tinted(nat, 250, 221, 24, 27, t.green);
-    ctx.drawImage(lapIcon, 28, L.lap - 23);
-    txt(ctx, 'LAP TIME', 58, L.lap, LABEL, t.ink);
+    // ...and centred on the clock's digits (clock caps 38 px, label caps 20 px, icon 27 px)
+    const mid = L.lap + 2 - 19;
+    ctx.drawImage(lapIcon, 28, mid - 13.5);
+    txt(ctx, 'LAP TIME', 58, mid + 10, LABEL, t.ink);
     txt(ctx, '10:24', 464, L.lap + 2, '600 54px PlexSemi', t.ink, 'right', 0.9);
     // Lap avg and HR, the Karoo's 2-across fields
     const lapAvgIcons = tinted(nat, 250, 221, 52, 27, t.green);
