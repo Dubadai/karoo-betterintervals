@@ -1,19 +1,19 @@
 # Getting started
 
-Interval Screen loads your planned workouts from [intervals.icu](https://intervals.icu) and runs
+BetterIntervals (formerly Interval Screen) loads your planned workouts from [intervals.icu](https://intervals.icu) and runs
 them itself on the Karoo, so you can move forward **and back** between intervals.
 
 ## 1. Install the app
 
-On your phone, open the latest [release](https://github.com/Dubadai/karoo-interval/releases/latest)
-and share the `interval-screen.apk` download link to the **Hammerhead Companion** app. It installs
+On your phone, open the latest [release](https://github.com/Dubadai/karoo-betterintervals/releases/latest)
+and share the `.apk` download link to the **Hammerhead Companion** app. It installs
 the app on your paired Karoo.
 
 Updating works the same way, and keeps your settings and API key: see [Updating the app](updating.md).
 
 ## 2. The introduction
 
-The first time you open **Interval Screen** from the Karoo's app list, four short pages walk you
+The first time you open **BetterIntervals** from the Karoo's app list, four short pages walk you
 through the setup. **Skip** (top right) jumps past them; everything stays changeable later in
 [Settings](settings.md), which can also show the introduction again.
 
@@ -34,7 +34,7 @@ key is stored only on the Karoo. No key yet? Tap **Next** anyway and add it late
 ### Add it to a ride
 
 1. On the Karoo, open **Profiles**, pick a profile, then **Data Pages**, and add a page with **+**.
-2. Tap **ADD FIELD** and pick **Interval Screen → Interval Screen**.
+2. Tap **ADD FIELD** and pick **BetterIntervals → Workout screen**.
 
 The screen fills the whole page. With a route loaded the Karoo makes the field a bit shorter, and
 the watts shrink to fit.
@@ -71,6 +71,6 @@ In the Karoo's controller settings you can assign these to remote buttons:
 
 ## Good to know
 
-- Don't also start the same workout in the Karoo's own workout player. Interval Screen marks a
+- Don't also start the same workout in the Karoo's own workout player. BetterIntervals marks a
   lap at every interval change, which would move the Karoo's player along too.
 - Syncing uses the Karoo's Wi-Fi, or your phone through the Companion app.

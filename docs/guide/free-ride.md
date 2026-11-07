@@ -1,6 +1,6 @@
 # Riding without a workout
 
-With no workout picked, Interval Screen shows a free-ride screen instead.
+With no workout picked, BetterIntervals shows a free-ride screen instead.
 
 <img src="images/free-ride.png" width="240" alt="Free-ride screen">
 

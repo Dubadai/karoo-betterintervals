@@ -1,6 +1,6 @@
-# Interval Screen guide
+# BetterIntervals guide
 
-How to use Interval Screen on a Hammerhead Karoo 3. Each page covers one part of the app, with
+How to use BetterIntervals on a Hammerhead Karoo 3. Each page covers one part of the app, with
 pictures from a real Karoo.
 
 | Guide | What it covers |
