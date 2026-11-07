@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Karoo zone colours</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
+  h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
+  h2 { font-size:15px; font-weight:500; margin:8px 0 14px; text-align:center; color:#CFCCC5; }
+  p.d { color:#A9A6A0; margin:0 auto 22px; max-width:780px; text-align:center; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:30px; margin-bottom:34px; }
+  .dev { display:grid; justify-items:center; gap:8px; }
+  .cap { color:#A9A6A0; font-size:13px; max-width:240px; text-align:center; }
+  .keys { display:flex; flex-wrap:wrap; justify-content:center; gap:22px; margin:0 auto 26px; }
+  .key { display:grid; gap:6px; }
+  .key b { font-weight:500; font-size:13px; color:#CFCCC5; }
+  .sw { display:flex; gap:4px; }
+  .sw span { width:46px; height:26px; border-radius:4px; display:grid; place-items:center; font:600 11px/1 -apple-system, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Workouts in the Karoo's power zone colours (as in BigWatts)</h1>
+<p class="d">Stair Climb on the workout screen and the Workouts page. BigWatts uses the Karoo's 7 power zones; BetterIntervals now uses 5 intervals.icu-style zones.</p>
+<div class="keys" id="keys"></div>
+
+<h2>Workout screen</h2>
+<div class="devices" id="screen-light"></div>
+<div class="devices" id="screen-dark"></div>
+<div class="devices" id="chart"></div>
+<h2>Workouts page</h2>
+<div class="devices" id="workouts"></div>
+
+<script>/*__KAROO_DEVICE_JS__*/</script>
+<script>
+const FRAME = "__FRAME__";
+const BASE = {
+  screen: { light: "__screen_light__", dark: "__screen_dark__" },
+  workouts: { light: "__workouts_light__", dark: "__workouts_dark__" },
+};
+
+// BetterIntervals now (values/ and values-night/colors.xml): z1–z5 and "done" (past steps).
+const NOW = {
+  light: { z: ['#1D9E75', '#639922', '#BA7517', '#D85A30', '#E24B4A'], done: '#888780', bg: { screen: '#FFFFFF', workouts: '#F1EFE8' } },
+  dark:  { z: ['#1D9E75', '#639922', '#EF9F27', '#D85A30', '#E24B4A'], done: '#888780', bg: { screen: '#000000', workouts: '#2C2C2A' } },
+};
+// BigWatts' Karoo zone colours (WattsRenderer.kt, zoneArc), Z1–Z7.
+const KAROO = {
+  light: ['#8F8D86', '#2F7FD8', '#3FA34D', '#E8B400', '#F07A1A', '#E0383E', '#8B4FD8'],
+  dark:  ['#A6A49C', '#4C9BF0', '#5CC46A', '#FFD02E', '#FF9440', '#FF5A5F', '#A97AF2'],
+};
+// Past steps, faded so they don't look like Z1 grey.
+const DONE_FADED = { light: '#DDDCD6', dark: '#3A3A38' };
+// Same % of FTP bands: intervals.icu z1–z5 = Karoo Z1–Z5 (≤55, 56–75, 76–90, 91–105, 106–120 %);
+// Karoo adds Z6 (121–150 %) and Z7 (> 150 %), which this workout doesn't reach.
+
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+
+/** Swap colours (keeping anti-aliased edges): each pixel that's a blend of [from] over [bg] becomes the same blend of [to]. */
+function recolour(pairs, bgHex, y0 = 0) {
+  const bg = hex(bgHex), P = pairs.map(([f, t]) => [hex(f), hex(t)]);
+  return ctx => {
+    const img = ctx.getImageData(0, 0, 480, 800), d = img.data;
+    for (let i = y0 * 480 * 4; i < d.length; i += 4) {
+      const p = [d[i], d[i + 1], d[i + 2]];
+      for (const [f, t] of P) {
+        const v = f.map((c, k) => c - bg[k]), len2 = v.reduce((s, c) => s + c * c, 0);
+        if (!len2) continue;
+        const a = p.reduce((s, c, k) => s + (c - bg[k]) * v[k], 0) / len2;
+        if (a < 0.2 || a > 1.05) continue;
+        const res = p.reduce((s, c, k) => s + Math.abs(c - (bg[k] + a * v[k])), 0);
+        if (res > 18) continue;
+        for (let k = 0; k < 3; k++) d[i + k] = Math.round(bg[k] + Math.min(a, 1) * (t[k] - bg[k]));
+        break;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  };
+}
+
+const VARIANTS = (theme, bgKey) => {
+  const n = NOW[theme], k = KAROO[theme], zones = n.z.map((c, i) => [c, k[i]]);
+  return [
+    ['Now: intervals.icu colours', null],
+    ['A · Karoo zone colours', [...zones]],
+    ['B · Karoo colours, past steps faded', [...zones, [n.done, DONE_FADED[theme]]]],
+  ];
+};
+
+function keys() {
+  const box = document.getElementById('keys');
+  const row = (title, colours, labels) => {
+    const k = document.createElement('div'); k.className = 'key';
+    k.innerHTML = `<b>${title}</b>`;
+    const sw = document.createElement('div'); sw.className = 'sw';
+    colours.forEach((c, i) => { const s = document.createElement('span'); s.style.background = c; s.style.color = '#0B0B0B'; s.textContent = labels[i]; sw.append(s); });
+    k.append(sw); box.append(k);
+  };
+  row('Now (light)', [...NOW.light.z, NOW.light.done], ['Z1', 'Z2', 'Z3', 'Z4', 'Z5', 'past']);
+  row('Karoo zones (light)', [...KAROO.light, DONE_FADED.light], ['Z1', 'Z2', 'Z3', 'Z4', 'Z5', 'Z6', 'Z7', 'past']);
+}
+
+(async () => {
+  keys();
+  for (const t of ['light', 'dark']) {
+    const dev = await KarooDevice.load({ frame: FRAME, screen: BASE.screen[t] });
+    const row = document.getElementById(`screen-${t}`);
+    for (const [cap, pairs] of VARIANTS(t)) {
+      const scr = dev.screen({ draw: pairs ? recolour(pairs, NOW[t].bg.screen, 640) : undefined });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 230));
+      const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${t})`; el.append(c); row.append(el);
+      const z = document.createElement('div'); z.className = 'dev'; z.append(dev.crop(scr, [0, 670, 480, 130], 0.5));
+      const zc = document.createElement('div'); zc.className = 'cap'; zc.textContent = `${cap.split(':')[0]} (${t})`; z.append(zc);
+      document.getElementById('chart').append(z);
+    }
+  }
+  const wrow = document.getElementById('workouts');
+  for (const t of ['light', 'dark']) {
+    const dev = await KarooDevice.load({ frame: FRAME, screen: BASE.workouts[t] });
+    for (const [cap, pairs] of VARIANTS(t).filter((_, i) => i !== 1)) {
+      const scr = dev.screen({ draw: pairs ? recolour(pairs, NOW[t].bg.workouts, 480) : undefined });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.crop(scr, [0, 370, 480, 260], 0.6));
+      const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap.split(':')[0]} (${t})`; el.append(c); wrow.append(el);
+    }
+  }
+})();
+</script>
+</body>
+</html>
