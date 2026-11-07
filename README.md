@@ -86,9 +86,36 @@ Releases must always be signed with the **same key**, or Karoos with an older ve
 4. Build and publish:
    ```bash
    ./gradlew :app:assembleRelease
+   ./gradlew -q :app:releaseManifest -PreleaseNotes="What changed"
    cp app/build.nosync/outputs/apk/release/app-release.apk betterintervals.apk
-   gh release create v0.1.0 betterintervals.apk --title "v0.1.0" --notes "What changed"
+   gh release create v0.1.0 betterintervals.apk app/build.nosync/manifest.json --title "v0.1.0" --notes "What changed"
    ```
+   Always upload `manifest.json` with the APK, and don't mark the release as a pre-release:
+   Karoos find both through GitHub's `releases/latest/download/…` links.
+
+### Update notices
+
+From 0.5.3, the app names `releases/latest/download/manifest.json` in its AndroidManifest
+(`io.hammerhead.karooext.MANIFEST_URL`). With it, the Karoo's Settings › Apps › DDB BetterIntervals
+page shows the release notes and an **UPDATE** button that installs `betterintervals.apk` on the
+Karoo. The Karoo only reads it when that page is opened, so `UpdateCheck.kt` tells the rider: when
+the Karoo starts and then once a day, never during a ride, it reads the manifest and puts one
+"Update available" card per new version in Control Center › Notifications. Tapping the card
+opens that Karoo page. Riders can turn it off in Settings › Update notices.
+
+To test it, serve a fake manifest with a higher `latestVersionCode` from the Mac and point a
+release-key build at it (the Karoo reaches the Mac through `adb reverse`):
+
+```bash
+./gradlew :app:assembleRelease -PmanifestUrl=http://localhost:8791/manifest.json
+adb reverse tcp:8791 tcp:8791
+adb install -r app/build.nosync/outputs/apk/release/app-release.apk
+```
+
+The card appears about a minute after the app starts (only when no ride is recording): a build
+with a different manifest URL forgets the last check. After that it checks once a day. Never
+publish a build made with `-PmanifestUrl`; install the real release afterwards (the test
+manifest's UPDATE does that if its `latestApkUrl` is the real APK).
 
 Without `keystore.properties`, release builds fall back to the debug key: fine for testing, but
 don't publish those.
@@ -102,6 +129,7 @@ don't publish those.
 | `IntervalDataType.kt` | The data field; redraws once a second, right away for countdown numbers |
 | `ScreenRenderer.kt` | Builds the field (workout screen and free-ride screen) |
 | `ChartRenderer.kt` | Draws the workout chart and the list thumbnails |
+| `UpdateCheck.kt` | "Update available" card when a newer release is on GitHub; opens the Karoo's app page |
 | `IntervalsIcu.kt`, `KarooHttp.kt` | intervals.icu client, requests through the Karoo's connection |
 | `PlanStore.kt` | Selected workout, API key, synced week, saved progress (app-private storage) |
 | `SetupActivity.kt`, `AccountActivity.kt` | Workouts page and Account page |

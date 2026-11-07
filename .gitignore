@@ -12,3 +12,6 @@ captures/
 keystore.properties
 *.jks
 *.keystore
+
+# Field gallery: the big framed images are made on demand (design-assets/tools/field-gallery)
+docs/design/gallery/artboard/

@@ -9,5 +9,10 @@
                 <action android:name="com.daviddokakis.karoointerval.DEBUG_REMOTE" />
             </intent-filter>
         </receiver>
+        <!-- Field gallery: the screen at Karoo sizes, light and dark (design-assets/tools/field-gallery) -->
+        <activity
+            android:name=".FieldGalleryActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
     </application>
 </manifest>

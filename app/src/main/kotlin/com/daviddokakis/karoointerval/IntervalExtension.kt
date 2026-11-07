@@ -7,6 +7,8 @@ import timber.log.Timber
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /** Entry point the Karoo system binds to. */
@@ -15,6 +17,7 @@ class IntervalExtension : KarooExtension(EXTENSION_ID, "1") {
     private lateinit var karoo: KarooSystemService
     private lateinit var workout: WorkoutSession
     private var syncJob: Job? = null
+    private val updateScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val types: List<DataTypeImpl> by lazy {
         listOf(IntervalDataType(extension, workout))
@@ -29,6 +32,9 @@ class IntervalExtension : KarooExtension(EXTENSION_ID, "1") {
         session = workout
         karoo.connect { connected -> Timber.i("Karoo system connected: $connected") }
         workout.start()
+
+        // Not riding: tell the rider when a newer release is on GitHub (see UpdateCheck).
+        UpdateCheck(this, karoo, appName = "BetterIntervals").start(updateScope)
 
         // Refresh this week's list in the background so it's ready when the rider picks a workout.
         if (store.hasCredentials) {
@@ -50,6 +56,7 @@ class IntervalExtension : KarooExtension(EXTENSION_ID, "1") {
 
     override fun onDestroy() {
         syncJob?.cancel()
+        updateScope.cancel()
         workout.stop()
         session = null
         karoo.disconnect()
