@@ -70,8 +70,8 @@ class ExampleCard(context: Context) : LinearLayout(context) {
 
 /**
  * A Settings page (design round 2, karoo-starter/docs/design/settings-preview/): a fixed bar with
- * the back arrow and "Settings"; under it the app's name as a big title that scrolls away; then the
- * Example [card], which slides up and stays just under the bar; then the settings ([form]).
+ * the back arrow and "Settings"; under it the app's name as a big title, the Example [card] and the
+ * settings ([form]), which all scroll together (the card isn't pinned, so the settings get the room).
  */
 class SettingsLayout(
     context: Context,
@@ -84,7 +84,6 @@ class SettingsLayout(
     textColor: Int,
 ) : LinearLayout(context) {
     private val scroll = android.widget.ScrollView(context)
-    private val spacer = View(context)
     private val cardHolder = android.widget.FrameLayout(context)
 
     init {
@@ -111,31 +110,13 @@ class SettingsLayout(
         val content = LinearLayout(context).apply {
             orientation = VERTICAL
             addView(title, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
-            addView(spacer, LayoutParams(LayoutParams.MATCH_PARENT, 0))
+            addView(cardHolder, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
             addView(form, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
         }
         scroll.addView(content, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
-        cardHolder.setBackgroundColor(pageColor)   // what scrolls under the card stays hidden
         cardHolder.setPadding(dp(12), dp(4), dp(12), dp(4))
         cardHolder.addView(card, android.widget.FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
-        addView(
-            android.widget.FrameLayout(context).apply {
-                addView(scroll, android.widget.FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
-                addView(cardHolder, android.widget.FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
-            },
-            LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f),
-        )
-        cardHolder.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
-            if (bottom - top != oldBottom - oldTop) spacer.post { spacer.layoutParams = spacer.layoutParams.apply { height = bottom - top }; spacer.requestLayout() }
-            place()
-        }
-        title.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> place() }
-        scroll.setOnScrollChangeListener { _, _, _, _, _ -> place() }
-    }
-
-    /** The card sits under the title, and stops under the bar once the title has scrolled away. */
-    private fun place() {
-        cardHolder.translationY = maxOf(0, title.height - scroll.scrollY).toFloat()
+        addView(scroll, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
