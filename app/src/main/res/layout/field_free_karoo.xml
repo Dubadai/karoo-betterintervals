@@ -244,12 +244,13 @@
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
 
-            <!-- Fits between the Karoo's back and next buttons (150dp), shrinking if needed -->
+            <!-- Fits between the Karoo's back and next buttons (150dp), shrinking if needed. Pulled up
+                 (-6dp), since the box has room above the text: 10 px from the label, as designed -->
             <TextView
                 android:id="@+id/free_last_lap"
                 android:layout_width="150dp"
                 android:layout_height="28dp"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="-6dp"
                 android:autoSizeMaxTextSize="22sp"
                 android:autoSizeMinTextSize="11sp"
                 android:autoSizeStepGranularity="1sp"
