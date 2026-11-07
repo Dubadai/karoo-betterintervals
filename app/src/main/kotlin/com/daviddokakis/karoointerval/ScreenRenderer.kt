@@ -540,7 +540,11 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             R.id.free_lap_time to 28f,
         ).forEach { (id, sp) -> v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_PX, sp * density * scale) }
 
-        v.setTextViewText(R.id.free_watts, s.powerShown?.toString() ?: "--")
+        val watts = s.powerShown?.toString() ?: "--"
+        v.setTextViewText(R.id.free_watts, watts)
+        v.setTextViewText(R.id.free_watts_label, context.getString(s.powerSmoothing.powerName))
+        v.setTextViewTextSize(R.id.free_watts_label, TypedValue.COMPLEX_UNIT_PX, 15f * density * scale)
+        v.setViewPadding(R.id.free_watts_label, 0, (24 * density).toInt(), 0, wattsLabelLift(watts, s.navigating))
         v.setTextViewText(R.id.free_lap_label, context.getString(if (s.lapShowsNp) R.string.np else R.string.lap_avg))
         v.setTextViewText(R.id.free_lap_avg, (if (s.lapShowsNp) s.freeLapNp else s.lapPowerAvg)?.toString() ?: "--")
         v.setOnClickPendingIntent(R.id.free_lap_tile, lapNpToggleIntent)
@@ -642,6 +646,32 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         return (dp * density * scale).toInt().coerceAtLeast(1)
     }
 
+    /**
+     * Bottom padding that puts the free-ride watts label 22 px above the digits. The label and
+     * the watts share the same box, centred, so the padding lifts the label by half its size.
+     * The watts' size is worked out the way their autosize picks it: up to 124sp, as big as fits
+     * the space (shorter with a route, which the Karoo doesn't report) and the width.
+     */
+    private fun wattsLabelLift(watts: String, navigating: Boolean): Int {
+        val areaPx = (FREE_WATTS_DP - (if (navigating) ROUTE_DP else 0f)) * density * scale - 24 * density
+        val widthPx = config.viewSize.first - 6 * density
+        wattsPaint.textSize = 100f
+        val perPx = (wattsPaint.measureText(watts) / 100f).coerceAtLeast(0.01f)
+        val size = minOf(124 * density, areaPx / 1.3f, widthPx / perPx)
+        // Digits are 0.698 em tall and sit 0.026 em below the box's centre; the label's capitals
+        // (15sp) are 20 px tall. Label centre = digits' top − 22 px − half the label.
+        val labelCap = 20f * scale
+        // (+3 px measured on a Karoo 3: the label's capitals sit a little low in their box)
+        val lift = 2 * (0.349f * size - 0.026f * size + 25 * scale + labelCap / 2)
+        return lift.toInt().coerceAtLeast(0)
+    }
+
+    private val wattsPaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        typeface = android.graphics.Typeface.create("sans-serif-light", android.graphics.Typeface.NORMAL)
+        textScaleX = 0.9f
+        letterSpacing = -0.05f
+    }
+
     /** Largest size up to [CELL_VALUE_SP] at which [text] fits in a Karoo-style cell. */
     private fun cellValueSp(text: String): Float {
         val cellPx = ((config.viewSize.first - 16 * density) / 2f - 3 * density - 12 * density).coerceAtLeast(1f)
@@ -719,6 +749,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         /** Height of the gauge's space on a full page without a route (measured), and how much a route takes. */
         private const val GAUGE_KAROO_DP = 128.7f   // 241 px on a Karoo 3 (162 px with a route)
         private const val ROUTE_DP = 42.1f          // a route makes the field 79 px shorter
+        private const val FREE_WATTS_DP = 196.3f    // the free-ride watts' space: 368 px on a Karoo 3
 
 
     }

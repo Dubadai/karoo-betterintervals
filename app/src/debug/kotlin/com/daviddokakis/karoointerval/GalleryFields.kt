@@ -16,7 +16,7 @@ object GalleryFields {
 
     /** The workout screen's looks and the states the guide explains (Karoo style is the only style). */
     val variants = listOf(
-        "ready", "karoo", "karoo-number", "karoo-colours", "gauge", "free", "free-first-lap", "done",
+        "ready", "karoo", "karoo-number", "karoo-colours", "gauge", "free", "free-first-lap", "free-instant", "free-5s", "free-10s", "done",
         "choose", "restart", "cancelled", "countdown", "paused", "zoomed", "target-range", "lap-np",
         "outline", "cadence",
     )
@@ -34,6 +34,10 @@ object GalleryFields {
             // Five HR zones from a rider profile, so the HR tile shows the Karoo's zone colour (132: Z2)
             "free" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES)
             "free-first-lap" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES, lastLapTimeSec = null)
+            // The watts label follows Settings › Power
+            "free-instant" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES, powerSmoothing = Smoothing.INSTANT)
+            "free-5s" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES, powerSmoothing = Smoothing.S5)
+            "free-10s" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES, powerSmoothing = Smoothing.S10)
             // The whole workout done: 52:00, averages that fit the showcase ride
             "done" -> k.copy(finished = true, stepIndex = 9, summary = WorkoutSummary(3120, 232, 251, 132, 88))
             // Jumping: choosing 1 ahead, restarting, cancelled, the countdown

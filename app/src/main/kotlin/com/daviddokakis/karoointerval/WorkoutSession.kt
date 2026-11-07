@@ -195,6 +195,7 @@ class WorkoutSession(
         }
         scope.launch { tickLoop() }
         scope.launch { store.appearance.collect { a -> _state.update { it.copy(appearance = a) } } }
+        scope.launch { store.powerSmoothing.collect { p -> _state.update { it.copy(powerSmoothing = p) } } }
         scope.launch { store.tileOutline.collect { on -> _state.update { it.copy(tileOutline = on) } } }
         scope.launch { store.secondField.collect { f -> _state.update { it.copy(secondField = f) } } }
         _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapShowsNp = store.lapShowsNp, hrShowsLap = store.hrShowsLap) }
