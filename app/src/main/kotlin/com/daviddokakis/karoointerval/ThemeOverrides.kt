@@ -149,6 +149,7 @@ internal object ThemeOverrides {
 
     private val FIELD_FREE_KAROO = listOf(
         Op(R.id.free_watts, Kind.TEXT, R.color.text),
+        Op(R.id.free_watts_label, Kind.TEXT, R.color.text_secondary),
         Op(R.id.th_free_karoo_2, Kind.TEXT, R.color.text),
         Op(R.id.free_lap_time, Kind.TEXT, R.color.text),
         Op(R.id.free_lap_tile, Kind.BG, R.color.tile_tonal),

@@ -55,6 +55,8 @@ data class ScreenState(
     val navigating: Boolean = false,
     /** Dark / Light / Auto setting (Auto: follow the Karoo). */
     val appearance: Appearance = Appearance.AUTO,
+    /** Settings › Power: what the big watts are (named above them on the free-ride screen). */
+    val powerSmoothing: Smoothing = Smoothing.S3,
     /** Tiles setting: Outline (border only) instead of Tonal (grey fill). */
     val tileOutline: Boolean = false,
     /** Target tile shows the target range instead of the single target (tap to toggle). */

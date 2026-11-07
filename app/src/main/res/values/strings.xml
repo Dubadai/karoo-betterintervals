@@ -24,6 +24,10 @@
     <string name="cd_heart_rate">Heart rate</string>
     <string name="hr">HR</string>
     <string name="jumping_to">Jumping to</string>
+    <string name="power_name_instant">Power</string>
+    <string name="power_name_3s">3s power</string>
+    <string name="power_name_5s">5s power</string>
+    <string name="power_name_10s">10s power</string>
     <string name="current_lap_time">Current lap time</string>
     <string name="last_lap_label">Last lap</string>
     <string name="last_lap_value">%1$s · %2$d W</string>

@@ -43,6 +43,22 @@
                 android:paddingTop="24dp"
                 android:textColor="@color/text"
                 android:textScaleX="0.9" />
+
+            <!-- What the watts are ("3S POWER", per Settings › Power), in the Last lap label's grey,
+                 22 px above the digits. Centred like the watts and lifted by a bottom padding the
+                 code works out from the watts' size, so the number itself stays centred. -->
+            <TextView
+                android:id="@+id/free_watts_label"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fontFamily="ibm-plex-sans-condensed"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:paddingTop="24dp"
+                android:textAllCaps="true"
+                android:textColor="@color/text_secondary"
+                android:textSize="15sp" />
         </FrameLayout>
 
         <!-- Lap row: "CURRENT LAP TIME" like the boxes' labels (15sp) and no icon (the Lap avg box
@@ -245,12 +261,12 @@
                 android:textSize="12sp" />
 
             <!-- Fits between the Karoo's back and next buttons (150dp), shrinking if needed. Pulled up
-                 (-6dp), since the box has room above the text: 10 px from the label, as designed -->
+                 (-0.7dp), since the box has room above the text: 20 px from the label, as designed -->
             <TextView
                 android:id="@+id/free_last_lap"
                 android:layout_width="150dp"
                 android:layout_height="28dp"
-                android:layout_marginTop="-6dp"
+                android:layout_marginTop="-0.7dp"
                 android:autoSizeMaxTextSize="22sp"
                 android:autoSizeMinTextSize="11sp"
                 android:autoSizeStepGranularity="1sp"
