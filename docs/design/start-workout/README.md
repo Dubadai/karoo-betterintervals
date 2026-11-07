@@ -38,3 +38,8 @@ app restart (saved progress only carries over a restart mid-ride).
 
 Not checked on the device: dark mode, the non-Karoo style, and today-first (no workout today in
 the cached week).
+
+Countdown in the button (mockup, not decided): `countdown-in-button.src.html`. David asked to
+show the start countdown in the yellow button instead of the First up box. A · the number and
+START NOW in the button; B · a big number with a small "Starting · tap to start now". In both the
+button darkens from the left as the seconds run, and First up stays as it is.
