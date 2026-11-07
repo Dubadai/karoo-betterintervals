@@ -66,3 +66,10 @@ tiles 231 × 141 with a 4 px gap; labels 20 caps, 20 below the top, 7–8 from t
 63–65, 13 above the bottom, 8 from the right; icons 22–23 px, 10–11 px in, centred on the label;
 CURRENT LAP TIME in line with the tile icons, the clock ending in line with the numbers; watts
 centred between the gear and the lap row.
+
+## What the big number is (`watts-label.html`)
+
+Four ways to say the big number is power, the number staying where it is (centred between the
+gear and the lap row), in the Karoo's label type (20 px caps) and its own green 3S POWER bolt
+(15 × 25 px): A a bolt top left of the number, B "W" top right, C "3S POWER" above, D "3S" with
+the bolt above ("3S" follows Settings › Power: instant, 3, 5 or 10 s).
