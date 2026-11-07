@@ -35,3 +35,11 @@ Lap avg tile darker in light mode: `#DDDDDD`, the Karoo's own page grey (was `#E
 No last lap yet (first lap): LAST LAP and its values are hidden; the space stays, so nothing moves
 when the first lap ends.
 - `03-built-no-ride-dark.png`: the build on David's Karoo, dark mode, no ride (Last lap hidden).
+
+## Tiles at the Karoo's own geometry (`tiles.html`)
+
+David: the free-ride typography looks a bit off next to the Karoo's own fields. Measured on his
+Karoo (light, px): the text is identical (labels 20 px caps, numbers 64 px, strokes 7 px), but our
+tiles are 218 × 144 (Karoo 236 × 140) with a 12 px gap (Karoo 4), 13–14 px padding right of label
+and number (Karoo 8), the number 20 px above the bottom (Karoo 12) and icons 17–21 px (Karoo 23).
+`tiles.html` shows a close-up (Karoo / ours now / ours with the Karoo's geometry) and full screens.
