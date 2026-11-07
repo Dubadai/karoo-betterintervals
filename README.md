@@ -8,23 +8,29 @@ you can jump forward **and back** between intervals.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/betterintervals-dark.jpg">
-  <img src="docs/images/betterintervals-light.jpg" alt="BetterIntervals on three Karoo 3s during a ride, in Karoo style: the START WORKOUT screen, the workout screen at 280 watts in range on a green background, and the power gauge">
+  <img src="docs/images/betterintervals-light.jpg" alt="A workout in three steps on three Karoo 3s: START WORKOUT before you start, the power gauge with 3 seconds left in an interval, and Workout done with the workout's numbers">
 </picture>
 
-- **Big 3-second power:** tap the watts to change how the target range shows: plain, coloured
-  number, coloured background, both, or a **power gauge**. Blue is below the range, green in it,
-  red above it.
+- **Before, during and after:** a workout waits for **START WORKOUT** (pick where to start with
+  ⏮ / ⏭, then a 5-second countdown), runs interval by interval with beeps before each change,
+  and ends on a **Workout done** screen with its time, average power, NP and heart rate.
+- **Big power** (instant or 3 / 5 / 10 s): starts on the **power gauge**; tap the watts for a plain,
+  coloured number, coloured background or both. Blue is below the range, green in it, red above it.
 - **Interval, time left and progress bar,** with lap average and target (tap Lap avg for Lap NP,
-  tap Target for the range) and heart rate.
+  tap Target for the range) and heart rate. **Settings › Top row** puts heart rate, cadence or the
+  target at the top.
 - **Next up with ⏮ / ⏭:** a jump starts a 5-second countdown with beeps, so you can get ready.
 - **The whole workout as a chart** in zone colours with a "now" marker; tap it to zoom in.
 - **Pause** stops the interval timer (for traffic, say) while the ride keeps recording. One lap per
   interval in your ride file, and short beeps before each interval ends.
-- **Without a workout:** big watts, lap time, lap average and heart rate (tap HR for the lap's
-  average), and the last lap.
-- **The Karoo's own look:** its fonts, field sizes and colours. **Dark / Light / Auto** follows the
+- **Without a workout:** big watts, the current lap time, and two tiles you tap through: LAP AVG,
+  LAP NP, RIDE AVG and HR, LAP HR, RIDE HR (heart rate in the Karoo's zone colours), plus the
+  last lap.
+- **The Karoo's own look:** its fonts, field sizes, icons and colours. **Dark / Light / Auto** follows the
   Karoo or stays fixed.
 - **Remote button actions:** next interval, previous interval, pause or resume the workout.
+
+<img src="docs/images/betterintervals-more.jpg" alt="More screens on three Karoo 3s: free ride without a workout (3S POWER, current lap time, Lap avg and HR in its zone colour), the Settings page with its example, and the five watts styles from the introduction">
 
 Values show `--` when a sensor isn't connected. There's a step-by-step
 [guide with pictures](docs/guide/README.md) for every feature.

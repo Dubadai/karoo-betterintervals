@@ -20,7 +20,7 @@ for a while first (warm up on your own, get out of town).
 
 ## Once it runs
 
-<img src="images/workout-screen.png" width="240" alt="Workout screen in range: 280 watts on a green background">
+<img src="images/workout-screen.png" width="240" alt="Workout screen with the power gauge: 280 watts in the target range 273–287, heart rate at the top">
 
 From top to bottom:
 
@@ -68,4 +68,4 @@ free-ride screen. The ride itself keeps recording.
 When you follow a route the Karoo shows the route under the field and makes it shorter. The
 watts shrink to fit; everything else stays the same.
 
-<img src="images/with-route.png" width="240" alt="Workout screen with a route loaded">
+<img src="images/with-route.png" width="240" alt="Workout screen with a route loaded: the field is shorter, the turn pill below it">
