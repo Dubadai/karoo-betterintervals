@@ -81,4 +81,8 @@
     <!-- Countdown (regular style): the darker blue it fills with, and "Jumping to" on the pale blue -->
     <color name="countdown_fill">#FF85B7EB</color>
     <color name="countdown_sub">#FF2E5A85</color>
+    <color name="example_card">#FF1D1D1D</color>
+    <color name="example_label">#FFA3A29C</color>
+    <color name="example_tile">#FF000000</color>
+    <color name="example_tile_border">#FF3A3A3A</color>
 </resources>

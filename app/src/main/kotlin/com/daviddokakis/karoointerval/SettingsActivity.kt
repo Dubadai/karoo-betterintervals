@@ -1,6 +1,7 @@
 package com.daviddokakis.karoointerval
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
@@ -21,6 +22,7 @@ class SettingsActivity : AppearanceActivity() {
 
     private lateinit var store: PlanStore
     private lateinit var form: LinearLayout
+    private lateinit var example: ExampleCard
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +41,9 @@ class SettingsActivity : AppearanceActivity() {
             },
         )
         root.addView(text(getString(R.string.settings_title), 22f, bold = true).apply { setPadding(dp(12), 0, dp(12), dp(4)) })
+        // The workout screen as these settings draw it; stays at the top while the settings scroll.
+        example = ExampleCard(this)
+        root.addView(example, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { setMargins(dp(12), dp(4), dp(12), dp(4)) })
         root.addView(ScrollView(this).apply { addView(form, MATCH_PARENT, WRAP_CONTENT) }, LinearLayout.LayoutParams(MATCH_PARENT, 0, 1f))
         setContentView(root)
         render()
@@ -49,7 +54,17 @@ class SettingsActivity : AppearanceActivity() {
         render() // the account row shows whether a key is set
     }
 
+    /** The workout screen with a made-up workout, drawn full size and shown small (127 dp tall). */
+    private fun showExample() {
+        val s = ExampleScreen.state(store.karooStyle.value, store.wattsMode, store.appearance.value)
+        val full = ExampleScreen.draw(this, s, ExampleScreen.FULL_W, ExampleScreen.FULL_H)
+        val h = dp(127)
+        val small = Bitmap.createScaledBitmap(full, h * ExampleScreen.FULL_W / ExampleScreen.FULL_H, h, true)
+        example.show(small, getString(R.string.example_description))
+    }
+
     private fun render() {
+        showExample()
         form.removeAllViews()
 
         // Appearance: Dark / Light / Auto. The page itself switches right away.

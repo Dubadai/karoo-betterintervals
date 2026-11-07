@@ -11,6 +11,12 @@
     <color name="text">#FF0B0B0B</color>
     <color name="text_secondary">#FF444441</color>
 
+    <!-- Settings: the "Example" card (ExampleCard) and the field tile inside it -->
+    <color name="example_card">#FFF1F1EF</color>
+    <color name="example_label">#FF6B6A66</color>
+    <color name="example_tile">#FFFFFFFF</color>
+    <color name="example_tile_border">#FFD5D4CF</color>
+
     <color name="watts_in_range">#FF27500A</color>
     <color name="watts_under">#FF0C447C</color>
     <color name="watts_over">#FF791F1F</color>

@@ -5,6 +5,8 @@ and screenshots from the Karoo 3 (`device/`). Newest work first.
 
 | Folder | Feature |
 | --- | --- |
+| `gallery/` | The workout screen in four looks, full and half page, light and dark (emulator, `gallery.sh`) |
+| `settings-example/` | "Example" card on the Settings page (live workout screen) |
 | `screens/` | Clean screens for the README visuals and the Karoo Artboard (no floating Karoo buttons) |
 | `onboarding/` | First-run introduction: connect, look, add to a ride profile, tap the watts |
 | `karoo-style/` | Karoo style setting (round 5: inverted countdown, centred "Move cancelled") (Karoo fonts, native-size cells, icons, yellow buttons), Settings page, Dark / Light / Auto |
