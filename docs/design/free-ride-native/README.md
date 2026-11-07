@@ -60,3 +60,9 @@ heart shape is 23 × 23.
 
 Round 2: the lap row loses its icon (the Lap avg tile below has the same one) and says CURRENT LAP
 TIME, starting in line with the tiles' icons.
+
+Built (`device/09-tiles-built-demo-light.png`, demo build on David's Karoo, light), measured in px:
+tiles 231 × 141 with a 4 px gap; labels 20 caps, 20 below the top, 7–8 from the right; numbers
+63–65, 13 above the bottom, 8 from the right; icons 22–23 px, 10–11 px in, centred on the label;
+CURRENT LAP TIME in line with the tile icons, the clock ending in line with the numbers; watts
+centred between the gear and the lap row.
