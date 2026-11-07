@@ -2,7 +2,7 @@
 
 With no workout picked, BetterIntervals shows a free-ride screen instead.
 
-<img src="images/free-ride.png" width="240" alt="Free-ride screen">
+<img src="images/free-ride.png" width="240" alt="Free ride: 3S POWER 280, current lap time 4:21, Lap avg 282 and HR 132 in its zone colour, last lap 8:20">
 
 - **Big number**: your power, named above it (**3S POWER**, or what Settings › Power is set to).
 - **Power tile**: tap it to go through **Lap avg** (the Karoo's current lap), **Lap NP** and
@@ -21,4 +21,4 @@ Tap the heart rate tile to go through your current heart rate, the lap's average
 the ride's average (**Ride HR**). Both tiles remember where you left them. The last lap shows its time, average watts and
 average heart rate.
 
-<img src="images/free-ride-karoo.png" width="240" alt="Free ride">
+<img src="images/free-ride-karoo.png" width="240" alt="Free ride after tapping both tiles twice: RIDE AVG 268 and RIDE HR 131">
