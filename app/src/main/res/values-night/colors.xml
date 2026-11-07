@@ -90,4 +90,6 @@
     <!-- Tonal tile with data field boundaries on (white at 28%: the Karoo's page grey #484848 on black, measured on the
          Karoo 3), see-through so a range tint still shows. -->
     <color name="tile_boundary">#48FFFFFF</color>
+    <!-- Workout done: the "ride keeps recording" dot -->
+    <color name="recording">#FFFF5C5C</color>
 </resources>

@@ -50,6 +50,40 @@ class WorkoutSession(
     private var lapSamples = 0
     private val lapNp = LapNp()
     private val freeLapNp = LapNp()
+
+    // The workout's own numbers for the done screen: only while it runs (started, not paused,
+    // ride recording), so riding before START or a traffic pause doesn't count.
+    private var workoutMs = 0L
+    private var workoutPowerSum = 0.0
+    private var workoutPowerSamples = 0
+    private val workoutNp = LapNp()
+    private var workoutHrSum = 0L
+    private var workoutHrSamples = 0
+    private var workoutCadSum = 0L
+    private var workoutCadSamples = 0
+
+    private fun workoutRunning(st: ScreenState = _state.value) =
+        recording && st.plan != null && !st.finished && !st.workoutPaused && !st.notStarted
+
+    private fun resetWorkoutStats() {
+        workoutMs = 0
+        workoutPowerSum = 0.0
+        workoutPowerSamples = 0
+        workoutNp.reset()
+        workoutHrSum = 0
+        workoutHrSamples = 0
+        workoutCadSum = 0
+        workoutCadSamples = 0
+        _state.update { it.copy(summary = null) }
+    }
+
+    private fun summary() = WorkoutSummary(
+        timeSec = (workoutMs / 1000).toInt(),
+        avgPower = if (workoutPowerSamples > 0) (workoutPowerSum / workoutPowerSamples).roundToInt() else null,
+        np = workoutNp.value,
+        avgHr = if (workoutHrSamples > 0) (workoutHrSum / workoutHrSamples).toInt() else null,
+        avgCadence = if (workoutCadSamples > 0) (workoutCadSum / workoutCadSamples).toInt() else null,
+    )
     private var countdownJob: Job? = null
     /** Jump being chosen (3 s confirmation), see [jumpStops]. */
     private var selectionPos: Int? = null
@@ -104,12 +138,16 @@ class WorkoutSession(
         scope.launch {
             // Cadence, for when it replaces heart rate (Settings › Cadence picks the smoothing).
             store.cadenceSmoothing.flatMapLatest { karoo.streamDataFlow(it.cadence) }.collect { s ->
-                _state.update { it.copy(cadence = s.single()?.roundToInt()) }
+                val cad = s.single()?.roundToInt()
+                if (cad != null && cad > 0 && workoutRunning()) { workoutCadSum += cad; workoutCadSamples++ }
+                _state.update { it.copy(cadence = cad) }
             }
         }
         scope.launch {
             karoo.streamDataFlow(DataType.Type.HEART_RATE).collect { s ->
-                _state.update { it.copy(heartRate = s.single()?.roundToInt()) }
+                val hr = s.single()?.roundToInt()
+                if (hr != null && hr > 0 && workoutRunning()) { workoutHrSum += hr; workoutHrSamples++ }
+                _state.update { it.copy(heartRate = hr) }
             }
         }
         scope.launch {
@@ -361,6 +399,10 @@ class WorkoutSession(
                 startWorkout()
                 return@launch
             }
+            if (_state.value.finished) {
+                closeWorkout() // …and like DONE on the workout done screen
+                return@launch
+            }
             val nowPaused = !_state.value.workoutPaused
             if (nowPaused) {
                 cancelCountdown()
@@ -397,6 +439,7 @@ class WorkoutSession(
         Timber.i("Workout started at step ${index + 1}")
         elapsedInStepMs = 0
         resetLap()
+        resetWorkoutStats()
         _state.update {
             it.copy(notStarted = false, stepIndex = index, elapsedInStepSec = 0, lapAvg = null, countdown = null, jumpTarget = null)
         }
@@ -405,9 +448,20 @@ class WorkoutSession(
         saveProgress()
     }
 
+    /** DONE on the workout done screen: take the workout off; the ride carries on (free-ride screen). */
+    fun closeWorkout() {
+        scope.launch {
+            if (!_state.value.finished) return@launch
+            Timber.i("Workout done, closed")
+            store.clearProgress()
+            store.clearSelection()
+        }
+    }
+
     private fun loadPlan(plan: WorkoutPlan?) {
         cancelCountdown()
         resetLap()
+        resetWorkoutStats()
         // Progress only carries over a restart mid-ride; with no ride active, start from the top.
         if (rideIdle) store.clearProgress()
         val restored = if (rideIdle) null else plan?.let { store.restoreProgress(it) }
@@ -430,6 +484,7 @@ class WorkoutSession(
         if (st.plan == null || st.notStarted) return
         cancelCountdown()
         resetLap()
+        resetWorkoutStats()
         elapsedInStepMs = 0
         store.clearProgress()
         _state.update { it.copy(stepIndex = 0, elapsedInStepSec = 0, finished = false, lapAvg = null, workoutPaused = false, notStarted = true) }
@@ -447,6 +502,7 @@ class WorkoutSession(
             val st = _state.value
             val step = st.currentStep ?: continue
             if (!recording || st.finished || st.workoutPaused || st.notStarted) continue
+            workoutMs += dt
 
             val before = (step.durationSec * 1000L - elapsedInStepMs) / 1000
             elapsedInStepMs += dt
@@ -460,7 +516,7 @@ class WorkoutSession(
                 if (st.hasNext) {
                     goToStep(st.stepIndex + 1, natural = true)
                 } else {
-                    _state.update { it.copy(finished = true, elapsedInStepSec = step.durationSec) }
+                    _state.update { it.copy(finished = true, elapsedInStepSec = step.durationSec, summary = summary()) }
                     karoo.dispatch(MarkLap)
                     beep(GO_TONE)
                     store.clearProgress()
@@ -538,6 +594,11 @@ class WorkoutSession(
             lapNp.add(SystemClock.elapsedRealtime(), watts)
         }
         if (watts != null && recording) freeLapNp.add(SystemClock.elapsedRealtime(), watts)
+        if (watts != null && workoutRunning(st)) {
+            workoutPowerSum += watts
+            workoutPowerSamples++
+            workoutNp.add(SystemClock.elapsedRealtime(), watts)
+        }
         _state.update {
             it.copy(
                 power = watts?.roundToInt(),
