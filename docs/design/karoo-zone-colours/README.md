@@ -26,3 +26,6 @@ Current step outline (mockup, not decided): today the 2dp outline sits right on 
 which is hard to read with bright Karoo colours. `outline-gap.src.html`: Now / A · 1dp gap /
 B · 1.5dp gap of page colour between the outline and the fill (the fill moves in, the outline
 stays where it is; the "now" line still runs through the bar).
+
+Decided (7 Nov 2026): **A · 1dp gap** for the current step, built (ChartRenderer: the fill moves
+in by 2dp, half the outline plus the gap; bars too narrow for it fill as before).

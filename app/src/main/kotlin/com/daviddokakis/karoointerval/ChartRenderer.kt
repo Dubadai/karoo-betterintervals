@@ -120,7 +120,23 @@ class ChartRenderer(private val context: Context) {
                     else -> bar.fill
                 },
             )
-            canvas.drawPath(path, fill)
+            // Current step: its 2dp outline goes on the bar's edge, and the fill moves in to leave
+            // a 1dp gap of page colour between them, so the zone colour and outline both read
+            // (design: docs/design/karoo-zone-colours/, outline gap A). Too narrow: fill as usual.
+            val inset = 2f * d   // half the outline (1dp) + the gap (1dp)
+            val current = !card && i == state.stepIndex
+            val fillPath = if (current && x1 - x0 > 2 * inset + 1f * d) {
+                Path().apply {
+                    moveTo(x0 + inset, bottom)
+                    lineTo(x0 + inset, minOf(ys.first + inset, bottom))
+                    lineTo(x1 - inset, minOf(ys.second + inset, bottom))
+                    lineTo(x1 - inset, bottom)
+                    close()
+                }
+            } else {
+                path
+            }
+            canvas.drawPath(fillPath, fill)
             bar.edge?.let { edge ->
                 // Karoo draws easy bars with a bright outline, just inside the bar.
                 val inset = edgePaint.strokeWidth / 2
