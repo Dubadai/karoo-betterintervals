@@ -57,3 +57,6 @@ fields on David's Karoo; tile = 232 × 140, gap 4):
 The mockup's label and number fonts were also set to the measured sizes (they were 23 and 66 px).
 The build already draws 20 and 64 px (15sp / 48sp). Our outline heart is 23 × 20; the Karoo's own
 heart shape is 23 × 23.
+
+Round 2: the lap row loses its icon (the Lap avg tile below has the same one) and says CURRENT LAP
+TIME, starting in line with the tiles' icons.

@@ -217,9 +217,9 @@ function after(theme, nat, shot, route, noLastLap = false) {
     // ...and centred on the clock's digits (clock caps 38 px, label caps 20 px, icon 27 px)
     const mid = L.lap + 2 - 19;
     if (KAROO_TILES) {
-      // icon lined up with the tiles' icons (x 16) and as big (23 px); clock ends where the numbers do
-      ctx.drawImage(lapIcon, 13, mid - 13, 26, 28);
-      txt(ctx, 'LAP TIME', 44, mid + 10, LABEL, t.ink);
+      // No icon (the Lap avg tile right below has the same one): "CURRENT LAP TIME", starting in
+      // line with the tiles' icons (x 16); the clock ends where the numbers do
+      txt(ctx, 'CURRENT LAP TIME', 14, mid + 10, LABEL, t.ink);
       txt(ctx, '10:24', 467, L.lap + 2, '600 54px PlexSemi', t.ink, 'right', 0.9);
     } else {
       ctx.drawImage(lapIcon, 28, mid - 13.5);
