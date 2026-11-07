@@ -19,10 +19,14 @@ and the Next up box stays outline-only on the grey.
 Measured on the Karoo 3 (light): page grey `#DDDDDD`; with boundaries on the Karoo puts every
 field, ours included, in a white card with a 1 px `#7D7D7D` border and rounded corners. Our
 field paints the page grey inside that card; the Karoo keeps its border and corners on top.
-Dark mode grey is still an estimate (`#1C1C1C`): measure it with the Karoo in dark mode.
+Dark mode (measured): page `#484848`, the Karoo's own fields are black cards, same `#7D7D7D`
+border. Ours matches: `#484848` page, black tile cards, gauge track `#6E6E6A`.
 
 - `mockup.src.html` + `build.py`: the mockup, drawn on device screenshots (run `python3 build.py`).
 - `base-light.png`, `base-dark.png`: gauge screen, boundaries off (from `screens/`).
 - `device/00-stock-fields-light.png`: Karoo's own fields with boundaries on (white cards on grey).
 - `device/01-free-ride-before-light.png`, `device/02-free-ride-after-light.png`: free ride before / after.
 - `device/03-workout-light.png`: workout screen (classic) after, boundaries on.
+- `device/04-stock-fields-dark.png`: Karoo's own fields with boundaries on, dark.
+- `device/05-workout-guess-dark.png`: first try with the guessed dark grey (`#1C1C1C`), too dark.
+- `device/06-workout-dark.png`: workout screen, dark, with the measured grey.
