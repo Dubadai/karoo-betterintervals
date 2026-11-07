@@ -27,7 +27,7 @@ class IntervalDataType(
     override fun startStream(emitter: Emitter<StreamState>) {
         val job = CoroutineScope(Dispatchers.Default).launch {
             session.state.collect { s ->
-                val p = s.power3s
+                val p = s.powerShown
                 emitter.onNext(
                     if (p == null) {
                         StreamState.NotAvailable
@@ -56,7 +56,7 @@ class IntervalDataType(
                 val s = session.state.value
                 val key = Key(
                     s.countdown, s.stepIndex, s.workoutPaused, s.chartZoomed, s.plan?.id, s.selectTarget,
-                    s.selectProgress, s.moveCancelled, s.targetShowsRange, s.wattsMode, s.karooStyle, s.tileOutline, s.appearance, s.navigating, s.hrShowsLap, s.lapShowsNp,
+                    s.selectProgress, s.moveCancelled, s.targetShowsRange, s.wattsMode, s.karooStyle, s.tileOutline, s.secondField, s.appearance, s.navigating, s.hrShowsLap, s.lapShowsNp,
                     s.autoConfirmLeft,
                 )
                 val since = SystemClock.elapsedRealtime() - lastRender
@@ -97,6 +97,7 @@ class IntervalDataType(
         val wattsMode: WattsMode,
         val karooStyle: Boolean,
         val tileOutline: Boolean,
+        val secondField: SecondField,
         val appearance: Appearance,
         val navigating: Boolean,
         val hrShowsLap: Boolean,

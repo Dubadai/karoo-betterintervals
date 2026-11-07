@@ -17,6 +17,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -93,9 +94,15 @@ class WorkoutSession(
             karoo.streamDataFlow(DataType.Type.POWER).collect { onPower(it.single()) }
         }
         scope.launch {
-            // …and the big number shows Karoo's 3-second average power.
-            karoo.streamDataFlow(DataType.Type.SMOOTHED_3S_AVERAGE_POWER).collect { s ->
-                _state.update { it.copy(power3s = s.single()?.roundToInt()) }
+            // …and the big number shows instant power or Karoo's 3 / 5 / 10 s average (Settings › Power).
+            store.powerSmoothing.flatMapLatest { karoo.streamDataFlow(it.power) }.collect { s ->
+                _state.update { it.copy(powerShown = s.single()?.roundToInt()) }
+            }
+        }
+        scope.launch {
+            // Cadence, for when it replaces heart rate (Settings › Cadence picks the smoothing).
+            store.cadenceSmoothing.flatMapLatest { karoo.streamDataFlow(it.cadence) }.collect { s ->
+                _state.update { it.copy(cadence = s.single()?.roundToInt()) }
             }
         }
         scope.launch {
@@ -140,6 +147,8 @@ class WorkoutSession(
         collectInt(DataType.Type.AVERAGE_POWER_LAST_LAP) { v -> _state.update { it.copy(lastLapPowerAvg = v) } }
         collectInt(DataType.Type.AVERAGE_LAP_HR) { v -> _state.update { it.copy(lapHrAvg = v) } }
         collectInt(DataType.Type.AVERAGE_HR_LAST_LAP) { v -> _state.update { it.copy(lastLapHrAvg = v) } }
+        collectInt(DataType.Type.CADENCE_LAP) { v -> _state.update { it.copy(lapCadenceAvg = v) } }
+        collectInt(DataType.Type.AVERAGE_CADENCE_LAST_LAP) { v -> _state.update { it.copy(lastLapCadenceAvg = v) } }
         scope.launch {
             store.plan.collect { plan -> loadPlan(plan) }
         }
@@ -147,6 +156,7 @@ class WorkoutSession(
         scope.launch { store.karooStyle.collect { on -> _state.update { it.copy(karooStyle = on) } } }
         scope.launch { store.appearance.collect { a -> _state.update { it.copy(appearance = a) } } }
         scope.launch { store.tileOutline.collect { on -> _state.update { it.copy(tileOutline = on) } } }
+        scope.launch { store.secondField.collect { f -> _state.update { it.copy(secondField = f) } } }
         _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapShowsNp = store.lapShowsNp, hrShowsLap = store.hrShowsLap) }
     }
 

@@ -571,7 +571,7 @@
 
                 <!-- Bottom on the text baseline; the heart itself is about as tall as the digits -->
                 <ImageView
-                    android:id="@+id/th_interval_7"
+                    android:id="@+id/hr_icon"
                     android:layout_width="15.5dp"
                     android:layout_height="14dp"
                     android:layout_marginEnd="5dp"
