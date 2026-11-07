@@ -6,10 +6,8 @@ A full-page data field for the Hammerhead Karoo 3 that makes structured workouts
 It loads your planned workouts from [intervals.icu](https://intervals.icu) and runs them itself, so
 you can jump forward **and back** between intervals.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/betterintervals-dark.jpg">
-  <img src="docs/images/betterintervals-light.jpg" alt="BetterIntervals on four Karoo 3s during a ride: the START WORKOUT screen, the power gauge at 280 watts with the 273–287 target on top, the purple countdown jumping to 3m @ 150W, and the Workout done screen">
-</picture>
+<img src="docs/images/betterintervals-light.jpg" alt="BetterIntervals on four Karoo 3s during a ride: the START WORKOUT screen, the power gauge at 280 watts with the 273–287 target on top, the purple countdown jumping to 3m @ 150W, and the Workout done screen">
+<img src="docs/images/betterintervals-dark.jpg" alt="The same in dark mode">
 
 - **Before, during and after:** a workout waits for **START WORKOUT** (pick where to start with
   ⏮ / ⏭, then a 5-second countdown), runs interval by interval with beeps before each change,
