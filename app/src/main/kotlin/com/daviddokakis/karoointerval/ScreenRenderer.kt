@@ -661,7 +661,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // Digits are 0.698 em tall and sit 0.026 em below the box's centre; the label's capitals
         // (15sp) are 20 px tall. Label centre = digits' top − 22 px − half the label.
         val labelCap = 20f * scale
-        val lift = 2 * (0.349f * size - 0.026f * size + 22 * scale + labelCap / 2)
+        // (+3 px measured on a Karoo 3: the label's capitals sit a little low in their box)
+        val lift = 2 * (0.349f * size - 0.026f * size + 25 * scale + labelCap / 2)
         return lift.toInt().coerceAtLeast(0)
     }
 
