@@ -13,7 +13,7 @@ Updating works the same way, and keeps your settings and API key: see [Updating 
 
 ## 2. The introduction
 
-The first time you open **BetterIntervals** from the Karoo's app list, four short pages walk you
+The first time you open **DDB BetterIntervals** from the Karoo's app list, four short pages walk you
 through the setup. **Skip** (top right) jumps past them; everything stays changeable later in
 [Settings](settings.md), which can also show the introduction again.
 
@@ -34,7 +34,7 @@ key is stored only on the Karoo. No key yet? Tap **Next** anyway and add it late
 ### Add it to a ride
 
 1. On the Karoo, open **Profiles**, pick a profile, then **Data Pages**, and add a page with **+**.
-2. Tap **ADD FIELD** and pick **BetterIntervals → Workout screen**.
+2. Tap **ADD FIELD** and pick **DDB BetterIntervals → Workout screen**.
 
 The screen fills the whole page. With a route loaded the Karoo makes the field a bit shorter, and
 the watts shrink to fit.
