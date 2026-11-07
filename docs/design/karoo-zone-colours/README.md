@@ -30,3 +30,8 @@ stays where it is; the "now" line still runs through the bar).
 Decided (7 Nov 2026): **A · 1dp gap** for the current step, built (ChartRenderer: the fill moves
 in by 2dp, half the outline plus the gap; bars too narrow for it fill as before).
 - `device/01-outline-gap-zoomed-dark.png`: built, chart zoomed on the current step (warm-up): white outline, ~2 px gap, zone colour.
+
+Jump target (mockup, not decided): `jump-target.src.html`. Today the step a jump lands on is solid
+blue (Karoo style: purple), which would read as Karoo Z2 (Z7). Options, each with today's ▼:
+A · solid black / white (the text colour), B · zone colour with stripes, C · zone colour with a
+dashed outline.
