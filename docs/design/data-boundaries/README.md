@@ -25,3 +25,4 @@ Dark mode grey is still an estimate (`#1C1C1C`): measure it with the Karoo in da
 - `base-light.png`, `base-dark.png`: gauge screen, boundaries off (from `screens/`).
 - `device/00-stock-fields-light.png`: Karoo's own fields with boundaries on (white cards on grey).
 - `device/01-free-ride-before-light.png`, `device/02-free-ride-after-light.png`: free ride before / after.
+- `device/03-workout-light.png`: workout screen (classic) after, boundaries on.
