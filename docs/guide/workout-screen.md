@@ -20,8 +20,10 @@ From top to bottom:
 
 ## The chart
 
-Each bar is one interval, in its power zone colour. Finished intervals turn grey, and a black
-marker shows where you are. The end time of the workout is on the right.
+Each bar is one interval, in its power zone colour: the Karoo's seven power zones (Z1 grey,
+Z2 blue, Z3 green, Z4 yellow, Z5 orange, Z6 red, Z7 purple), as % of the workout's FTP. Finished
+intervals keep their colour, so you can still see what you'd jump back to. The current interval
+is outlined, and a black marker (white in dark mode) shows where you are. The end time of the workout is on the right.
 
 Tap the chart to zoom in on the current interval. Tap again to see the whole workout.
 

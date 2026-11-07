@@ -58,7 +58,7 @@ week's list; the app goes straight back to the ride screen. See
 ## 4. Changing it later
 
 Tap ⚙ on the ride screen, then ⚙ on the Workouts page, for [Settings](settings.md): Appearance,
-Karoo style, your intervals.icu account, and **Show introduction**.
+Karoo style, Tiles, your intervals.icu account, and **Show introduction**.
 
 ## 5. Optional: remote buttons
 

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data field boundaries: round 3</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
+  h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
+  p.d { color:#A9A6A0; margin:0 auto 22px; max-width:780px; text-align:center; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:30px; margin-bottom:34px; }
+  .dev { display:grid; justify-items:center; gap:8px; }
+  .cap { color:#A9A6A0; font-size:13px; max-width:240px; text-align:center; }
+</style>
+</head>
+<body>
+<h1>Data field boundaries round 3: more contrast</h1>
+<p class="d">With the Karoo's measured colours (light: page #DDDDDD, white cards; dark: page #484848, black cards; border #7D7D7D).</p>
+<div class="devices" id="light"></div>
+<div class="devices" id="dark"></div>
+<div class="devices" id="zoom"></div>
+
+<script>/*__KAROO_DEVICE_JS__*/</script>
+<script>
+const FRAME = "__FRAME__";
+const SHOTS = { light: "__SHOT_light__", dark: "__SHOT_dark__" };
+
+// Base: gauge screen with boundaries off (field from y≈64). Tiles 16–234 / 246–464 × 461–562,
+// Next up 16–464 × 574–664 (2 px outline), corners ≈15 px. Karoo card with boundaries on:
+// 1 px #7D7D7D border at x 1/478, y 60/780, corners ≈18 px (measured on the device).
+const TILES = [[16, 461, 218, 101], [246, 461, 218, 101]];
+const NEXT = [16, 574, 448, 90];
+const CARD = [1.5, 60.5, 477, 720];
+const R = 15;
+const K = {
+  light: { bg: 255, tile: 235, page: 221, card: 255, track: [227, 225, 218], trackGrey: [196, 194, 187] },
+  dark:  { bg: 0,   tile: 31,  page: 72,  card: 0,   track: [58, 58, 56],    trackGrey: [110, 110, 106] },
+};
+const OUTLINE = '#888780', KAROO_BORDER = '#7D7D7D';
+
+const rr = ([x, y, w, h], r = R) => { const p = new Path2D(); p.roundRect(x, y, w, h, r); return p; };
+const inset = ([x, y, w, h], d) => [x + d, y + d, w - 2 * d, h - 2 * d];
+
+function resurface(theme, { field, tile, tileOutline, greyTrack }) {
+  return ctx => {
+    const k = K[theme], img = ctx.getImageData(0, 0, 480, 800), d = img.data;
+    const card = rr(CARD, 18), tiles = TILES.map(t => rr(t));
+    const remap = (v, from, to) => theme === 'light'
+      ? Math.min(255, v * to / from)
+      : Math.max(0, 255 - (255 - v) * (255 - to) / (255 - from));
+    const near = (r, g, b, c) => Math.abs(r - c[0]) + Math.abs(g - c[1]) + Math.abs(b - c[2]) < 9;
+    for (let y = 0; y < 800; y++) for (let x = 0; x < 480; x++) {
+      const i = (y * 480 + x) * 4, r = d[i], g = d[i + 1], b = d[i + 2];
+      const inCard = y > 60 && ctx.isPointInPath(card, x + .5, y + .5);
+      let from = k.bg, to = inCard ? field : k.page;
+      if (inCard && tiles.some(p => ctx.isPointInPath(p, x + .5, y + .5))) { from = k.tile; to = tile; }
+      if (greyTrack && near(r, g, b, k.track)) { [d[i], d[i + 1], d[i + 2]] = k.trackGrey; continue; }
+      if (from === to) continue;
+      if (Math.max(r, g, b) - Math.min(r, g, b) > 24) continue;   // keep coloured marks as they are
+      d[i] = remap(r, from, to); d[i + 1] = remap(g, from, to); d[i + 2] = remap(b, from, to);
+    }
+    ctx.putImageData(img, 0, 0);
+    ctx.lineWidth = 1; ctx.strokeStyle = KAROO_BORDER; ctx.stroke(card);
+    if (tileOutline) {
+      ctx.lineWidth = 2; ctx.strokeStyle = OUTLINE;
+      TILES.forEach(t => ctx.stroke(rr(inset(t, 1), R - 1)));
+    }
+  };
+}
+
+const VARIANTS = theme => {
+  const k = K[theme], cardName = theme === 'light' ? 'white' : 'black';
+  return [
+    ['Built: grey page, card tiles', { field: k.page, tile: k.card, greyTrack: true }],
+    [`A · Karoo card, grey tiles: ${cardName} field, tiles in the Karoo grey`, { field: k.card, tile: k.page }],
+    [`B · Karoo card, outlined tiles: ${cardName} field, tiles outlined like Next up`, { field: k.card, tile: k.card, tileOutline: true }],
+  ];
+};
+
+(async () => {
+  for (const t of ['light', 'dark']) {
+    const dev = await KarooDevice.load({ frame: FRAME, screen: SHOTS[t] });
+    const row = document.getElementById(t);
+    for (const [cap, opts] of VARIANTS(t)) {
+      const scr = dev.screen({ draw: resurface(t, opts) });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 240));
+      const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${t})`; el.append(c); row.append(el);
+      const z = document.createElement('div'); z.className = 'dev'; z.append(dev.crop(scr, [0, 380, 480, 300], 0.6));
+      const zc = document.createElement('div'); zc.className = 'cap'; zc.textContent = `${cap.split(':')[0]} (${t})`; z.append(zc);
+      document.getElementById('zoom').append(z);
+    }
+  }
+})();
+</script>
+</body>
+</html>

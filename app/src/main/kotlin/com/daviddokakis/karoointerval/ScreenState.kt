@@ -5,9 +5,16 @@ data class ScreenState(
     val plan: WorkoutPlan? = null,
     /** Instant power (lap average is built from this). */
     val power: Int? = null,
-    /** 3-second average power, shown as the big number. */
-    val power3s: Int? = null,
+    /** Power shown as the big number: instant or a 3 / 5 / 10 s average (Settings › Power). */
+    val powerShown: Int? = null,
     val heartRate: Int? = null,
+    /** Cadence (rpm), smoothed per Settings › Cadence. */
+    val cadence: Int? = null,
+    /** Karoo's lap and last-lap average cadence. */
+    val lapCadenceAvg: Int? = null,
+    val lastLapCadenceAvg: Int? = null,
+    /** Settings › Heart rate or cadence. */
+    val secondField: SecondField = SecondField.HEART_RATE,
     /** 0-based index of the current step. */
     val stepIndex: Int = 0,
     val elapsedInStepSec: Int = 0,
@@ -46,6 +53,8 @@ data class ScreenState(
     val appearance: Appearance = Appearance.AUTO,
     /** "Karoo native styling" setting: Karoo's font, labels and icons on the interval screen. */
     val karooStyle: Boolean = false,
+    /** Tiles setting: Outline (border only) instead of Tonal (grey fill). */
+    val tileOutline: Boolean = false,
     /** Target tile shows the target range instead of the single target (tap to toggle). */
     val targetShowsRange: Boolean = false,
     /** "Move cancelled" is showing (after ✕ on the countdown). */
@@ -87,6 +96,15 @@ data class ScreenState(
 
     /** Free ride: the heart rate the HR tile shows (current, or the lap's average). */
     val shownHr: Int? get() = if (hrShowsLap) lapHrAvg else heartRate
+
+    /** Cadence instead of heart rate (Settings). */
+    val showsCadence: Boolean get() = secondField == SecondField.CADENCE
+
+    /** The value in the HR spots: heart rate or cadence, now. */
+    val secondValue: Int? get() = if (showsCadence) cadence else heartRate
+
+    /** Free ride's HR tile: now or the lap average (tap to switch), heart rate or cadence. */
+    val shownSecond: Int? get() = if (showsCadence) (if (hrShowsLap) lapCadenceAvg else cadence) else shownHr
 
     /** 1-based zone of [hr], or null when unknown or below Z1. */
     fun zoneOf(hr: Int?): Int? {

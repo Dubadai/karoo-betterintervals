@@ -28,7 +28,34 @@ Open the **Workouts** page (⚙ on the ride screen), then tap ⚙ in its top rig
 
 <img src="images/karoo-style.png" width="240" alt="Karoo style: classic screen"> <img src="images/karoo-style-gauge.png" width="240" alt="Karoo style: power gauge">
 
-Both settings apply right away, also during a ride.
+## Tiles
+
+**Tonal / Outline**: how the Lap avg, Target and Heart rate tiles look.
+
+- **Tonal** (default): a grey fill. With *Data field boundaries* on in the Karoo's settings, it's
+  the same grey as the Karoo's page between fields.
+- **Outline**: no fill, just a thin border like the Next up box.
+
+<img src="images/tiles-tonal-dark.png" width="240" alt="Tonal tiles, dark"> <img src="images/tiles-outline-dark.png" width="240" alt="Outline tiles, dark">
+
+## Power
+
+**Instant / 3 s / 5 s / 10 s**: how the big watts are smoothed. Instant jumps with every pedal
+stroke; 3 s (default) is steady and still quick; 5 s and 10 s are calmer for long, even efforts.
+
+## Heart rate or cadence
+
+**Heart rate / Cadence**: what shows in the heart rate spots: next to the watts at the top, in the
+HR tile on the gauge screen, and in the free-ride HR tile (tap it for the lap average). With
+**Cadence**, a cadence icon replaces the heart, the free-ride tile has no heart-rate zone colour,
+and the last lap shows rpm instead of bpm.
+
+With Cadence picked, a **Cadence** row appears: **Instant** (default, like the Karoo's own Cadence
+field), **3 s**, **5 s** or **10 s**.
+
+<img src="images/settings-cadence.png" width="240" alt="Settings: Heart rate or cadence, Cadence smoothing"> <img src="images/workout-cadence.png" width="240" alt="Workout screen with cadence at the top">
+
+All settings apply right away, also during a ride.
 
 ## Update notices
 

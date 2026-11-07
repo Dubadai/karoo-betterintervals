@@ -25,12 +25,14 @@
     <color name="land">#FF85B7EB</color>
 
     <color name="done">#FF888780</color>
-    <!-- Workout zone colours (intervals.icu style). All >= 3:1 against near-black. -->
-    <color name="z1">#FF1D9E75</color>
-    <color name="z2">#FF639922</color>
-    <color name="z3">#FFEF9F27</color>
-    <color name="z4">#FFD85A30</color>
-    <color name="z5">#FFE24B4A</color>
+    <!-- Workout zone colours: the Karoo's power zones, as in BigWatts (Z1 grey … Z7 purple). -->
+    <color name="z1">#FFA6A49C</color>
+    <color name="z2">#FF4C9BF0</color>
+    <color name="z3">#FF5CC46A</color>
+    <color name="z4">#FFFFD02E</color>
+    <color name="z5">#FFFF9440</color>
+    <color name="z6">#FFFF5A5F</color>
+    <color name="z7">#FFA97AF2</color>
     <!-- Lap icon purple (Karoo lap icon), >= 3:1 on the tile -->
     <color name="lap_icon">#FFAFA9EC</color>
     <!-- Corner icons (gear, pause): muted grey, >= 3:1 against the page -->
@@ -81,4 +83,7 @@
     <!-- Countdown (regular style): the darker blue it fills with, and "Jumping to" on the pale blue -->
     <color name="countdown_fill">#FF85B7EB</color>
     <color name="countdown_sub">#FF2E5A85</color>
+    <!-- Tonal tile with data field boundaries on (white at 28%: the Karoo's page grey #484848 on black, measured on the
+         Karoo 3), see-through so a range tint still shows. -->
+    <color name="tile_boundary">#48FFFFFF</color>
 </resources>
