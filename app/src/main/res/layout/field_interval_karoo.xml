@@ -29,6 +29,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:orientation="vertical"
+            android:clipToPadding="false"
             android:paddingStart="8dp"
             android:paddingTop="8dp"
             android:paddingEnd="8dp"
@@ -68,22 +69,21 @@
 
         </FrameLayout>
 
-        <!-- Interval number + time left + progress. The label (or the paused box) and the time are
-             siblings in one baseline-aligned row, so the bottoms of "INTERVAL 1 / 16" and "−2:18"
-             line up exactly. -->
+        <!-- Interval number + time left + progress. The label (or the paused box) is centred on the
+             time's digits, like free ride's CURRENT LAP TIME. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:baselineAligned="true"
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <!-- Timer icon on the label's capitals (12dp icon, baseline 10dp from its top) -->
             <ImageView
                 android:id="@+id/icon_timer"
-                android:layout_width="12dp"
-                android:layout_height="12dp"
+                android:layout_width="13dp"
+                android:layout_height="13dp"
                 android:layout_marginEnd="4dp"
-                android:baseline="10dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_timer"
                 android:tint="@color/karoo_green" />
@@ -98,7 +98,7 @@
                 android:maxLines="1"
                 android:textAllCaps="true"
                 android:textColor="@color/text"
-                android:textSize="13sp" />
+                android:textSize="15sp" />
 
             <!-- While paused: a yellow box sized to its text, centred on the time's line, then a spacer -->
             <LinearLayout
@@ -154,7 +154,7 @@
                 android:letterSpacing="-0.05"
                 android:textColor="@color/text"
                 android:textScaleX="0.9"
-                android:textSize="23sp" />
+                android:textSize="28sp" />
         </LinearLayout>
 
         <ProgressBar
@@ -167,7 +167,9 @@
             android:max="1000"
             android:progressDrawable="@drawable/progress_interval" />
 
-        <!-- Lap avg and Target: one compact block, the same on every screen (54dp cells, 6dp insets). Header: green icons left, 15sp label right, icons centred on the capitals via
+        <!-- Lap avg and Target at the Karoo's 2-across field geometry (measured on its HR field): a 4 px gap,
+             out to 6 px from the field's edge (negative margins; the upper part doesn't clip to its
+             padding), ink 8 px from the right, the number 12 px above the bottom, 23 px icons. 54dp cells. Header: green icons left, 15sp label right, icons centred on the capitals via
              android:baseline (12dp icon, baseline 11dp from its top). Value: Karoo's number font
              (Plex Sans Regular, 90% wide, tighter), 48sp (the code shrinks a value that's too wide); its box starts 30dp
              up (under the header's empty space) and hangs 7dp below the cell (the font's empty
@@ -176,6 +178,8 @@
             android:id="@+id/tiles_row"
             android:layout_width="match_parent"
             android:layout_height="54dp"
+            android:layout_marginStart="-5dp"
+            android:layout_marginEnd="-5dp"
             android:orientation="horizontal">
 
             <FrameLayout
@@ -183,9 +187,10 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:layout_marginEnd="3dp"
+                android:layout_marginEnd="1dp"
                 android:background="@drawable/bg_tile_tonal"
-                android:paddingHorizontal="6dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="3dp"
                 android:paddingTop="6dp">
 
                 <LinearLayout
@@ -196,20 +201,20 @@
 
                     <ImageView
                         android:id="@+id/icon_lap"
-                        android:layout_width="11dp"
-                        android:layout_height="11dp"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
                         android:layout_marginEnd="3dp"
-                        android:baseline="10dp"
+                        android:baseline="11dp"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_lap"
                         android:tint="@color/karoo_green" />
 
                     <ImageView
                         android:id="@+id/icon_bolt"
-                        android:layout_width="11dp"
-                        android:layout_height="11dp"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
                         android:layout_marginEnd="3dp"
-                        android:baseline="10dp"
+                        android:baseline="11dp"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_bolt_filled"
                         android:tint="@color/karoo_green" />
@@ -226,7 +231,7 @@
                         android:text="@string/lap_avg"
                         android:textAllCaps="true"
                         android:textColor="@color/text"
-                        android:textSize="13sp" />
+                        android:textSize="15sp" />
                 </LinearLayout>
 
                 <TextView
@@ -234,6 +239,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="bottom|end"
+                    android:layout_marginBottom="-1.5dp"
                     android:fontFamily="sans-serif"
                     android:includeFontPadding="false"
                     android:letterSpacing="-0.05"
@@ -241,7 +247,7 @@
                     android:gravity="end|bottom"
                     android:maxLines="1"
                     android:textColor="@color/text"
-                    android:textSize="28sp" />
+                    android:textSize="31sp" />
             </FrameLayout>
 
             <FrameLayout
@@ -249,9 +255,10 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:layout_marginStart="3dp"
+                android:layout_marginStart="1dp"
                 android:background="@drawable/bg_tile_tonal"
-                android:paddingHorizontal="6dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="3dp"
                 android:paddingTop="6dp">
 
                 <LinearLayout
@@ -262,10 +269,10 @@
 
                     <ImageView
                         android:id="@+id/icon_target"
-                        android:layout_width="11dp"
-                        android:layout_height="11dp"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
                         android:layout_marginEnd="3dp"
-                        android:baseline="10dp"
+                        android:baseline="11dp"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_target"
                         android:tint="@color/karoo_green" />
@@ -282,13 +289,14 @@
                         android:text="@string/target"
                         android:textAllCaps="true"
                         android:textColor="@color/text"
-                        android:textSize="13sp" />
+                        android:textSize="15sp" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="bottom|end"
+                    android:layout_marginBottom="-1.5dp"
                     android:baselineAligned="true"
                     android:orientation="horizontal">
 
@@ -303,7 +311,7 @@
                         android:gravity="end|bottom"
                         android:maxLines="1"
                         android:textColor="@color/text"
-                        android:textSize="28sp" />
+                        android:textSize="31sp" />
 
                     <TextView
                         android:id="@+id/target_next"

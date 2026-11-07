@@ -157,7 +157,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // Settings › Top row: heart rate, cadence or the target at the top; the other goes in the
         // second tile next to Lap avg. Not picked: as each layout has it (number styles: heart rate
         // or cadence, gauge: target). "Swapped": the layout's top spot shows what its tile usually does.
-        val top = s.topRow ?: if (gaugeMode) TopRow.TARGET else if (s.showsCadence) TopRow.CADENCE else TopRow.HEART_RATE
+        val top = s.topRow ?: if (s.showsCadence) TopRow.CADENCE else TopRow.HEART_RATE
         val swapped = (top == TopRow.TARGET) != gaugeMode
         val extraCadence = when (top) { TopRow.CADENCE -> true; TopRow.HEART_RATE -> false; TopRow.TARGET -> s.showsCadence }
         val extraText = (if (extraCadence) s.cadence else s.heartRate)?.toString() ?: "--"
@@ -617,6 +617,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             },
         )
         if (s.showsCadence) showCadenceIcon(v, R.id.free_hr_icon, onTint = false)
+        // LAP HR / LAP CAD: the lap arrow before the heart, like LAP AVG (green; black on a zone colour, below)
+        v.setViewVisibility(R.id.free_hr_lap_icon, if (s.freeSecond == FreeSecond.LAP) View.VISIBLE else View.GONE)
         v.setOnClickPendingIntent(R.id.free_hr_tile, lapHrToggleIntent)
 
         // The tile takes the Karoo's own colour for the heart rate zone it shows, like the Karoo's
@@ -630,6 +632,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             v.setTextColor(R.id.free_hr_label, ink)
             v.setImageViewResource(R.id.free_hr_icon, R.drawable.ic_heart_outline)
             v.setInt(R.id.free_hr_icon, "setColorFilter", ink)
+            v.setInt(R.id.free_hr_lap_icon, "setColorFilter", ink)
         }
 
         v.setTextViewText(R.id.free_lap_number, s.lapNumber?.let { context.getString(R.string.lap_number, it) } ?: "")
@@ -731,7 +734,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
 
     /** Largest size up to [CELL_VALUE_SP] at which [text] fits in a Karoo-style cell. */
     private fun cellValueSp(text: String): Float {
-        val cellPx = ((config.viewSize.first - 16 * density) / 2f - 3 * density - 12 * density).coerceAtLeast(1f)
+        val cellPx = ((config.viewSize.first - 6 * density) / 2f - 1 * density - 8 * density).coerceAtLeast(1f)   // tiles at the Karoo's geometry
         var sp = CELL_VALUE_SP
         while (sp > 16f) {
             numberPaint.textSize = sp * density * scale
@@ -752,14 +755,14 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             R.id.move_cancelled_text to 16f, R.id.countdown to 31f,
         )
         // One compact block under the watts, the same on every screen: 13sp labels, 28sp values
-        // (smaller only if a value doesn't fit), 23sp time.
-        sizes += listOf(R.id.lap_avg to cellValueSp(lapText), R.id.lap_avg_label to 13f, R.id.interval_label to 13f, R.id.time_left to 23f)
+        // (smaller only if a value doesn't fit), 28sp time.
+        sizes += listOf(R.id.lap_avg to cellValueSp(lapText), R.id.lap_avg_label to 15f, R.id.interval_label to 15f, R.id.time_left to 28f)
         sizes += if (gaugeMode) {
             // top row: target range in the top-row HR's type; HR is a cell
-            listOf(R.id.hr to cellValueSp(hrText), R.id.hr_label to 13f, R.id.target to 20f, R.id.target_next to 14f)
+            listOf(R.id.hr to cellValueSp(hrText), R.id.hr_label to 15f, R.id.target to 20f, R.id.target_next to 14f)
         } else {
             // top row: heart rate (Plex Sans SemiBold); Target is a cell
-            listOf(R.id.hr to 20f, R.id.target to cellValueSp(targetText), R.id.target_label to 13f)
+            listOf(R.id.hr to 20f, R.id.target to cellValueSp(targetText), R.id.target_label to 15f)
         }
         sizes.forEach { (id, sp) -> v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_PX, sp * density * scale) }
         // A shrunk cell value has less room under its baseline, so it would sit lower than a
@@ -802,7 +805,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         private const val REF_W_DP = 255f
         private const val REF_H_DP = 385f
         private const val CHART_DP = 56f
-        private const val CELL_VALUE_SP = 28f
+        private const val CELL_VALUE_SP = 31f
         /** Height of the gauge's space on a full page without a route (measured), and how much a route takes. */
         private const val GAUGE_KAROO_DP = 128.7f   // 241 px on a Karoo 3 (162 px with a route)
         private const val ROUTE_DP = 42.1f          // a route makes the field 79 px shorter

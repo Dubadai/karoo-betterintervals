@@ -198,6 +198,18 @@
                     android:baselineAligned="true"
                     android:orientation="horizontal">
 
+                    <!-- LAP HR: the lap arrow before the heart, like the power tile's (hidden otherwise) -->
+                    <ImageView
+                        android:id="@+id/free_hr_lap_icon"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:layout_marginEnd="3dp"
+                        android:baseline="11dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_lap"
+                        android:tint="@color/karoo_green"
+                        android:visibility="gone" />
+
                     <ImageView
                         android:id="@+id/free_hr_icon"
                         android:layout_width="14.5dp"

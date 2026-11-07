@@ -60,7 +60,7 @@ field), **3 s**, **5 s** or **10 s**.
 **Heart rate / Cadence / Target**: what the top of the workout screen shows. The target and Lap
 avg are always on the screen: whatever isn't at the top goes in the tile next to Lap avg. With
 **Target** at the top, that tile shows heart rate (or cadence, if Heart rate or cadence says so).
-Until you pick one, the number styles have heart rate at the top and the gauge has the target.
+Until you pick one, heart rate (or cadence) is at the top on every style, the gauge too.
 
 All settings apply right away, also during a ride.
 

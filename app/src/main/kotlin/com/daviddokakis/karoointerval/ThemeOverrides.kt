@@ -158,6 +158,7 @@ internal object ThemeOverrides {
         Op(R.id.free_lap_label, Kind.TEXT, R.color.text),
         Op(R.id.free_lap_avg, Kind.TEXT, R.color.text),
         Op(R.id.free_hr_tile, Kind.BG, R.color.tile_tonal),
+        Op(R.id.free_hr_lap_icon, Kind.TINT, R.color.karoo_green),
         Op(R.id.free_hr_icon, Kind.TINT, R.color.text),
         Op(R.id.free_hr_label, Kind.TEXT, R.color.text),
         Op(R.id.free_hr, Kind.TEXT, R.color.text),
