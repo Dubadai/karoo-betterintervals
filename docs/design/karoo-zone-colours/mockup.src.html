@@ -21,7 +21,7 @@
 </style>
 </head>
 <body>
-<h1>Workouts in the Karoo's power zone colours (as in BigWatts)</h1>
+<h1>Workouts in the Karoo's power zone colours (as in BigWatts): round 2</h1>
 <p class="d">Stair Climb on the workout screen and the Workouts page. BigWatts uses the Karoo's 7 power zones; BetterIntervals now uses 5 intervals.icu-style zones.</p>
 <div class="keys" id="keys"></div>
 
@@ -50,8 +50,10 @@ const KAROO = {
   light: ['#8F8D86', '#2F7FD8', '#3FA34D', '#E8B400', '#F07A1A', '#E0383E', '#8B4FD8'],
   dark:  ['#A6A49C', '#4C9BF0', '#5CC46A', '#FFD02E', '#FF9440', '#FF5A5F', '#A97AF2'],
 };
-// Past steps, faded so they don't look like Z1 grey.
-const DONE_FADED = { light: '#DDDCD6', dark: '#3A3A38' };
+// Finished steps keep their zone colour (round 2: you may jump back to them). On the workout
+// screen the two finished steps are grey; their zones come from the same workout on the Workouts
+// page: the warm-up ramp is Z1 (x 16–64 on the screen chart), the first step Z3 (x 65–87).
+const DONE_STEPS = [[16, 64, 0], [65, 87, 2]];
 // Same % of FTP bands: intervals.icu z1–z5 = Karoo Z1–Z5 (≤55, 56–75, 76–90, 91–105, 106–120 %);
 // Karoo adds Z6 (121–150 %) and Z7 (> 150 %), which this workout doesn't reach.
 
@@ -59,12 +61,13 @@ const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 
 /** Swap colours (keeping anti-aliased edges): each pixel that's a blend of [from] over [bg] becomes the same blend of [to]. */
 function recolour(pairs, bgHex, y0 = 0) {
-  const bg = hex(bgHex), P = pairs.map(([f, t]) => [hex(f), hex(t)]);
+  const bg = hex(bgHex), P = pairs.map(([f, t, x0 = 0, x1 = 479]) => [hex(f), hex(t), x0, x1]);
   return ctx => {
     const img = ctx.getImageData(0, 0, 480, 800), d = img.data;
     for (let i = y0 * 480 * 4; i < d.length; i += 4) {
-      const p = [d[i], d[i + 1], d[i + 2]];
-      for (const [f, t] of P) {
+      const p = [d[i], d[i + 1], d[i + 2]], x = (i / 4) % 480;
+      for (const [f, t, x0, x1] of P) {
+        if (x < x0 || x > x1) continue;
         const v = f.map((c, k) => c - bg[k]), len2 = v.reduce((s, c) => s + c * c, 0);
         if (!len2) continue;
         const a = p.reduce((s, c, k) => s + (c - bg[k]) * v[k], 0) / len2;
@@ -83,8 +86,8 @@ const VARIANTS = (theme, bgKey) => {
   const n = NOW[theme], k = KAROO[theme], zones = n.z.map((c, i) => [c, k[i]]);
   return [
     ['Now: intervals.icu colours', null],
-    ['A · Karoo zone colours', [...zones]],
-    ['B · Karoo colours, past steps faded', [...zones, [n.done, DONE_FADED[theme]]]],
+    ['A · Karoo zone colours, finished steps grey', [...zones]],
+    ['B · Karoo zone colours, finished steps keep their colour', [...zones, ...DONE_STEPS.map(([x0, x1, z]) => [n.done, k[z], x0, x1])]],
   ];
 };
 
@@ -98,7 +101,7 @@ function keys() {
     k.append(sw); box.append(k);
   };
   row('Now (light)', [...NOW.light.z, NOW.light.done], ['Z1', 'Z2', 'Z3', 'Z4', 'Z5', 'past']);
-  row('Karoo zones (light)', [...KAROO.light, DONE_FADED.light], ['Z1', 'Z2', 'Z3', 'Z4', 'Z5', 'Z6', 'Z7', 'past']);
+  row('Karoo zones (light)', KAROO.light, ['Z1', 'Z2', 'Z3', 'Z4', 'Z5', 'Z6', 'Z7']);
 }
 
 (async () => {
@@ -118,7 +121,8 @@ function keys() {
   const wrow = document.getElementById('workouts');
   for (const t of ['light', 'dark']) {
     const dev = await KarooDevice.load({ frame: FRAME, screen: BASE.workouts[t] });
-    for (const [cap, pairs] of VARIANTS(t).filter((_, i) => i !== 1)) {
+    // No finished steps on the Workouts page, so A and B look the same there.
+    for (const [cap, pairs] of VARIANTS(t).filter((_, i) => i !== 1).map(([c, p], i) => [i ? 'Karoo zone colours' : c, p])) {
       const scr = dev.screen({ draw: pairs ? recolour(pairs, NOW[t].bg.workouts, 480) : undefined });
       const el = document.createElement('div'); el.className = 'dev'; el.append(dev.crop(scr, [0, 370, 480, 260], 0.6));
       const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap.split(':')[0]} (${t})`; el.append(c); wrow.append(el);
