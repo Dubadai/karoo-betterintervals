@@ -44,8 +44,8 @@
                 android:textScaleX="0.9" />
         </FrameLayout>
 
-        <!-- Lap row: "LAP TIME" and its icon a step above the boxes' label size (17sp, 14dp icon),
-             centred on the lap time's height (28sp) -->
+        <!-- Lap row: "LAP TIME" and its icon exactly like the boxes' labels (15sp, 12dp icon, lined
+             up with the boxes' icons), centred on the lap time's digits (28sp) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -56,8 +56,9 @@
 
             <ImageView
                 android:id="@+id/th_free_karoo_1"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="6dp"
                 android:layout_marginEnd="3dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_lap"
@@ -74,7 +75,7 @@
                 android:text="@string/lap_time"
                 android:textAllCaps="true"
                 android:textColor="@color/text"
-                android:textSize="17sp" />
+                android:textSize="15sp" />
 
             <TextView
                 android:id="@+id/free_lap_time"

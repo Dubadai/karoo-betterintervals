@@ -619,6 +619,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             if (karoo) parts else context.getString(R.string.last_lap_no_power, parts)
         }
         v.setTextViewText(R.id.free_last_lap, last ?: "")
+        // No last lap yet (first lap): hide the "LAST LAP" label too. Its space stays, so nothing
+        // moves when the first lap ends.
+        if (karoo) v.setViewVisibility(R.id.th_free_karoo_5, if (last == null) View.INVISIBLE else View.VISIBLE)
         v.setOnClickPendingIntent(R.id.free_btn_settings, settingsIntent)
         return v
     }
