@@ -42,7 +42,7 @@ object DemoData {
         return s.copy(
             plan = plan,
             elapsedInStepSec = elapsedInStep,
-            power3s = watts,
+            powerShown = watts,
             heartRate = hr,
             lapAvg = lapAvg,
             // NP a bit above the average, as with surging power; "--" in the lap's first 30 s.
@@ -56,6 +56,10 @@ object DemoData {
             // Lap average HR drifts a little below the current one; last lap 142 bpm.
             lapHrAvg = 138 + (tick % 7),
             lastLapHrAvg = 142,
+            // Cadence around 90 rpm; lap 88, last lap 87.
+            cadence = 88 + (tick % 5),
+            lapCadenceAvg = 88,
+            lastLapCadenceAvg = 87,
             hrZones = s.hrZones.ifEmpty { DEFAULT_HR_ZONES },
         )
     }

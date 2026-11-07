@@ -63,6 +63,38 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         ThemeOverrides.drawableColor[drawable]?.let { v.setColorStateList(id, "setBackgroundTintList", opaque(color(it))) }
     }
 
+    /**
+     * Data field boundaries on (Karoo Settings): the Karoo puts every field in a white (dark mode:
+     * black) card with a thin border on a grey page. The field stays see-through, so it sits on
+     * that card like the Karoo's own fields; tonal tiles take the page grey to tie in with it.
+     */
+    private val boundaries = config.boundariesEnabled
+
+    /**
+     * The Lap avg / Target / HR tiles, per the Tiles setting: Outline (a border like Next up),
+     * or Tonal ([tonal], the layout's own fill; the Karoo's page grey with boundaries on).
+     */
+    private fun tileDrawable(outline: Boolean, tonal: Int): Int = when {
+        outline -> R.drawable.bg_outline
+        boundaries -> R.drawable.bg_tile_boundary
+        else -> tonal
+    }
+
+    private fun applyTiles(v: RemoteViews, tiles: List<Int>, outline: Boolean, tonal: Int) {
+        tiles.forEach { setBg(v, it, tileDrawable(outline, tonal)) }
+    }
+
+    /** The heart icon swapped for the cadence icon: Karoo green in Karoo style (text colour on a tint), else the text colour. */
+    private fun showCadenceIcon(v: RemoteViews, id: Int, karoo: Boolean, onTint: Boolean) {
+        v.setImageViewResource(id, R.drawable.ic_cadence)
+        v.setInt(id, "setColorFilter", color(if (karoo && !onTint) R.color.karoo_green else R.color.text))
+        v.setContentDescription(id, context.getString(R.string.cadence))
+    }
+
+    /** "Cadence" / "Lap cad", in capitals for Karoo style. */
+    private fun cadenceLabel(karoo: Boolean, lap: Boolean): String =
+        context.getString(if (lap) R.string.lap_cadence else R.string.cadence).let { if (karoo) it.uppercase() else it }
+
     /** A tint that replaces a drawable's colour but keeps its alpha. */
     private fun opaque(c: Int) = android.content.res.ColorStateList.valueOf(c or 0xFF000000.toInt())
     private val density = context.resources.displayMetrics.density
@@ -117,12 +149,13 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         }
         val v = RemoteViews(context.packageName, layout)
         applyAppearance(v, layout)
+        applyTiles(v, listOf(R.id.lap_tile, if (gaugeMode) R.id.hr_tile else R.id.target_tile), s.tileOutline, R.drawable.bg_tile_tonal)
         // The cell values' texts, so a Karoo-style cell can shrink a value that's too wide.
         lapText = (if (s.lapShowsNp) s.lapNp else s.lapAvg)?.toString() ?: "--"
         targetText = s.targetRange.let { band ->
             if (s.targetShowsRange && band != null) "${band.first}–${band.last}" else s.target?.toString() ?: "--"
         }
-        hrText = s.heartRate?.toString() ?: "--"
+        hrText = s.secondValue?.toString() ?: "--"
         applyTextSizes(v, gaugeMode, karoo)
 
         v.setViewVisibility(R.id.content, View.VISIBLE)
@@ -145,10 +178,10 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (gaugeMode) {
             val gaugeW = (config.viewSize.first - 16 * density).toInt()
             if (gaugeW > 0) {
-                v.setImageViewBitmap(R.id.gauge, gauge.render(gaugeW, gaugeHeightPx(karoo, s.navigating), s.power3s, s.target, s.targetRange, color(wattsColor), karoo))
+                v.setImageViewBitmap(R.id.gauge, gauge.render(gaugeW, gaugeHeightPx(karoo, s.navigating), s.powerShown, s.target, s.targetRange, color(wattsColor), karoo))
             }
         } else {
-            v.setTextViewText(R.id.watts, s.power3s?.toString() ?: "--")
+            v.setTextViewText(R.id.watts, s.powerShown?.toString() ?: "--")
             v.setTextColor(R.id.watts, color(wattsColor))
         }
         val upperBg = if (s.wattsMode.colorsBackground && range != null) {
@@ -176,7 +209,13 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             icons.forEach { v.setInt(it, "setColorFilter", iconColor) }
         }
         v.setOnClickPendingIntent(if (gaugeMode) R.id.gauge else R.id.watts, wattsColorIntent)
-        v.setTextViewText(R.id.hr, s.heartRate?.toString() ?: "--")
+        v.setTextViewText(R.id.hr, s.secondValue?.toString() ?: "--")
+        // Settings › Heart rate or cadence: cadence takes the heart rate's spot (top row, or the
+        // gauge screen's tile) with its own icon; the layout stays the same.
+        if (s.showsCadence) {
+            showCadenceIcon(v, R.id.hr_icon, karoo, onTint = upperBg != 0 && (gaugeMode || karoo))
+            if (gaugeMode) v.setTextViewText(R.id.hr_label, cadenceLabel(karoo, lap = false))
+        }
 
         // Pause / resume (top right). Paused by you: green half-pill with a filled play symbol.
         // Ride paused by Karoo: hidden, since the workout resumes with the ride.
@@ -391,7 +430,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
      */
     private fun rangeState(s: ScreenState): RangeState? {
         if (s.finished || s.workoutPaused || s.paused) return null
-        val p = s.power3s ?: return null
+        val p = s.powerShown ?: return null
         val range = s.targetRange ?: return null
         return when {
             p < range.first -> RangeState.UNDER
@@ -412,6 +451,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         val layout = if (karoo) R.layout.field_free_karoo else R.layout.field_free
         val v = RemoteViews(context.packageName, layout)
         applyAppearance(v, layout)
+        val freeTonal = if (karoo) R.drawable.bg_tile_tonal else R.drawable.bg_tile
+        applyTiles(v, listOf(R.id.free_lap_tile), s.tileOutline, freeTonal)
         (
             if (karoo) {
                 listOf(
@@ -427,20 +468,26 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             }
         ).forEach { (id, sp) -> v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_PX, sp * density * scale) }
 
-        v.setTextViewText(R.id.free_watts, s.power3s?.toString() ?: "--")
+        v.setTextViewText(R.id.free_watts, s.powerShown?.toString() ?: "--")
         v.setTextViewText(R.id.free_lap_label, context.getString(if (s.lapShowsNp) R.string.np else R.string.lap_avg))
         v.setTextViewText(R.id.free_lap_avg, (if (s.lapShowsNp) s.freeLapNp else s.lapPowerAvg)?.toString() ?: "--")
         v.setOnClickPendingIntent(R.id.free_lap_tile, lapNpToggleIntent)
         // HR tile: tap to switch between the current heart rate and the lap's average ("LAP HR").
-        v.setTextViewText(R.id.free_hr, s.shownHr?.toString() ?: "--")
+        // With cadence instead (Settings), the same tile shows cadence / lap cadence.
+        v.setTextViewText(R.id.free_hr, s.shownSecond?.toString() ?: "--")
         v.setTextViewText(
             R.id.free_hr_label,
-            context.getString(if (s.hrShowsLap) R.string.lap_hr else if (karoo) R.string.hr else R.string.heart_rate),
+            if (s.showsCadence) {
+                cadenceLabel(karoo, lap = s.hrShowsLap)
+            } else {
+                context.getString(if (s.hrShowsLap) R.string.lap_hr else if (karoo) R.string.hr else R.string.heart_rate)
+            },
         )
+        if (s.showsCadence) showCadenceIcon(v, R.id.free_hr_icon, karoo, onTint = false)
         v.setOnClickPendingIntent(R.id.free_hr_tile, lapHrToggleIntent)
 
-        // The tile's tint follows the heart rate it shows.
-        val zoneBg = when (s.zoneOf(s.shownHr)) {
+        // The tile's tint follows the heart rate it shows (cadence has no zones).
+        val zoneBg = if (s.showsCadence) null else when (s.zoneOf(s.shownHr)) {
             1 -> R.drawable.bg_hr_z1
             2 -> R.drawable.bg_hr_z2
             3 -> R.drawable.bg_hr_z3
@@ -449,7 +496,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             else -> null
         }
         // Soft tint of the HR zone colour; text keeps the normal colours and the heart stays red.
-        setBg(v, R.id.free_hr_tile, zoneBg ?: if (karoo) R.drawable.bg_tile_tonal else R.drawable.bg_tile)
+        // No zone: like the Lap avg tile (Tiles setting).
+        setBg(v, R.id.free_hr_tile, zoneBg ?: tileDrawable(s.tileOutline, freeTonal))
 
         v.setTextViewText(R.id.free_lap_number, s.lapNumber?.let { context.getString(R.string.lap_number, it) } ?: "")
         v.setTextViewText(R.id.free_lap_time, s.lapTimeSec?.let(::formatClock) ?: "--:--")
@@ -459,7 +507,11 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             val parts = listOfNotNull(
                 formatClock(time),
                 s.lastLapPowerAvg?.let { "$it W" },
-                s.lastLapHrAvg?.takeIf { it > 0 }?.let { context.getString(R.string.bpm_value, it) },
+                if (s.showsCadence) {
+                    s.lastLapCadenceAvg?.takeIf { it > 0 }?.let { context.getString(R.string.rpm_value, it) }
+                } else {
+                    s.lastLapHrAvg?.takeIf { it > 0 }?.let { context.getString(R.string.bpm_value, it) }
+                },
             ).joinToString(" · ")
             if (karoo) parts else context.getString(R.string.last_lap_no_power, parts)
         }

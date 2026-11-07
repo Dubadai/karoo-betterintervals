@@ -23,19 +23,28 @@ object ExampleScreen {
         ftp = 280,
     )
 
-    /** Interval 4 of 10: 280 W (in range), 132 bpm, lap average 282 W. */
-    fun state(karooStyle: Boolean, wattsMode: WattsMode, appearance: Appearance = Appearance.AUTO) = ScreenState(
+    /** Interval 4 of 10: 280 W (in range), 132 bpm or 88 rpm, lap average 282 W. */
+    fun state(
+        karooStyle: Boolean,
+        wattsMode: WattsMode,
+        appearance: Appearance = Appearance.AUTO,
+        tileOutline: Boolean = false,
+        secondField: SecondField = SecondField.HEART_RATE,
+    ) = ScreenState(
         plan = plan,
         stepIndex = 3,
         elapsedInStepSec = 207,
         power = 280,
-        power3s = 280,
+        powerShown = 280,
         heartRate = 132,
+        cadence = 88,
         lapAvg = 282,
         lapNumber = 4,
         wattsMode = wattsMode,
         appearance = appearance,
         karooStyle = karooStyle,
+        tileOutline = tileOutline,
+        secondField = secondField,
     )
 
     /** [s] drawn as a [w] × [h] px Karoo field would show it. [context] decides light or dark (Auto). */

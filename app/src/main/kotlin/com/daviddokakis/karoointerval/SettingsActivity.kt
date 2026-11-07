@@ -14,7 +14,8 @@ import android.widget.ScrollView
 import android.widget.TextView
 
 /**
- * Settings: Appearance (Dark / Light / Auto) and Karoo style first, both as Karoo's own segmented
+ * Settings: Appearance (Dark / Light / Auto), Karoo style, Tiles (Tonal / Outline), Power
+ * smoothing and Heart rate or cadence (with cadence smoothing) first, both as Karoo's own segmented
  * control (as in Karoo Settings → Display), then the intervals.icu account as one row that opens
  * the Account page.
  */
@@ -56,7 +57,10 @@ class SettingsActivity : AppearanceActivity() {
 
     /** The workout screen with a made-up workout, drawn full size and shown small (127 dp tall). */
     private fun showExample() {
-        val s = ExampleScreen.state(store.karooStyle.value, store.wattsMode, store.appearance.value)
+        val s = ExampleScreen.state(
+            store.karooStyle.value, store.wattsMode, store.appearance.value,
+            tileOutline = store.tileOutline.value, secondField = store.secondField.value,
+        )
         val full = ExampleScreen.draw(this, s, ExampleScreen.FULL_W, ExampleScreen.FULL_H)
         val h = dp(127)
         val small = Bitmap.createScaledBitmap(full, h * ExampleScreen.FULL_W / ExampleScreen.FULL_H, h, true)
@@ -93,6 +97,52 @@ class SettingsActivity : AppearanceActivity() {
             },
         )
         form.addView(settingsHelp(getString(R.string.karoo_style_help)))
+        form.addView(settingsDivider())
+
+        // Tiles: Tonal / Outline (the Lap avg, Target and HR tiles on the workout screen)
+        form.addView(settingsHeading(R.drawable.ic_tiles, getString(R.string.tiles)))
+        form.addView(
+            segmented(listOf(R.string.tiles_tonal to false, R.string.tiles_outline to true), store.tileOutline.value) { on ->
+                store.setTileOutline(on)
+                render()
+            },
+        )
+        form.addView(settingsHelp(getString(R.string.tiles_help)))
+        form.addView(settingsDivider())
+
+        // Power: how the big watts are smoothed
+        form.addView(settingsHeading(R.drawable.ic_bolt, getString(R.string.power_smoothing)))
+        form.addView(
+            segmented(Smoothing.entries.map { it.label to it }, store.powerSmoothing.value) { picked ->
+                store.setPowerSmoothing(picked)
+                render()
+            },
+        )
+        form.addView(settingsHelp(getString(R.string.power_smoothing_help)))
+        form.addView(settingsDivider())
+
+        // Heart rate or cadence in the HR spots, and (cadence) its smoothing
+        form.addView(settingsHeading(R.drawable.ic_heart_outline, getString(R.string.second_field)))
+        form.addView(
+            segmented(
+                listOf(R.string.heart_rate to SecondField.HEART_RATE, R.string.cadence to SecondField.CADENCE),
+                store.secondField.value,
+            ) { picked ->
+                store.setSecondField(picked)
+                render()
+            },
+        )
+        form.addView(settingsHelp(getString(R.string.second_field_help)))
+        if (store.secondField.value == SecondField.CADENCE) {
+            form.addView(settingsHeading(R.drawable.ic_cadence, getString(R.string.cadence_smoothing)))
+            form.addView(
+                segmented(Smoothing.entries.map { it.label to it }, store.cadenceSmoothing.value) { picked ->
+                    store.setCadenceSmoothing(picked)
+                    render()
+                },
+            )
+            form.addView(settingsHelp(getString(R.string.cadence_smoothing_help)))
+        }
         form.addView(settingsDivider())
 
         // intervals.icu: one row, opens the Account page
