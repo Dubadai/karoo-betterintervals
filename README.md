@@ -6,8 +6,8 @@ A full-page data field for the Hammerhead Karoo 3 that makes structured workouts
 It loads your planned workouts from [intervals.icu](https://intervals.icu) and runs them itself, so
 you can jump forward **and back** between intervals.
 
-<img src="docs/images/betterintervals-light.png" alt="BetterIntervals on four Karoo 3s during a ride: the START WORKOUT screen, the power gauge at 280 watts with the 273–287 target on top, the purple countdown jumping to 3m @ 150W, and the Workout done screen">
-<img src="docs/images/betterintervals-dark.png" alt="The same in dark mode">
+<img src="docs/images/workout.png" alt="A workout in three steps on three Karoo 3s: START WORKOUT before you start, the power gauge with 3 seconds left in an interval, and Workout done with the workout's numbers">
+<img src="docs/images/workout-dark.png" alt="The same in dark mode">
 
 - **Before, during and after:** a workout waits for **START WORKOUT** (pick where to start with
   ⏮ / ⏭, then a 5-second countdown), runs interval by interval with beeps before each change,
@@ -28,7 +28,19 @@ you can jump forward **and back** between intervals.
   Karoo or stays fixed.
 - **Remote button actions:** next interval, previous interval, pause or resume the workout.
 
-<img src="docs/images/betterintervals-more.jpg" alt="More screens on three Karoo 3s: free ride without a workout (3S POWER, current lap time, Lap avg and HR in its zone colour), the Settings page with its example, and the five watts styles from the introduction">
+### Without a workout
+
+Big power and the current lap, and two tiles you tap through: the lap's average, the lap's NP and the
+whole ride's average, and heart rate now, for the lap and for the ride.
+
+<img src="docs/images/free-ride.png" alt="Free ride on a Karoo 3: 3S POWER 280, the current lap time 4:21, the tiles on LAP NP 289 and LAP HR 138 (heart rate in its zone colour), and the last lap">
+<img src="docs/images/free-ride-dark.png" alt="The same in dark mode">
+
+### Settings
+
+Each change shows straight away in the example at the top.
+
+<img src="docs/images/settings.png" alt="Settings on three Karoo 3s: the example and Appearance; Power smoothing and Heart rate or cadence; Top row and Update notices">
 
 Values show `--` when a sensor isn't connected. There's a step-by-step
 [guide with pictures](docs/guide/README.md) for every feature.
