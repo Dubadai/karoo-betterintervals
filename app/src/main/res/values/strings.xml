@@ -55,6 +55,8 @@
     <string name="cadence_smoothing">Cadence</string>
     <string name="cadence_smoothing_help">Instant, or averaged over 3, 5 or 10 seconds.</string>
     <string name="rpm_value">%1$d rpm</string>
+    <string name="example">Example</string>
+    <string name="example_description">Example of the workout screen with these settings: interval 4 of 10 at 280 watts.</string>
     <string name="update_notices">Update notices</string>
     <string name="update_notices_help">A card in Control Center › Notifications when a new version is out. Checked once a day, never during a ride.</string>
     <string name="update_header">Update available</string>
