@@ -32,6 +32,7 @@
 <script>
 const FRAME = "__FRAME__";
 const SHOTS = { light: "__SHOT_light__", dark: "__SHOT_dark__" };
+const ROUTES = { light: "__ROUTE_light__", dark: "__ROUTE_dark__" };
 const NATIVE = "__NATIVE__";
 const T = {
   light: { page: '#DDDDDD', card: '#FFFFFF', border: '#7D7D7D', ink: '#000000', sub: '#444441', tile: '#EBEBEB', green: '#129A5E' },
@@ -95,28 +96,47 @@ function field(ctx, x, y, w, h, bg, icons, label, value, ink) {
   num(ctx, value, x + w - 10, y + h - 13, NUM, ink);
 }
 
-function after(theme, nat, shot) {
-  const t = T[theme];
+// Two heights: the full page (Last lap between the Karoo's back and play buttons, as before) and
+// with a route loaded (the Karoo makes the field shorter, ending above the turn pill).
+const LAYOUT = {
+  full:  { last: 752, lastW: 280, tiles: 532, lap: 508 },
+  route: { last: 676, lastW: 448, tiles: 462, lap: 440, cardEnd: 690 },
+};
+function fit(ctx, s, font, size, maxW, sx = 1) {        // largest size <= [size] that fits [maxW]
+  for (; size > 10; size -= 1) { ctx.font = font(size); if (ctx.measureText(s).width * sx <= maxW) break; }
+  return size;
+}
+function after(theme, nat, shot, route) {
+  const t = T[theme], L = route ? LAYOUT.route : LAYOUT.full;
   return ctx => {
-    statusBar(ctx, null, t); card(ctx, t);
+    statusBar(ctx, null, t);
+    if (route) {
+      const r = window.ROUTE[theme];
+      ctx.drawImage(r, 0, 0, 480, 800, 0, 0, 480, 800);           // route pill and bottom bar from the shot
+      ctx.fillStyle = t.page; ctx.fillRect(0, 56, 480, 634); ctx.fillRect(0, 690, 125, 92); ctx.fillRect(355, 690, 125, 92);
+      ctx.fillStyle = t.card; ctx.beginPath(); ctx.roundRect(1, 60, 478, L.cardEnd - 60, 16); ctx.fill();
+      if (t.border) { ctx.strokeStyle = t.border; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(1.5, 60.5, 477, L.cardEnd - 61, 16); ctx.stroke(); }
+      statusBar(ctx, null, t);
+    } else card(ctx, t);
     ctx.drawImage(shot, 0, 70, 66, 56, 0, 70, 66, 56);                          // gear (from the shot)
-    // Watts: higher up, the Karoo's number font
-    num(ctx, '280', 240, 282, 232, t.ink, 'center');
-    // Lap time: the same one-line row as before (green lap icon, LAP TIME, clock on the right),
-    // a step bigger: label 15 → 17sp, clock 23 → 28sp.
+    // Watts: the Karoo's number font, as big as fits between the top and the lap row
+    const top = 80, bottom = L.lap - 70;
+    const ws = Math.min(232, (bottom - top) / 0.7, fit(ctx, '280', f => `400 ${f}px PlexReg`, 400, 440, 0.9));
+    num(ctx, '280', 240, bottom, ws, t.ink, 'center');
+    // Lap time: the same one-line row as before, a step bigger (label 15 → 17sp, clock 23 → 28sp)
     const lapIcon = tinted(window.LIGHT_SHOT, 16, 455, 24, 26, t.green);
-    ctx.drawImage(lapIcon, 16, 393, 27, 29);
-    txt(ctx, 'LAP TIME', 48, 420, '500 36px PlexCond', t.ink);
-    txt(ctx, '10:24', 464, 422, '600 54px PlexSemi', t.ink, 'right', 0.9);
+    ctx.drawImage(lapIcon, 16, L.lap - 27, 27, 29);
+    txt(ctx, 'LAP TIME', 48, L.lap, '500 36px PlexCond', t.ink);
+    txt(ctx, '10:24', 464, L.lap + 2, '600 54px PlexSemi', t.ink, 'right', 0.9);
     // Lap avg and HR, the Karoo's 2-across fields
     const lapAvgIcons = tinted(nat, 250, 221, 52, 27, t.green);
-    field(ctx, 16, 446, 218, 145, t.tile, (x, y) => ctx.drawImage(lapAvgIcons, x, y - 2), 'LAP AVG', '271', t.ink);
-    field(ctx, 246, 446, 218, 145, HR_ZONES[HR_ZONE - 1], (x, y) => heartOutline(ctx, x, y - 2, 27, '#000000'), 'HR', '132', '#000000');
-    // Last lap: Karoo label, values a step below the field numbers
+    field(ctx, 16, L.tiles, 218, 145, t.tile, (x, y) => ctx.drawImage(lapAvgIcons, x, y - 2), 'LAP AVG', '271', t.ink);
+    field(ctx, 246, L.tiles, 218, 145, HR_ZONES[HR_ZONE - 1], (x, y) => heartOutline(ctx, x, y - 2, 27, '#000000'), 'HR', '132', '#000000');
     // Last lap: the same design as before (small grey label, bold condensed values), a step
-    // bigger: label 11 → 12sp, values ~15% bigger. Sits above the Karoo's back / play buttons.
-    txt(ctx, 'LAST LAP', 240, 642, '500 23px PlexCond', t.sub, 'center');
-    txt(ctx, '8:20 · 271 W · 142 bpm', 240, 676, 'bold 34px PlexCond', t.ink, 'center');
+    // bigger: label 11 → 12sp, values ~15% bigger, shrinking to fit the space they have.
+    txt(ctx, 'LAST LAP', 240, L.last - 34, '500 23px PlexCond', t.sub, 'center');
+    const ls = fit(ctx, '8:20 · 271 W · 142 bpm', f => `bold ${f}px PlexCond`, 34, L.lastW);
+    txt(ctx, '8:20 · 271 W · 142 bpm', 240, L.last, `bold ${ls}px PlexCond`, t.ink, 'center');
   };
 }
 function before(theme, shot) {
@@ -135,12 +155,13 @@ const img = src => new Promise(ok => { const i = new Image(); i.onload = () => o
   await Promise.all([LABEL, '400 40px PlexReg', '600 40px PlexSemi'].map(f => document.fonts.load(f)));
   const nat = await img(NATIVE);
   window.LIGHT_SHOT = await img(SHOTS.light);
+  window.ROUTE = { light: await img(ROUTES.light), dark: await img(ROUTES.dark) };
   for (const theme of ['light', 'dark']) {
     const shot = await img(SHOTS[theme]);
     const dev = await KarooDevice.load({ frame: FRAME, screen: SHOTS[theme] });
-    for (const [cap, draw] of [['Now', before(theme, shot)], ['Karoo native', after(theme, nat, shot)]]) {
+    for (const [cap, draw] of [['Now', before(theme, shot)], ['Karoo native', after(theme, nat, shot, false)], ['Karoo native, route loaded', after(theme, nat, shot, true)]]) {
       const scr = dev.screen({ draw });
-      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 300));
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 260));
       const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${theme})`; el.append(c);
       document.getElementById(theme).append(el);
     }

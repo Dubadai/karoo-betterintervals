@@ -16,6 +16,7 @@ for src in sorted(here.glob('*.src.html')):
   html = html.replace('__NATIVE__', data_url(here / 'native-light.png'))
   for key in ['light', 'dark']:
     html = html.replace(f'__SHOT_{key}__', data_url(here / f'base-{key}.png'))
+    html = html.replace(f'__ROUTE_{key}__', data_url(here / f'route-{key}.png'))
   out = here / src.name.replace('.src.html', '.html')
   out.write_text(html)
   print('wrote', out)

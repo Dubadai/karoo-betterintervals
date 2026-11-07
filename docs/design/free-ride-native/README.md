@@ -21,3 +21,8 @@ Device screenshots (`device/`):
 - `00-current-light.png`: v0.5.3 on David's Karoo, no ride.
 - `01-native-hr-zone-light.png`: the Karoo's own HR field with Zone Color (zone 1).
 - `02-native-hr-combo-light.png`: the Karoo's HR combo field (its own, lighter blue).
+
+Round 2: everything sits further down. Without a route, Last lap is back between the Karoo's back
+and play buttons (shrinking to fit 150dp, as before) and the rest moves down with it. With a route
+(`route-light.png`, `route-dark.png` as the base) the Karoo makes the field shorter, so Last lap
+sits at the field's bottom edge above the turn pill and the watts get the space that's left.
