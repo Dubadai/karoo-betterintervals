@@ -73,3 +73,6 @@ Four ways to say the big number is power, the number staying where it is (centre
 gear and the lap row), in the Karoo's label type (20 px caps) and its own green 3S POWER bolt
 (15 × 25 px): A a bolt top left of the number, B "W" top right, C "3S POWER" above, D "3S" with
 the bolt above ("3S" follows Settings › Power: instant, 3, 5 or 10 s).
+
+Last lap: the values were 27 px under their label on the Karoo (the mockup has 10); pulled up
+(-6dp), now 10 px. `device/10-last-lap-gap-dark.png`.
