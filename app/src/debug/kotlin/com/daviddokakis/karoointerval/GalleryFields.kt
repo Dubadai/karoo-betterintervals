@@ -12,12 +12,14 @@ import java.util.concurrent.CountDownLatch
  */
 // gallery: no-power-neighbours (this app shows power itself)
 object GalleryFields {
+    private val HR_ZONES = listOf(0..119, 120..139, 140..154, 155..169, 170..220)
+
     /**
      * Karoo style everywhere (how BetterIntervals is shown); "classic*" is the other style, for the
      * guide's "it can also look like this". The rest are the states the guide explains.
      */
     val variants = listOf(
-        "ready", "karoo", "karoo-number", "karoo-colours", "gauge", "free", "done",
+        "ready", "karoo", "karoo-number", "karoo-colours", "gauge", "free", "free-first-lap", "done",
         "choose", "restart", "cancelled", "countdown", "paused", "zoomed", "target-range", "lap-np",
         "outline", "cadence", "classic", "classic-colours", "classic-free",
     )
@@ -32,7 +34,9 @@ object GalleryFields {
             "karoo-number" -> ExampleScreen.state(karooStyle = true, wattsMode = WattsMode.TEXT)
             "karoo-colours" -> ExampleScreen.state(karooStyle = true, wattsMode = WattsMode.BOTH)
             "gauge" -> ExampleScreen.state(karooStyle = true, wattsMode = WattsMode.GAUGE)
-            "free" -> ExampleScreen.freeRide(karooStyle = true)
+            // Five HR zones from a rider profile, so the HR tile shows the Karoo's zone colour (132: Z2)
+            "free" -> ExampleScreen.freeRide(karooStyle = true).copy(hrZones = HR_ZONES)
+            "free-first-lap" -> ExampleScreen.freeRide(karooStyle = true).copy(hrZones = HR_ZONES, lastLapTimeSec = null)
             // The whole workout done: 52:00, averages that fit the showcase ride
             "done" -> k.copy(finished = true, stepIndex = 9, summary = WorkoutSummary(3120, 232, 251, 132, 88))
             // Jumping: choosing 1 ahead, restarting, cancelled, the countdown
