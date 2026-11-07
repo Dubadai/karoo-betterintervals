@@ -183,7 +183,9 @@ class WorkoutSession(
             val st = _state.value
             if (st.plan == null) return@launch
             if (st.notStarted) {
-                // Ready screen: ⏮ / ⏭ pick the step to start from, no confirm needed.
+                // Ready screen: ⏮ / ⏭ pick the step to start from, no confirm needed (and stop a
+                // start countdown that's running).
+                cancelCountdown()
                 val index = (st.stepIndex + delta).coerceIn(0, st.stepCount - 1)
                 if (index != st.stepIndex) _state.update { it.copy(stepIndex = index, elapsedInStepSec = 0) }
                 Timber.i("Start step -> ${index + 1}")
@@ -229,7 +231,7 @@ class WorkoutSession(
             if (countdownJob?.isActive != true) return@launch
             countdownJob?.cancel()
             countdownJob = null
-            goToStep(target, natural = false)
+            if (_state.value.notStarted) beginWorkout(target) else goToStep(target, natural = false)
         }
     }
 
@@ -355,7 +357,14 @@ class WorkoutSession(
     fun togglePause() {
         scope.launch {
             if (_state.value.notStarted) {
-                startWorkout() // the remote's pause button starts a waiting workout
+                // The remote's pause button starts a waiting workout; pressed during the start
+                // countdown, it stops it.
+                if (countdownJob?.isActive == true) {
+                    cancelCountdown()
+                    beep(CANCEL_TONE)
+                } else {
+                    startWorkout()
+                }
                 return@launch
             }
             val nowPaused = !_state.value.workoutPaused
@@ -369,19 +378,34 @@ class WorkoutSession(
         }
     }
 
-    /** START WORKOUT (or the remote's pause button on the ready screen): run from the chosen step. */
+    /**
+     * START WORKOUT (or the remote's pause button on the ready screen): the usual 5 s countdown,
+     * then the workout runs from the chosen step. Tapped again while counting: start right away.
+     */
     fun startWorkout() {
         scope.launch {
             val st = _state.value
             if (st.plan == null || !st.notStarted) return@launch
-            Timber.i("Workout started at step ${st.stepIndex + 1}")
-            elapsedInStepMs = 0
-            resetLap()
-            _state.update { it.copy(notStarted = false, elapsedInStepSec = 0, lapAvg = null) }
-            if (recording) karoo.dispatch(MarkLap) // the first interval gets its own lap
-            beep(GO_TONE)
-            saveProgress()
+            if (countdownJob?.isActive == true) {
+                jumpNow()
+                return@launch
+            }
+            Timber.i("Start countdown, step ${st.stepIndex + 1}")
+            startCountdown(st.stepIndex)
         }
+    }
+
+    /** End of the start countdown: the workout runs, with a happy little tune. */
+    private fun beginWorkout(index: Int) {
+        Timber.i("Workout started at step ${index + 1}")
+        elapsedInStepMs = 0
+        resetLap()
+        _state.update {
+            it.copy(notStarted = false, stepIndex = index, elapsedInStepSec = 0, lapAvg = null, countdown = null, jumpTarget = null)
+        }
+        if (recording) karoo.dispatch(MarkLap) // the first interval gets its own lap
+        karoo.dispatch(PlayBeepPattern(START_TUNE))
+        saveProgress()
     }
 
     private fun loadPlan(plan: WorkoutPlan?) {
@@ -465,7 +489,7 @@ class WorkoutSession(
                 delay(1000)
             }
             countdownJob = null
-            goToStep(target, natural = false)
+            if (_state.value.notStarted) beginWorkout(target) else goToStep(target, natural = false)
         }
     }
 
@@ -558,5 +582,15 @@ class WorkoutSession(
         private val WARN_TONE = PlayBeepPattern.Tone(frequency = 1500, durationMs = 80)
         private val GO_TONE = PlayBeepPattern.Tone(frequency = 3000, durationMs = 400)
         private val CANCEL_TONE = PlayBeepPattern.Tone(frequency = 1000, durationMs = 200)
+        /** Workout starts: a rising major arpeggio (E6, G#6, B6, E7), happier than the plain GO beep. */
+        private val START_TUNE = listOf(
+            PlayBeepPattern.Tone(frequency = 1319, durationMs = 110),
+            PlayBeepPattern.Tone(frequency = null, durationMs = 20),
+            PlayBeepPattern.Tone(frequency = 1661, durationMs = 110),
+            PlayBeepPattern.Tone(frequency = null, durationMs = 20),
+            PlayBeepPattern.Tone(frequency = 1976, durationMs = 110),
+            PlayBeepPattern.Tone(frequency = null, durationMs = 20),
+            PlayBeepPattern.Tone(frequency = 2637, durationMs = 360),
+        )
     }
 }

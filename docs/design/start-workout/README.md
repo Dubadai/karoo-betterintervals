@@ -27,6 +27,12 @@ Layouts `field_ready.xml` / `field_ready_karoo.xml` are generated from the worko
 - `device/03-started-at-2-light.png`: ⏮ back to 2, then START: the workout screen at 2 / 16
   (the clock waits for the ride to record).
 
+- `device/04-start-countdown-light.png`: after START: the 5 s countdown ("Starting with"), START NOW.
+
+START runs the usual 5 s countdown (David, 7 Nov 2026), then a happier start tune (rising E6,
+G#6, B6, E7) instead of the plain GO beep. START NOW or a tap on the countdown skips the wait;
+the remote's pause button (or ⏮ / ⏭) stops it.
+
 With no ride active, a workout always starts over waiting at the first interval, also after an
 app restart (saved progress only carries over a restart mid-ride).
 
