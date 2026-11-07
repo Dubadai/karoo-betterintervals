@@ -31,3 +31,4 @@ Round 3: watts centred between the bottom of the visible gear (not its touch are
 the lap row. "LAP TIME" and its icon now use exactly the tiles' label font, size and icon, lined up
 with the tiles' icons. Label and icon are centred on
 the clock's digits.
+Lap avg tile darker in light mode: `#DDDDDD`, the Karoo's own page grey (was `#EBEBEB`).
