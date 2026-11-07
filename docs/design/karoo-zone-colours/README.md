@@ -21,3 +21,8 @@ Karoo Z2 blue (Z7 purple) and needs another look.
 
 - `mockup.src.html` + `build.py`: recoloured from the clean screens (`../screens/`) and the
   Workouts page capture (`Karoo/design-assets/05-workouts-*`); `base-*.png` are those bases.
+
+Current step outline (mockup, not decided): today the 2dp outline sits right on the zone colour,
+which is hard to read with bright Karoo colours. `outline-gap.src.html`: Now / A · 1dp gap /
+B · 1.5dp gap of page colour between the outline and the fill (the fill moves in, the outline
+stays where it is; the "now" line still runs through the bar).
