@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "karoo-interval"
+rootProject.name = "karoo-betterintervals"
 
 include(":app")
 

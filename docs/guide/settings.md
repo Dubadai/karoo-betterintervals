@@ -9,14 +9,14 @@ Open the **Workouts** page (⚙ on the ride screen), then tap ⚙ in its top rig
 **Dark / Light / Auto**, like the Karoo's own *In-Ride Appearance*.
 
 - **Auto** (default): follows the Karoo's In-Ride Appearance.
-- **Dark** or **Light**: the interval screen and the app's pages always use that mode, whatever
+- **Dark** or **Light**: the workout screen and the app's pages always use that mode, whatever
   the Karoo is set to. The Karoo's own top bar keeps its colours.
 
-<img src="images/appearance-dark.png" width="240" alt="Interval screen in Dark on a Karoo set to light">
+<img src="images/appearance-dark.png" width="240" alt="Workout screen in Dark on a Karoo set to light">
 
 ## Karoo style
 
-**Off / On**. On makes the interval screen look like the Karoo's own data pages:
+**Off / On**. On makes the workout screen look like the Karoo's own data pages:
 
 - Karoo's fonts: condensed uppercase labels, and numbers in the same font as Karoo's fields.
 - Everything under the watts is one compact block that looks the same on every screen, so the

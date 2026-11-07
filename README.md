@@ -1,11 +1,13 @@
-# Interval Screen for Karoo 3
+# BetterIntervals for Karoo 3
+
+*Formerly Interval Screen.*
 
 A full-page data field for the Hammerhead Karoo 3 that makes structured workouts easy to follow.
 It loads your planned workouts from [intervals.icu](https://intervals.icu) and runs them itself, so
 you can jump forward **and back** between intervals.
 
-![Interval Screen in dark mode: workout screen, power gauge and free ride](docs/images/interval-screen-dark.webp)
-![Interval Screen in light mode](docs/images/interval-screen-light.webp)
+![BetterIntervals in dark mode: workout screen, power gauge and free ride](docs/images/interval-screen-dark.webp)
+![BetterIntervals in light mode](docs/images/interval-screen-light.webp)
 
 - **Big 3-second power:** tap the watts to change how the target range shows: plain, coloured
   number, coloured background, both, or a **power gauge**. Blue is below the range, green in it,
@@ -31,11 +33,11 @@ Developers: read `../CLAUDE.md` (the Karoo playbook) first.
 
 1. On your phone, open the latest [release](../../releases/latest) and share the `.apk` download
    link to the **Hammerhead Companion** app. It installs the app on your paired Karoo.
-   (With a computer: `adb install interval-screen.apk`.)
-2. On the Karoo, open **Interval Screen** from the app list, tap the person icon and enter your
+   (With a computer: `adb install betterintervals.apk`.)
+2. On the Karoo, open **BetterIntervals** from the app list, tap the person icon and enter your
    intervals.icu API key (intervals.icu → Settings → Developer settings). Keep Athlete ID `0`.
 3. Pick a workout from this week's list.
-4. In a ride profile, add a page with one field and choose **Interval Screen → Interval screen**.
+4. In a ride profile, add a page with one field and choose **BetterIntervals → Workout screen**.
 5. Optional: assign *Next interval*, *Previous interval* and *Pause or resume workout* to remote buttons.
 
 Syncing uses the Karoo's Wi-Fi, or your phone through the Companion app. Your API key is stored
@@ -75,15 +77,17 @@ No GitHub token is needed. The Karoo SDK (karoo-ext 1.1.9, Apache 2.0) is includ
 Releases must always be signed with the **same key**, or Karoos with an older version can't update.
 
 1. Create the key once (Android Studio → Build → Generate Signed App Bundle or APK → Create new),
-   saved **outside** this folder, e.g. next to it as `karoo-interval-release.jks`. Back it up.
+   saved **outside** this folder (ours is `../keys/karoo_interval.jks`). Back it up. The key, the
+   `applicationId` `com.daviddokakis.karoointerval` and the field IDs stay the same after the rename
+   to BetterIntervals, so installed copies keep updating and ride pages keep the field.
 2. Copy `keystore.properties.example` to `keystore.properties` and fill in the passwords. Both
    files are git-ignored.
 3. Raise `versionCode` and `versionName` in `app/build.gradle.kts`.
 4. Build and publish:
    ```bash
    ./gradlew :app:assembleRelease
-   cp app/build/outputs/apk/release/app-release.apk interval-screen.apk
-   gh release create v0.1.0 interval-screen.apk --title "v0.1.0" --notes "What changed"
+   cp app/build.nosync/outputs/apk/release/app-release.apk betterintervals.apk
+   gh release create v0.1.0 betterintervals.apk --title "v0.1.0" --notes "What changed"
    ```
 
 Without `keystore.properties`, release builds fall back to the debug key: fine for testing, but

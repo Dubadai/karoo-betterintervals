@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- id and typeId are from the Interval Screen days. Keep them: ride pages refer to the field by
+     these IDs, so changing them would drop the field from riders' pages. -->
 <ExtensionInfo
     displayName="@string/extension_name"
     icon="@drawable/ic_interval"
