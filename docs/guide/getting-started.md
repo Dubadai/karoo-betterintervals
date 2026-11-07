@@ -28,8 +28,7 @@ key is stored only on the Karoo. No key yet? Tap **Next** anyway and add it late
 
 ### Choose a look
 
-**Appearance** (Dark / Light / Auto) and **Karoo style** (Off / On), the same as in
-[Settings](settings.md). The page itself changes as you tap.
+**Appearance** (Dark / Light / Auto), the same as in [Settings](settings.md). The page itself changes as you tap.
 
 ### Add it to a ride
 
@@ -44,7 +43,7 @@ the watts shrink to fit.
 ### Tap the watts
 
 During a ride, **tap the big watts number** to switch how it looks: Number, Colour, Background,
-Both, Gauge, then back to Number. The app remembers your pick. See
+Both, Gauge, then back to Number. It starts on the gauge, and the app remembers your pick. See
 [Watts colours and the power gauge](watts-colours.md).
 
 <img src="images/intro-tap-the-watts.png" width="240" alt="Introduction, page 4: the five ways the watts can look">
@@ -58,7 +57,7 @@ week's list; the app goes straight back to the ride screen. See
 ## 4. Changing it later
 
 Tap ⚙ on the ride screen, then ⚙ on the Workouts page, for [Settings](settings.md): Appearance,
-Karoo style, Tiles, your intervals.icu account, and **Show introduction**.
+Tiles, your intervals.icu account, and **Show introduction**.
 
 ## 5. Optional: remote buttons
 

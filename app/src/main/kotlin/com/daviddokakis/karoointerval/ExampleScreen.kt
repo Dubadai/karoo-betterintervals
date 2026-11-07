@@ -25,7 +25,6 @@ object ExampleScreen {
 
     /** Interval 4 of 10: 280 W (in range), 132 bpm or 88 rpm, lap average 282 W. */
     fun state(
-        karooStyle: Boolean,
         wattsMode: WattsMode,
         appearance: Appearance = Appearance.AUTO,
         tileOutline: Boolean = false,
@@ -43,14 +42,13 @@ object ExampleScreen {
         lapNumber = 4,
         wattsMode = wattsMode,
         appearance = appearance,
-        karooStyle = karooStyle,
         tileOutline = tileOutline,
         secondField = secondField,
         notStarted = notStarted,
     )
 
     /** No workout loaded (free ride): lap 4 at 4:21, lap average 282 W, last lap 8:20 at 271 W. */
-    fun freeRide(karooStyle: Boolean, appearance: Appearance = Appearance.AUTO, tileOutline: Boolean = false) = ScreenState(
+    fun freeRide(appearance: Appearance = Appearance.AUTO, tileOutline: Boolean = false) = ScreenState(
         power = 280,
         powerShown = 280,
         heartRate = 132,
@@ -63,7 +61,6 @@ object ExampleScreen {
         lastLapPowerAvg = 271,
         lastLapHrAvg = 126,
         appearance = appearance,
-        karooStyle = karooStyle,
         tileOutline = tileOutline,
     )
 

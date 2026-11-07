@@ -9,15 +9,10 @@ internal object ThemeOverrides {
     class Op(val id: Int, val kind: Kind, val color: Int, val color2: Int = 0)
 
     fun forLayout(layout: Int): List<Op> = when (layout) {
-        R.layout.field_interval -> FIELD_INTERVAL
-        R.layout.field_interval_gauge -> FIELD_INTERVAL_GAUGE
         R.layout.field_interval_karoo -> FIELD_INTERVAL_KAROO
         R.layout.field_interval_gauge_karoo -> FIELD_INTERVAL_GAUGE_KAROO
-        R.layout.field_free -> FIELD_FREE
         R.layout.field_free_karoo -> FIELD_FREE_KAROO
-        R.layout.field_ready -> FIELD_READY
         R.layout.field_ready_karoo -> FIELD_READY_KAROO
-        R.layout.field_done -> FIELD_DONE
         R.layout.field_done_karoo -> FIELD_DONE_KAROO
         else -> emptyList()
     }
@@ -32,21 +27,20 @@ internal object ThemeOverrides {
         R.drawable.bg_confirm to R.color.resume_bg,
         R.drawable.bg_confirm_karoo to R.color.karoo_yellow,
         R.drawable.bg_countdown to R.color.countdown_bg,
-        R.drawable.bg_done to R.color.resume_bg,
         R.drawable.bg_done_karoo to R.color.karoo_yellow,
-        R.drawable.bg_hr_z1 to R.color.hr_z1,
-        R.drawable.bg_hr_z2 to R.color.hr_z2,
-        R.drawable.bg_hr_z3 to R.color.hr_z3,
-        R.drawable.bg_hr_z4 to R.color.hr_z4,
-        R.drawable.bg_hr_z5 to R.color.hr_z5,
+        R.drawable.bg_hr_c1 to R.color.karoo_hr_c1,
+        R.drawable.bg_hr_c2 to R.color.karoo_hr_c2,
+        R.drawable.bg_hr_c3 to R.color.karoo_hr_c3,
+        R.drawable.bg_hr_c4 to R.color.karoo_hr_c4,
+        R.drawable.bg_hr_c5 to R.color.karoo_hr_c5,
+        R.drawable.bg_hr_c6 to R.color.karoo_hr_c6,
+        R.drawable.bg_hr_c7 to R.color.karoo_hr_c7,
         R.drawable.bg_info to R.color.info_bg,
         R.drawable.bg_outline to R.color.done,
         R.drawable.bg_paused to R.color.paused_bg,
         R.drawable.bg_range_in to R.color.range_bg_in,
         R.drawable.bg_range_over to R.color.range_bg_over,
         R.drawable.bg_range_under to R.color.range_bg_under,
-        R.drawable.bg_resume to R.color.resume_bg,
-        R.drawable.bg_resume_alt to R.color.resume_bg_alt,
         R.drawable.bg_resume_karoo to R.color.karoo_yellow,
         R.drawable.bg_resume_karoo_alt to R.color.karoo_yellow_alt,
         R.drawable.bg_segment_selected to R.color.segment_selected,
@@ -56,94 +50,6 @@ internal object ThemeOverrides {
         R.drawable.bg_tile to R.color.tile,
         R.drawable.bg_tile_boundary to R.color.tile_boundary,
         R.drawable.bg_tile_tonal to R.color.tile_tonal,
-    )
-
-    private val FIELD_INTERVAL = listOf(
-        Op(R.id.watts, Kind.TEXT, R.color.text),
-        Op(R.id.interval_label, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.paused_box, Kind.BG, R.color.paused_bg),
-        Op(R.id.paused_icon, Kind.TINT, R.color.paused_fg),
-        Op(R.id.paused_text, Kind.TEXT, R.color.paused_fg),
-        Op(R.id.time_left, Kind.TEXT, R.color.text),
-        Op(R.id.interval_progress, Kind.PROGRESS, R.color.text, R.color.tile_tonal),
-        Op(R.id.lap_tile, Kind.BG, R.color.tile_tonal),
-        Op(R.id.lap_avg_label, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.lap_avg, Kind.TEXT, R.color.text),
-        Op(R.id.target_tile, Kind.BG, R.color.tile_tonal),
-        Op(R.id.target_label, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.target, Kind.TEXT, R.color.text),
-        Op(R.id.target_next, Kind.TEXT, R.color.text),
-        Op(R.id.btn_confirm_x, Kind.BG, R.color.tile_tonal),
-        Op(R.id.th_interval_1, Kind.TINT, R.color.text),
-        Op(R.id.btn_confirm, Kind.BG, R.color.resume_bg),
-        Op(R.id.confirm_fill, Kind.PROGRESS, R.color.resume_bg, R.color.confirm_wait_bg),
-        Op(R.id.th_interval_2, Kind.TINT, R.color.resume_fg),
-        Op(R.id.confirm_text, Kind.TEXT, R.color.resume_fg),
-        Op(R.id.move_cancelled, Kind.BG, R.color.info_bg),
-        Op(R.id.th_interval_3, Kind.TINT, R.color.info_fg),
-        Op(R.id.move_cancelled_text, Kind.TEXT, R.color.info_fg),
-        Op(R.id.next_box, Kind.BG, R.color.done),
-        Op(R.id.select_fill, Kind.TINT, R.color.select_fill_jump),
-        Op(R.id.th_interval_4, Kind.BG, R.color.track),
-        Op(R.id.th_interval_5, Kind.TINT, R.color.text),
-        Op(R.id.next_label, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.next_value, Kind.TEXT, R.color.text),
-        Op(R.id.skip_bg, Kind.BG, R.color.skip_bg),
-        Op(R.id.skip_icon, Kind.TINT, R.color.skip_fg),
-        Op(R.id.countdown_fill, Kind.PROGRESS, R.color.countdown_fill, R.color.countdown_bg),
-        Op(R.id.countdown, Kind.TEXT, R.color.countdown_fg),
-        Op(R.id.countdown_label, Kind.TEXT, R.color.countdown_sub),
-        Op(R.id.countdown_value, Kind.TEXT, R.color.countdown_fg),
-        Op(R.id.th_interval_6, Kind.TINT, R.color.text),
-        Op(R.id.btn_pause_icon, Kind.TINT, R.color.text),
-        Op(R.id.hr_icon, Kind.TINT, R.color.heart_icon),
-        Op(R.id.hr, Kind.TEXT, R.color.text),
-        Op(R.id.btn_resume, Kind.BG, R.color.resume_bg),
-        Op(R.id.th_interval_8, Kind.TINT, R.color.resume_fg),
-    )
-
-    private val FIELD_INTERVAL_GAUGE = listOf(
-        Op(R.id.interval_label, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.paused_box, Kind.BG, R.color.paused_bg),
-        Op(R.id.paused_icon, Kind.TINT, R.color.paused_fg),
-        Op(R.id.paused_text, Kind.TEXT, R.color.paused_fg),
-        Op(R.id.time_left, Kind.TEXT, R.color.text),
-        Op(R.id.interval_progress, Kind.PROGRESS, R.color.text, R.color.tile_tonal),
-        Op(R.id.lap_tile, Kind.BG, R.color.tile_tonal),
-        Op(R.id.lap_avg_label, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.lap_avg, Kind.TEXT, R.color.text),
-        Op(R.id.hr_tile, Kind.BG, R.color.tile_tonal),
-        Op(R.id.hr_icon, Kind.TINT, R.color.heart_icon),
-        Op(R.id.hr_label, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.hr, Kind.TEXT, R.color.text),
-        Op(R.id.btn_confirm_x, Kind.BG, R.color.tile_tonal),
-        Op(R.id.th_interval_gauge_2, Kind.TINT, R.color.text),
-        Op(R.id.btn_confirm, Kind.BG, R.color.resume_bg),
-        Op(R.id.confirm_fill, Kind.PROGRESS, R.color.resume_bg, R.color.confirm_wait_bg),
-        Op(R.id.th_interval_gauge_3, Kind.TINT, R.color.resume_fg),
-        Op(R.id.confirm_text, Kind.TEXT, R.color.resume_fg),
-        Op(R.id.move_cancelled, Kind.BG, R.color.info_bg),
-        Op(R.id.th_interval_gauge_4, Kind.TINT, R.color.info_fg),
-        Op(R.id.move_cancelled_text, Kind.TEXT, R.color.info_fg),
-        Op(R.id.next_box, Kind.BG, R.color.done),
-        Op(R.id.select_fill, Kind.TINT, R.color.select_fill_jump),
-        Op(R.id.th_interval_gauge_5, Kind.BG, R.color.track),
-        Op(R.id.th_interval_gauge_6, Kind.TINT, R.color.text),
-        Op(R.id.next_label, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.next_value, Kind.TEXT, R.color.text),
-        Op(R.id.skip_bg, Kind.BG, R.color.skip_bg),
-        Op(R.id.skip_icon, Kind.TINT, R.color.skip_fg),
-        Op(R.id.countdown_fill, Kind.PROGRESS, R.color.countdown_fill, R.color.countdown_bg),
-        Op(R.id.countdown, Kind.TEXT, R.color.countdown_fg),
-        Op(R.id.countdown_label, Kind.TEXT, R.color.countdown_sub),
-        Op(R.id.countdown_value, Kind.TEXT, R.color.countdown_fg),
-        Op(R.id.th_interval_gauge_7, Kind.TINT, R.color.text),
-        Op(R.id.btn_pause_icon, Kind.TINT, R.color.text),
-        Op(R.id.target_label, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.target, Kind.TEXT, R.color.text),
-        Op(R.id.target_next, Kind.TEXT, R.color.text),
-        Op(R.id.btn_resume, Kind.BG, R.color.resume_bg),
-        Op(R.id.th_interval_gauge_8, Kind.TINT, R.color.resume_fg),
     )
 
     private val FIELD_INTERVAL_KAROO = listOf(
@@ -241,23 +147,6 @@ internal object ThemeOverrides {
         Op(R.id.th_interval_gauge_karoo_10, Kind.TINT, R.color.karoo_yellow_fg),
     )
 
-    private val FIELD_FREE = listOf(
-        Op(R.id.free_watts, Kind.TEXT, R.color.text),
-        Op(R.id.free_lap_tile, Kind.BG, R.color.tile),
-        Op(R.id.th_free_1, Kind.TINT, R.color.lap_icon),
-        Op(R.id.free_lap_label, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.free_lap_avg, Kind.TEXT, R.color.text),
-        Op(R.id.free_hr_tile, Kind.BG, R.color.tile),
-        Op(R.id.free_hr_icon, Kind.TINT, R.color.heart_icon),
-        Op(R.id.free_hr_label, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.free_hr, Kind.TEXT, R.color.text),
-        Op(R.id.free_lap_number, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.free_lap_time, Kind.TEXT, R.color.text),
-        Op(R.id.th_free_2, Kind.BG_COLOR, R.color.track),
-        Op(R.id.free_last_lap, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.th_free_3, Kind.TINT, R.color.text),
-    )
-
     private val FIELD_FREE_KAROO = listOf(
         Op(R.id.free_watts, Kind.TEXT, R.color.text),
         Op(R.id.th_free_karoo_1, Kind.TINT, R.color.karoo_green),
@@ -269,40 +158,12 @@ internal object ThemeOverrides {
         Op(R.id.free_lap_label, Kind.TEXT, R.color.text),
         Op(R.id.free_lap_avg, Kind.TEXT, R.color.text),
         Op(R.id.free_hr_tile, Kind.BG, R.color.tile_tonal),
-        Op(R.id.free_hr_icon, Kind.TINT, R.color.heart_icon),
+        Op(R.id.free_hr_icon, Kind.TINT, R.color.text),
         Op(R.id.free_hr_label, Kind.TEXT, R.color.text),
         Op(R.id.free_hr, Kind.TEXT, R.color.text),
         Op(R.id.th_free_karoo_5, Kind.TEXT, R.color.text_secondary),
         Op(R.id.free_last_lap, Kind.TEXT, R.color.text),
         Op(R.id.th_free_karoo_6, Kind.TINT, R.color.text),
-    )
-
-    private val FIELD_READY = listOf(
-        Op(R.id.watts, Kind.TEXT, R.color.text),
-        Op(R.id.start_fill, Kind.PROGRESS, R.color.resume_bg_alt, R.color.resume_bg),
-        Op(R.id.start_icon, Kind.TINT, R.color.resume_fg),
-        Op(R.id.start_count, Kind.TEXT, R.color.resume_fg),
-        Op(R.id.start_label, Kind.TEXT, R.color.resume_fg),
-        Op(R.id.ready_name, Kind.TEXT, R.color.text),
-        Op(R.id.ready_total, Kind.TEXT, R.color.text),
-        Op(R.id.next_box, Kind.BG, R.color.done),
-        Op(R.id.select_fill, Kind.TINT, R.color.select_fill_jump),
-        Op(R.id.th_ready_4, Kind.BG, R.color.track),
-        Op(R.id.th_ready_5, Kind.TINT, R.color.text),
-        Op(R.id.next_label, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.next_value, Kind.TEXT, R.color.text),
-        Op(R.id.skip_bg, Kind.BG, R.color.skip_bg),
-        Op(R.id.skip_icon, Kind.TINT, R.color.skip_fg),
-        Op(R.id.countdown_fill, Kind.PROGRESS, R.color.countdown_fill, R.color.countdown_bg),
-        Op(R.id.countdown, Kind.TEXT, R.color.countdown_fg),
-        Op(R.id.countdown_label, Kind.TEXT, R.color.countdown_sub),
-        Op(R.id.countdown_value, Kind.TEXT, R.color.countdown_fg),
-        Op(R.id.th_ready_6, Kind.TINT, R.color.text),
-        Op(R.id.btn_pause_icon, Kind.TINT, R.color.text),
-        Op(R.id.hr_icon, Kind.TINT, R.color.heart_icon),
-        Op(R.id.hr, Kind.TEXT, R.color.text),
-        Op(R.id.btn_resume, Kind.BG, R.color.resume_bg),
-        Op(R.id.th_ready_8, Kind.TINT, R.color.resume_fg),
     )
 
     private val FIELD_READY_KAROO = listOf(
@@ -331,29 +192,6 @@ internal object ThemeOverrides {
         Op(R.id.hr, Kind.TEXT, R.color.text),
         Op(R.id.btn_resume, Kind.BG, R.color.karoo_yellow),
         Op(R.id.th_ready_karoo_11, Kind.TINT, R.color.karoo_yellow_fg),
-    )
-
-    private val FIELD_DONE = listOf(
-        Op(R.id.done_check, Kind.TINT, R.color.karoo_green),
-        Op(R.id.done_title, Kind.TEXT, R.color.text),
-        Op(R.id.done_name, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.done_tile_1, Kind.BG, R.color.tile_tonal),
-        Op(R.id.done_label_1, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.done_value_1, Kind.TEXT, R.color.text),
-        Op(R.id.done_tile_2, Kind.BG, R.color.tile_tonal),
-        Op(R.id.done_label_2, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.done_value_2, Kind.TEXT, R.color.text),
-        Op(R.id.done_tile_3, Kind.BG, R.color.tile_tonal),
-        Op(R.id.done_label_3, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.done_value_3, Kind.TEXT, R.color.text),
-        Op(R.id.done_tile_4, Kind.BG, R.color.tile_tonal),
-        Op(R.id.done_label_4, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.done_value_4, Kind.TEXT, R.color.text),
-        Op(R.id.btn_done, Kind.BG, R.color.resume_bg),
-        Op(R.id.th_done_1, Kind.TEXT, R.color.resume_fg),
-        Op(R.id.th_done_2, Kind.TINT, R.color.recording),
-        Op(R.id.th_done_3, Kind.TEXT, R.color.text_secondary),
-        Op(R.id.done_gear_icon, Kind.TINT, R.color.text),
     )
 
     private val FIELD_DONE_KAROO = listOf(

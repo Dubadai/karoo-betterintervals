@@ -54,7 +54,6 @@
     <color name="paused_fg">#FF412402</color>
     <color name="resume_bg">#FF3B6D11</color>
     <color name="confirm_wait_bg">#FF27500A</color>
-    <color name="resume_fg">#FFFFFFFF</color>
     <!-- Pulse step: lighter green (white symbol still >= 3:1) -->
     <color name="resume_bg_alt">#FF639922</color>
     <!-- Fill while choosing a jump (blue) or a restart (grey); text on it stays >= 7:1 -->
@@ -62,7 +61,6 @@
     <color name="select_fill_restart">#FFD3D1C7</color>
     <!-- Power gauge: grey arc, target range in green (>= 3:1 against the page) -->
     <color name="gauge_track">#FFE3E1DA</color>
-    <color name="gauge_band">#FF639922</color>
     <!-- Karoo native styling: Karoo's icon green, Karoo's button yellow (both modes, black symbol),
          and a grey, disabled skip button while paused -->
     <color name="karoo_green">#FF129A5E</color>

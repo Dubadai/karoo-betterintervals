@@ -35,17 +35,11 @@ class GaugeRenderer(private val context: Context) {
 
     private val numberPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
 
-    private fun styleNumber(karooStyle: Boolean) {
-        if (karooStyle) {
-            // Karoo style: the watts in Plex Sans Medium (sans-serif on the Karoo), 90% wide, tighter.
-            numberPaint.typeface = Typeface.create("sans-serif", Typeface.NORMAL)
-            numberPaint.textScaleX = 0.9f
-            numberPaint.letterSpacing = -0.05f
-        } else {
-            numberPaint.typeface = Typeface.DEFAULT_BOLD
-            numberPaint.textScaleX = 1f
-            numberPaint.letterSpacing = 0f
-        }
+    init {
+        // The watts in the Karoo's number style: Plex Sans (sans-serif on the Karoo), 90% wide, tighter.
+        numberPaint.typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+        numberPaint.textScaleX = 0.9f
+        numberPaint.letterSpacing = -0.05f
     }
 
     /** The arc that gives the watts the biggest size in a [w] × [h] space (flatter when short). */
@@ -89,18 +83,13 @@ class GaugeRenderer(private val context: Context) {
      * @param width bitmap width in px.
      * @param height bitmap height in px: the gauge's space on screen.
      * @param numberColor colour of the watts digits (plain text colour, or a range colour).
-     * @param karooStyle Karoo native styling: Karoo green band and Karoo's number font.
      */
-    fun render(
-        width: Int, height: Int, watts: Int?, target: Int?, range: IntRange?, numberColor: Int,
-        karooStyle: Boolean = false,
-    ): Bitmap {
+    fun render(width: Int, height: Int, watts: Int?, target: Int?, range: IntRange?, numberColor: Int): Bitmap {
         val w = width.coerceAtLeast(1)
         val h = height.coerceAtLeast(1)
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
         val text = watts?.toString() ?: "--"
-        styleNumber(karooStyle)
         val g = layout(w.toFloat(), h.toFloat(), text)
 
         val cx = w / 2f
@@ -123,7 +112,7 @@ class GaugeRenderer(private val context: Context) {
             fun fraction(v: Float) = ((v - lo) / (hi - lo)).coerceIn(0f, 1f)
 
             if (range != null) {
-                arc.color = color(if (karooStyle) R.color.karoo_green else R.color.gauge_band)
+                arc.color = color(R.color.karoo_green)
                 val a = fraction(range.first.toFloat())
                 val b = fraction(range.last.toFloat())
                 c.drawArc(oval, start + a * g.sweep, (b - a) * g.sweep, false, arc)

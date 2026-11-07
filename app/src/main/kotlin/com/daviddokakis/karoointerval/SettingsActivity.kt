@@ -58,7 +58,7 @@ class SettingsActivity : AppearanceActivity() {
     /** The workout screen with a made-up workout, drawn full size and shown small (127 dp tall). */
     private fun showExample() {
         val s = ExampleScreen.state(
-            store.karooStyle.value, store.wattsMode, store.appearance.value,
+            store.wattsMode, store.appearance.value,
             tileOutline = store.tileOutline.value, secondField = store.secondField.value,
         )
         val full = ExampleScreen.draw(this, s, ExampleScreen.FULL_W, ExampleScreen.FULL_H)
@@ -86,17 +86,6 @@ class SettingsActivity : AppearanceActivity() {
             },
         )
         form.addView(settingsHelp(getString(R.string.appearance_help)))
-        form.addView(settingsDivider())
-
-        // Karoo style: Off / On
-        form.addView(settingsHeading(R.drawable.ic_style, getString(R.string.karoo_style)))
-        form.addView(
-            segmented(listOf(R.string.off to false, R.string.on to true), store.karooStyle.value) { on ->
-                store.setKarooStyle(on)
-                render()
-            },
-        )
-        form.addView(settingsHelp(getString(R.string.karoo_style_help)))
         form.addView(settingsDivider())
 
         // Tiles: Tonal / Outline (the Lap avg, Target and HR tiles on the workout screen)

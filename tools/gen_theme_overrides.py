@@ -14,7 +14,7 @@ Run after changing a field layout: python3 tools/gen_theme_overrides.py  (from t
 import pathlib, re
 root = pathlib.Path(__file__).resolve().parents[1]
 res = root / 'app/src/main/res'
-LAYOUTS = ['field_interval', 'field_interval_gauge', 'field_interval_karoo', 'field_interval_gauge_karoo', 'field_free', 'field_free_karoo', 'field_ready', 'field_ready_karoo', 'field_done', 'field_done_karoo']
+LAYOUTS = ['field_interval_karoo', 'field_interval_gauge_karoo', 'field_free_karoo', 'field_ready_karoo', 'field_done_karoo']
 
 def drawable_color(name):
     """The colour resource a drawable is painted with (solid, else stroke/fill), or None."""

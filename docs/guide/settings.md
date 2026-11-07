@@ -14,9 +14,9 @@ Open the **Workouts** page (⚙ on the ride screen), then tap ⚙ in its top rig
 
 <img src="images/appearance-dark.png" width="240" alt="Workout screen in Dark on a Karoo set to light">
 
-## Karoo style
+## The Karoo's own look
 
-**Off / On**. On makes the workout screen look like the Karoo's own data pages:
+BetterIntervals always looks like the Karoo's own data pages (there's no setting for it):
 
 - Karoo's fonts: condensed uppercase labels, and numbers in the same font as Karoo's fields.
 - Everything under the watts is one compact block that looks the same on every screen, so the
@@ -26,11 +26,7 @@ Open the **Workouts** page (⚙ on the ride screen), then tap ⚙ in its top rig
 - The resume button is Karoo yellow. ⏭ is black (white in dark mode), so the Karoo's own yellow
   buttons and route pill stand out.
 
-<img src="images/karoo-style.png" width="240" alt="Karoo style: the workout screen"> <img src="images/karoo-style-gauge.png" width="240" alt="Karoo style: power gauge">
-
-With **Karoo style Off**, the workout screen has its own look: larger, mixed-case labels and a blue skip button.
-
-<img src="images/classic-style.png" width="240" alt="Karoo style Off: the same workout screen in BetterIntervals' own look">
+<img src="images/karoo-style.png" width="240" alt="The workout screen"> <img src="images/karoo-style-gauge.png" width="240" alt="The power gauge">
 
 ## Tiles
 

@@ -1,4 +1,4 @@
-"""Generates the "workout done" layouts: field_done.xml and field_done_karoo.xml.
+"""Generates the "workout done" layout: field_done_karoo.xml (Karoo style is the only style).
 
 A big green check, "Workout done!", the workout's name, four tiles with the workout's own numbers
 (time, average power, NP, average heart rate or cadence), a DONE button and a note that the ride
@@ -12,9 +12,6 @@ root = pathlib.Path(__file__).resolve().parents[1]
 layouts = root / 'app/src/main/res/layout'
 
 STYLES = {
-    'field_done.xml': dict(src='field_interval.xml', label_font='sans-serif', label_style='bold', caps='false',
-        value_font='sans-serif', value_style='bold', value_extra='', button_bg='@drawable/bg_done',
-        button_fg='@color/resume_fg', label_color='@color/text_secondary'),
     'field_done_karoo.xml': dict(src='field_interval_karoo.xml', label_font='ibm-plex-sans-condensed', label_style='normal',
         caps='true', value_font='sans-serif', value_style='normal',
         value_extra='\n                    android:letterSpacing="-0.05"\n                    android:textScaleX="0.9"',

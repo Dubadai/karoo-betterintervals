@@ -12,27 +12,28 @@ import java.util.concurrent.CountDownLatch
  */
 // gallery: no-power-neighbours (this app shows power itself)
 object GalleryFields {
-    /**
-     * Karoo style everywhere (how BetterIntervals is shown); "classic*" is the other style, for the
-     * guide's "it can also look like this". The rest are the states the guide explains.
-     */
+    private val HR_ZONES = listOf(0..119, 120..139, 140..154, 155..169, 170..220)
+
+    /** The workout screen's looks and the states the guide explains (Karoo style is the only style). */
     val variants = listOf(
-        "ready", "karoo", "karoo-number", "karoo-colours", "gauge", "free", "done",
+        "ready", "karoo", "karoo-number", "karoo-colours", "gauge", "free", "free-first-lap", "done",
         "choose", "restart", "cancelled", "countdown", "paused", "zoomed", "target-range", "lap-np",
-        "outline", "cadence", "classic", "classic-colours", "classic-free",
+        "outline", "cadence",
     )
     val sizes: List<String>? = listOf("full")   // BetterIntervals is always a full-page field
 
     fun render(context: Context, variant: String, w: Int, h: Int, night: Boolean): Bitmap {
-        val k = ExampleScreen.state(karooStyle = true, wattsMode = WattsMode.PLAIN)
+        val k = ExampleScreen.state(wattsMode = WattsMode.PLAIN)
         val s = when (variant) {
             // A workout loaded, waiting at the first interval for START WORKOUT
-            "ready" -> ExampleScreen.state(karooStyle = true, wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0)
+            "ready" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0)
             "karoo" -> k
-            "karoo-number" -> ExampleScreen.state(karooStyle = true, wattsMode = WattsMode.TEXT)
-            "karoo-colours" -> ExampleScreen.state(karooStyle = true, wattsMode = WattsMode.BOTH)
-            "gauge" -> ExampleScreen.state(karooStyle = true, wattsMode = WattsMode.GAUGE)
-            "free" -> ExampleScreen.freeRide(karooStyle = true)
+            "karoo-number" -> ExampleScreen.state(wattsMode = WattsMode.TEXT)
+            "karoo-colours" -> ExampleScreen.state(wattsMode = WattsMode.BOTH)
+            "gauge" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE)
+            // Five HR zones from a rider profile, so the HR tile shows the Karoo's zone colour (132: Z2)
+            "free" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES)
+            "free-first-lap" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES, lastLapTimeSec = null)
             // The whole workout done: 52:00, averages that fit the showcase ride
             "done" -> k.copy(finished = true, stepIndex = 9, summary = WorkoutSummary(3120, 232, 251, 132, 88))
             // Jumping: choosing 1 ahead, restarting, cancelled, the countdown
@@ -44,11 +45,9 @@ object GalleryFields {
             "zoomed" -> k.copy(chartZoomed = true)
             "target-range" -> k.copy(targetShowsRange = true)
             "lap-np" -> k.copy(lapShowsNp = true, lapNp = 289, targetShowsRange = true)
-            "outline" -> ExampleScreen.state(karooStyle = true, wattsMode = WattsMode.PLAIN, tileOutline = true)
-            "cadence" -> ExampleScreen.state(karooStyle = true, wattsMode = WattsMode.PLAIN, secondField = SecondField.CADENCE)
-            "classic-colours" -> ExampleScreen.state(karooStyle = false, wattsMode = WattsMode.BOTH)
-            "classic-free" -> ExampleScreen.freeRide(karooStyle = false)
-            else -> ExampleScreen.state(karooStyle = false, wattsMode = WattsMode.PLAIN)
+            "outline" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, tileOutline = true)
+            "cadence" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, secondField = SecondField.CADENCE)
+            else -> k
         }
         // Layouts are inflated on the main thread, as on the Karoo.
         var out: Bitmap? = null

@@ -194,7 +194,6 @@ class WorkoutSession(
             store.plan.collect { plan -> loadPlan(plan) }
         }
         scope.launch { tickLoop() }
-        scope.launch { store.karooStyle.collect { on -> _state.update { it.copy(karooStyle = on) } } }
         scope.launch { store.appearance.collect { a -> _state.update { it.copy(appearance = a) } } }
         scope.launch { store.tileOutline.collect { on -> _state.update { it.copy(tileOutline = on) } } }
         scope.launch { store.secondField.collect { f -> _state.update { it.copy(secondField = f) } } }

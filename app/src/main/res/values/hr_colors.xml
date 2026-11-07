@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Heart rate zone tints for the free-ride Heart rate tile: soft versions of the zone colours
-  Z1 blue #4A8FE0, Z2 green #4CAF50, Z3 yellow #F2D23C, Z4 orange #E8735A, Z5 red #E5404A.
-  Light mode: 28% of the zone colour over white. Text >= 13:1, secondary text >= 6.7:1,
-  red heart >= 3.7:1 on every tint. Dark-mode tints are in values-night/hr_colors.xml.
+  The Karoo's own heart rate zone colours: what its HR field shows with Zone Color on (ride app
+  colours climb1..climb7, the same in light and dark mode). Which ones a rider sees depends on how
+  many zones their profile has (ScreenRenderer.hrZoneDrawable); for 5 zones c1 c2 c3 c4 c6.
+  Text and icon on them are black, as on the Karoo.
 -->
 <resources>
-    <color name="hr_z1">#FFCCE0F6</color>
-    <color name="hr_z2">#FFCDE9CE</color>
-    <color name="hr_z3">#FFFBF2C8</color>
-    <color name="hr_z4">#FFF9D8D1</color>
-    <color name="hr_z5">#FFF8CACC</color>
+    <color name="karoo_hr_c1">#FF60EEB2</color>
+    <color name="karoo_hr_c2">#FF00B988</color>
+    <color name="karoo_hr_c3">#FFFFF500</color>
+    <color name="karoo_hr_c4">#FFFB8C65</color>
+    <color name="karoo_hr_c5">#FFFE581F</color>
+    <color name="karoo_hr_c6">#FFD60404</color>
+    <color name="karoo_hr_c7">#FFB700A2</color>
+    <color name="karoo_hr_text">#FF000000</color>
 </resources>
