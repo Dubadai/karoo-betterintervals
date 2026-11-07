@@ -1,13 +1,13 @@
 package com.daviddokakis.karoointerval
 
-import android.content.BroadcastReceiver
+import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Typeface
+import android.os.Bundle
 import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
@@ -18,18 +18,20 @@ import java.io.FileOutputStream
  * `Karoo/design-assets/tools/field-gallery/gallery.sh <app folder>` (Karoo 3 emulator, no device).
  * What to draw is in GalleryFields.kt next to this file. Shared copy: design-assets/tools/field-gallery/android/.
  */
-class FieldGalleryReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        val pending = goAsync()
+class FieldGalleryActivity : Activity() {
+    // An activity, not a broadcast: Android freezes a background app mid-way through a long gallery.
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         Thread {
-            val out = File(context.filesDir, "gallery")
+            val out = File(filesDir, "gallery")
             try {
-                FieldGallery.run(context.applicationContext, out)
+                FieldGallery.run(applicationContext, out)
             } catch (e: Throwable) {
                 Log.e("FieldGallery", "Gallery failed", e)
+                out.mkdirs()
                 File(out, "FAILED").writeText(Log.getStackTraceString(e))
             } finally {
-                pending.finish()
+                runOnUiThread { finish() }
             }
         }.start()
     }

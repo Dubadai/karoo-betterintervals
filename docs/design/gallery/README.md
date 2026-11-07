@@ -13,4 +13,5 @@ bash ../design-assets/tools/field-gallery/gallery.sh karoo-betterintervals
 
 Numbers are the showcase values (design-assets/tools/field-gallery/showcase.json): 280 W, 132 bpm,
 ride time 1:12:40, clock 10:24; no debug demo data.
-Seen on the first run: at half page the gauge look loses its gauge and the tile values.
+Seen in the gallery: at half page (478×336) the screen breaks in every look: the watts are gone and
+the header overlaps the interval row.
