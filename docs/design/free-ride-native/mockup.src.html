@@ -23,8 +23,7 @@
 <body>
 <h1>Free ride (no workout loaded): Karoo native sizes</h1>
 <p class="d">Data field boundaries on. Every label is the Karoo's field label (Plex Sans Condensed, same height as "SPEED" or "HR"), every number is the Karoo's field number (Plex Sans, 90% wide, the height of the Karoo's 2-across numbers). Ride in progress: 280 W, lap 10:24, lap avg 271, 132 bpm.</p>
-<div class="devices" id="light"></div>
-<div class="devices" id="dark"></div>
+<div id="rows"></div>
 <h2>Heart rate tile in each zone (the Karoo's own HR zone colours)</h2>
 <div class="tiles" id="zones"></div>
 
@@ -162,16 +161,29 @@ const img = src => new Promise(ok => { const i = new Image(); i.onload = () => o
   const nat = await img(NATIVE);
   window.LIGHT_SHOT = await img(SHOTS.light);
   window.ROUTE = { light: await img(ROUTES.light), dark: await img(ROUTES.dark) };
+  // One row per screen: light on the left, dark on the right, so both modes are always side by side.
+  const shots = {}, devs = {};
   for (const theme of ['light', 'dark']) {
-    const shot = await img(SHOTS[theme]);
-    const dev = await KarooDevice.load({ frame: FRAME, screen: SHOTS[theme] });
-    for (const [cap, draw] of [['Now', before(theme, shot)], ['Karoo native', after(theme, nat, shot, false)], ['Karoo native, route loaded', after(theme, nat, shot, true)], ['First lap: no last lap yet', after(theme, nat, shot, false, true)]]) {
-      const scr = dev.screen({ draw, scale: 2 });
-      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 380));
-      const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${theme})`; el.append(c);
-      document.getElementById(theme).append(el);
-    }
+    shots[theme] = await img(SHOTS[theme]);
+    devs[theme] = await KarooDevice.load({ frame: FRAME, screen: SHOTS[theme] });
   }
+  const screens = [
+    ['Now', th => before(th, shots[th])],
+    ['Karoo native', th => after(th, nat, shots[th], false)],
+    ['Karoo native, route loaded', th => after(th, nat, shots[th], true)],
+    ['First lap: no last lap yet', th => after(th, nat, shots[th], false, true)],
+  ];
+  for (const [cap, make] of screens) {
+    const row = document.createElement('div'); row.className = 'devices';
+    for (const theme of ['light', 'dark']) {
+      const scr = devs[theme].screen({ draw: make(theme), scale: 2 });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(devs[theme].device(scr, 380));
+      const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${theme})`; el.append(c);
+      row.append(el);
+    }
+    document.getElementById('rows').append(row);
+  }
+
   // HR tile in every zone, light and dark page
   for (const theme of ['light', 'dark']) for (let z = 1; z <= 5; z++) {
     const t = T[theme], c = document.createElement('canvas'); c.width = 234; c.height = 161;
