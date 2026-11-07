@@ -8,11 +8,11 @@ import java.util.concurrent.CountDownLatch
 
 /**
  * DEBUG ONLY: what the field gallery (FieldGallery.kt) draws: the workout screen in its main looks
- * (ExampleScreen's made-up workout). Full page, and half a page (e.g. above a route or map).
+ * (ExampleScreen's made-up workout), full page: BetterIntervals is always a full-page field.
  */
 object GalleryFields {
     val variants = listOf("classic", "karoo", "gauge", "colours")
-    val sizes: List<String>? = listOf("full", "half")
+    val sizes: List<String>? = listOf("full")   // BetterIntervals is always a full-page field
 
     fun render(context: Context, variant: String, w: Int, h: Int, night: Boolean): Bitmap {
         val s = when (variant) {
