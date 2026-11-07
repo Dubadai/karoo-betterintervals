@@ -22,12 +22,14 @@ STYLES = {
 }
 
 def tile(i, label):
+    # RemoteViews can't inflate Space: the gap between two tiles is the right tile's margin.
+    gap = '\n                android:layout_marginStart="6dp"' if i % 2 == 0 else ''
     return f'''
             <FrameLayout
                 android:id="@+id/done_tile_{i}"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_weight="1"{gap}
                 android:background="@drawable/bg_tile_tonal"
                 android:paddingStart="8dp"
                 android:paddingTop="6dp"
@@ -130,8 +132,6 @@ BODY = '''<?xml version="1.0" encoding="utf-8"?>
             android:layout_height="54dp"
             android:orientation="horizontal">
 ''' + tile(1, '@string/time') + '''
-
-            <Space android:layout_width="6dp" android:layout_height="match_parent" />
 ''' + tile(2, '@string/avg_power') + '''
         </LinearLayout>
 
@@ -141,8 +141,6 @@ BODY = '''<?xml version="1.0" encoding="utf-8"?>
             android:layout_marginTop="6dp"
             android:orientation="horizontal">
 ''' + tile(3, '@string/done_np') + '''
-
-            <Space android:layout_width="6dp" android:layout_height="match_parent" />
 ''' + tile(4, '@string/avg_hr') + '''
         </LinearLayout>
 

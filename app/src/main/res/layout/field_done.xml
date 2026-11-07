@@ -105,13 +105,12 @@
                     android:textStyle="bold" />
             </FrameLayout>
 
-            <Space android:layout_width="6dp" android:layout_height="match_parent" />
-
             <FrameLayout
                 android:id="@+id/done_tile_2"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
+                android:layout_marginStart="6dp"
                 android:background="@drawable/bg_tile_tonal"
                 android:paddingStart="8dp"
                 android:paddingTop="6dp"
@@ -192,13 +191,12 @@
                     android:textStyle="bold" />
             </FrameLayout>
 
-            <Space android:layout_width="6dp" android:layout_height="match_parent" />
-
             <FrameLayout
                 android:id="@+id/done_tile_4"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
+                android:layout_marginStart="6dp"
                 android:background="@drawable/bg_tile_tonal"
                 android:paddingStart="8dp"
                 android:paddingTop="6dp"
