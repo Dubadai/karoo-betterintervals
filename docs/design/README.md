@@ -22,6 +22,7 @@ and screenshots from the Karoo 3 (`device/`). Newest work first.
 | `free-ride/` | Screen without a workout: watts, lap avg, HR zone tile, laps |
 | `free-ride-native/` | Free ride at the Karoo's own sizes and HR zone colours (round 1) |
 | `karoo-style-only/` | Karoo style always on: the switch leaves Settings and the introduction |
+| `workout-top-row/` | Workout screen top row: heart rate, cadence or target (mockup) |
 | `workouts-page/` | Workouts list, Account page, offline / Wi-Fi |
 | `route/` | Layout with Karoo's route pill (field gets shorter, watts auto-size) |
 | `interval-screen/` | The main workout screen, countdown and zoomed chart |
