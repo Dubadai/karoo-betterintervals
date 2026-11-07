@@ -8,3 +8,4 @@ possible from now on. Karoo style becomes the only look, so its Off / On switch 
 
 Built: `device/05-free-ride-built-dark.png` (David's Karoo), `device/06-settings-built-light.png` (emulator).
 `final.html`: every screen from the field gallery, light and dark (`python3 build_final.py`).
+`device/07-free-ride-built-light.png`: light mode on David's Karoo (no HR strap, no ride).
