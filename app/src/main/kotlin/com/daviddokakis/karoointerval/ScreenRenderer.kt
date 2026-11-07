@@ -64,26 +64,24 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     }
 
     /**
-     * Data field boundaries on (Karoo Settings): the Karoo puts a white card with a thin border
-     * behind every field on a grey page. Paint the field in that page grey and turn [tiles] into
-     * cards, so the full page doesn't read as one big white card. Off: nothing changes.
+     * Data field boundaries on (Karoo Settings): the Karoo puts every field in a white (dark mode:
+     * black) card with a thin border on a grey page. The field stays see-through, so it sits on
+     * that card like the Karoo's own fields; tonal tiles take the page grey to tie in with it.
      */
     private val boundaries = config.boundariesEnabled
 
-    private fun applyBoundaries(v: RemoteViews, tiles: List<Int>) {
-        if (!boundaries) return
-        setForcedBg(v, R.id.field_root, R.drawable.bg_boundary_page, R.color.boundary_page)
-        tiles.forEach { setForcedBg(v, it, R.drawable.bg_tile_card, R.color.card) }
+    /**
+     * The Lap avg / Target / HR tiles, per the Tiles setting: Outline (a border like Next up),
+     * or Tonal ([tonal], the layout's own fill; the Karoo's page grey with boundaries on).
+     */
+    private fun tileDrawable(outline: Boolean, tonal: Int): Int = when {
+        outline -> R.drawable.bg_outline
+        boundaries -> R.drawable.bg_tile_boundary
+        else -> tonal
     }
 
-    /** Like [setBg] for drawables ThemeOverrides doesn't know, and always replacing an earlier tint. */
-    private fun setForcedBg(v: RemoteViews, id: Int, drawable: Int, colorRes: Int) {
-        v.setInt(id, "setBackgroundResource", drawable)
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
-        // Auto: no tint, so the Karoo resolves the drawable's colour in its own day/night mode.
-        // Forced: tint with the colour in that mode (this also replaces ThemeOverrides' tile tint).
-        val tint = if (resFor == Appearance.AUTO) null else opaque(color(colorRes))
-        v.setColorStateList(id, "setBackgroundTintList", tint)
+    private fun applyTiles(v: RemoteViews, tiles: List<Int>, outline: Boolean, tonal: Int) {
+        tiles.forEach { setBg(v, it, tileDrawable(outline, tonal)) }
     }
 
     /** A tint that replaces a drawable's colour but keeps its alpha. */
@@ -139,7 +137,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         }
         val v = RemoteViews(context.packageName, layout)
         applyAppearance(v, layout)
-        applyBoundaries(v, listOf(R.id.lap_tile, if (gaugeMode) R.id.hr_tile else R.id.target_tile))
+        applyTiles(v, listOf(R.id.lap_tile, if (gaugeMode) R.id.hr_tile else R.id.target_tile), s.tileOutline, R.drawable.bg_tile_tonal)
         // The cell values' texts, so a Karoo-style cell can shrink a value that's too wide.
         lapText = (if (s.lapShowsNp) s.lapNp else s.lapAvg)?.toString() ?: "--"
         targetText = s.targetRange.let { band ->
@@ -168,7 +166,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (gaugeMode) {
             val gaugeW = (config.viewSize.first - 16 * density).toInt()
             if (gaugeW > 0) {
-                v.setImageViewBitmap(R.id.gauge, gauge.render(gaugeW, gaugeHeightPx(karoo, s.navigating), s.power3s, s.target, s.targetRange, color(wattsColor), karoo, onGrey = boundaries))
+                v.setImageViewBitmap(R.id.gauge, gauge.render(gaugeW, gaugeHeightPx(karoo, s.navigating), s.power3s, s.target, s.targetRange, color(wattsColor), karoo))
             }
         } else {
             v.setTextViewText(R.id.watts, s.power3s?.toString() ?: "--")
@@ -435,7 +433,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         val layout = if (karoo) R.layout.field_free_karoo else R.layout.field_free
         val v = RemoteViews(context.packageName, layout)
         applyAppearance(v, layout)
-        applyBoundaries(v, listOf(R.id.free_lap_tile))
+        val freeTonal = if (karoo) R.drawable.bg_tile_tonal else R.drawable.bg_tile
+        applyTiles(v, listOf(R.id.free_lap_tile), s.tileOutline, freeTonal)
         (
             if (karoo) {
                 listOf(
@@ -473,12 +472,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             else -> null
         }
         // Soft tint of the HR zone colour; text keeps the normal colours and the heart stays red.
-        // Boundaries on and no zone: a card, like the Lap avg tile.
-        when {
-            zoneBg != null -> setBg(v, R.id.free_hr_tile, zoneBg)
-            boundaries -> setForcedBg(v, R.id.free_hr_tile, R.drawable.bg_tile_card, R.color.card)
-            else -> setBg(v, R.id.free_hr_tile, if (karoo) R.drawable.bg_tile_tonal else R.drawable.bg_tile)
-        }
+        // No zone: like the Lap avg tile (Tiles setting).
+        setBg(v, R.id.free_hr_tile, zoneBg ?: tileDrawable(s.tileOutline, freeTonal))
 
         v.setTextViewText(R.id.free_lap_number, s.lapNumber?.let { context.getString(R.string.lap_number, it) } ?: "")
         v.setTextViewText(R.id.free_lap_time, s.lapTimeSec?.let(::formatClock) ?: "--:--")

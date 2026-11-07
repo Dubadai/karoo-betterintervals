@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Data field boundaries on: Lap avg / Target / HR tiles as solid cards on the Karoo's grey page. -->
+<!-- Tonal tile with data field boundaries on: the Karoo's own page grey, see-through so a range tint shows. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/card" />
+    <solid android:color="@color/tile_boundary" />
     <corners android:radius="8dp" />
 </shape>

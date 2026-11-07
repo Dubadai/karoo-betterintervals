@@ -146,6 +146,7 @@ class WorkoutSession(
         scope.launch { tickLoop() }
         scope.launch { store.karooStyle.collect { on -> _state.update { it.copy(karooStyle = on) } } }
         scope.launch { store.appearance.collect { a -> _state.update { it.copy(appearance = a) } } }
+        scope.launch { store.tileOutline.collect { on -> _state.update { it.copy(tileOutline = on) } } }
         _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapShowsNp = store.lapShowsNp, hrShowsLap = store.hrShowsLap) }
     }
 

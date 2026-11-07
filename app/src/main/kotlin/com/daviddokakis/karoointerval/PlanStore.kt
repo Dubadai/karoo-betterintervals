@@ -67,6 +67,16 @@ class PlanStore private constructor(context: Context) {
         _karooStyle.value = on
     }
 
+    private val _tileOutline = MutableStateFlow(prefs.getBoolean(KEY_TILE_OUTLINE, false))
+
+    /** Tiles (Settings page): Tonal (a grey fill) or Outline (a border like Next up, no fill). */
+    val tileOutline: StateFlow<Boolean> = _tileOutline
+
+    fun setTileOutline(on: Boolean) {
+        prefs.edit().putBoolean(KEY_TILE_OUTLINE, on).apply()
+        _tileOutline.value = on
+    }
+
     private val _appearance = MutableStateFlow(
         Appearance.entries.firstOrNull { it.name == prefs.getString(KEY_APPEARANCE, null) } ?: Appearance.AUTO,
     )
@@ -183,6 +193,7 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_HR_LAP = "hr_shows_lap"
         private const val KEY_KAROO_STYLE = "karoo_style"
         private const val KEY_APPEARANCE = "appearance"
+        private const val KEY_TILE_OUTLINE = "tile_outline"
         private const val KEY_WEEK_JSON = "week_json"
         private const val KEY_WEEK_SYNCED = "week_synced"
         private const val KEY_INTRO_DONE = "intro_done"
