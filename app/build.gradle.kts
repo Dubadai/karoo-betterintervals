@@ -22,8 +22,8 @@ android {
         applicationId = "com.daviddokakis.karoointerval"
         minSdk = 26
         targetSdk = 34
-        versionCode = 11
-        versionName = "0.6.0"
+        versionCode = 12
+        versionName = "0.6.1"
         // Where the Karoo and UpdateCheck find the latest version. To test the update notice,
         // build with -PmanifestUrl=http://localhost:8791/manifest.json (see README "Update notices").
         manifestPlaceholders["manifestUrl"] =
