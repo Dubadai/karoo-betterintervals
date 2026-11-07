@@ -2,7 +2,7 @@
 
 The screen without a workout, made to match the Karoo's own fields (data field boundaries on).
 
-Round 1 (mockup.html), after David's notes:
+Round 1 (mockup.html), after our notes:
 
 - **Watts** higher up, in the Karoo's number font (IBM Plex Sans, 90% wide).
 - **Lap time**: the same one-line row as before (green lap icon, LAP TIME, clock on the right),
@@ -18,7 +18,7 @@ Round 1 (mockup.html), after David's notes:
 
 Device screenshots (`device/`):
 
-- `00-current-light.png`: v0.5.3 on David's Karoo, no ride.
+- `00-current-light.png`: v0.5.3 on our test Karoo, no ride.
 - `01-native-hr-zone-light.png`: the Karoo's own HR field with Zone Color (zone 1).
 - `02-native-hr-combo-light.png`: the Karoo's HR combo field (its own, lighter blue).
 
@@ -34,18 +34,18 @@ the clock's digits.
 Lap avg tile darker in light mode: `#DDDDDD`, the Karoo's own page grey (was `#EBEBEB`).
 No last lap yet (first lap): LAST LAP and its values are hidden; the space stays, so nothing moves
 when the first lap ends.
-- `03-built-no-ride-dark.png`: the build on David's Karoo, dark mode, no ride (Last lap hidden).
+- `03-built-no-ride-dark.png`: the build on our test Karoo, dark mode, no ride (Last lap hidden).
 
 ## Tiles at the Karoo's own geometry (`tiles.html`)
 
-David: the free-ride typography looks a bit off next to the Karoo's own fields. Measured on his
+Feedback: the free-ride typography looks a bit off next to the Karoo's own fields. Measured on our
 Karoo (light, px): the text is identical (labels 20 px caps, numbers 64 px, strokes 7 px), but our
 tiles are 218 × 144 (Karoo 236 × 140) with a 12 px gap (Karoo 4), 13–14 px padding right of label
 and number (Karoo 8), the number 20 px above the bottom (Karoo 12) and icons 17–21 px (Karoo 23).
 `tiles.html` shows a close-up (Karoo / ours now / ours with the Karoo's geometry) and full screens.
 
 Typography audit (three passes, measured in px on the mockup against the Karoo's own HR / SPEED
-fields on David's Karoo; tile = 232 × 140, gap 4):
+fields on our test Karoo; tile = 232 × 140, gap 4):
 
 | Element | Karoo's own field | Mockup (Karoo geometry) |
 | --- | --- | --- |
@@ -61,7 +61,7 @@ heart shape is 23 × 23.
 Round 2: the lap row loses its icon (the Lap avg tile below has the same one) and says CURRENT LAP
 TIME, starting in line with the tiles' icons.
 
-Built (`device/09-tiles-built-demo-light.png`, demo build on David's Karoo, light), measured in px:
+Built (`device/09-tiles-built-demo-light.png`, demo build on our test Karoo, light), measured in px:
 tiles 231 × 141 with a 4 px gap; labels 20 caps, 20 below the top, 7–8 from the right; numbers
 63–65, 13 above the bottom, 8 from the right; icons 22–23 px, 10–11 px in, centred on the label;
 CURRENT LAP TIME in line with the tile icons, the clock ending in line with the numbers; watts
@@ -82,13 +82,13 @@ values. Top rows of `watts-label.html`.
 The label follows Settings › Power, named like the Karoo's own fields: POWER (instant), 3S POWER,
 5S POWER, 10S POWER.
 
-Built (`device/11-power-label-built-dark.png`, David's Karoo, demo): 3S POWER 22 px above the
+Built (`device/11-power-label-built-dark.png`, our test Karoo, demo): 3S POWER 22 px above the
 digits, the number centred between the gear and the lap row (within 2.5 px), Last lap 20 px above
 its values. Every Power setting checked on the emulator (`gallery/screens/free-*`).
 
 ## Lap data and whole-ride data (`ride-data.html`)
 
-David wants whole-ride numbers on endurance rides. Two ways, mocked:
+We want whole-ride numbers on endurance rides. Two ways, mocked:
 
 - **A · Each tile cycles on its own:** power LAP AVG → LAP NP → RIDE AVG, HR → LAP HR → RIDE HR.
 - **B · One switch for the screen (recommended):** tap the time row to switch Lap ↔ Ride: RIDE TIME,

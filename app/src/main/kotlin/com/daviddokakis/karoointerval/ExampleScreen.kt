@@ -68,7 +68,7 @@ object ExampleScreen {
 
     /** [s] drawn as a [w] × [h] px Karoo field would show it. [context] decides light or dark (Auto). */
     fun draw(context: Context, s: ScreenState, w: Int, h: Int): Bitmap {
-        // Boundaries on: how David rides, and how all our mockups show the Karoo.
+        // Boundaries on: how we ride, and how all our mockups show the Karoo.
         val config = ViewConfig(gridSize = 60 to (60 * h / 721).coerceIn(1, 60), viewSize = w to h, textSize = 96, boundariesEnabled = true)
         val view = ScreenRenderer(context, config).render(s, demo = false).apply(context, FrameLayout(context))
         view.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(h, View.MeasureSpec.EXACTLY))

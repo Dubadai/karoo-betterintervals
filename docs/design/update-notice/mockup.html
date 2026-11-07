@@ -35,7 +35,7 @@ code { font-size: 13px; }
 <body>
 <main>
 <h1>BetterIntervals: "update available" on the Karoo</h1>
-<p class="lead">Round 1. Drawn on real screenshots from David's Karoo 3 (light mode). The Notifications page and the App info page with its UPDATE button are the Karoo's own; only the BetterIntervals card and texts are drawn in.</p>
+<p class="lead">Round 1. Drawn on real screenshots from our test Karoo 3 (light mode). The Notifications page and the App info page with its UPDATE button are the Karoo's own; only the BetterIntervals card and texts are drawn in.</p>
 
 <h2>How it would work (option B)</h2>
 <div class="flow">
@@ -48,7 +48,7 @@ code { font-size: 13px; }
 <h2>What I found</h2>
 <div class="box">
 <ul>
-<li><b>The Karoo already has an update button</b> for side-loaded apps. An app names a <code>manifest.json</code> in its AndroidManifest (<code>io.hammerhead.karooext.MANIFEST_URL</code>). Settings › Apps › the app then shows About, Release notes and an <b>UPDATE</b> button that installs <code>latestApkUrl</code>. Seen working on David's Karoo for kDouble (screenshot <code>03</code>).</li>
+<li><b>The Karoo already has an update button</b> for side-loaded apps. An app names a <code>manifest.json</code> in its AndroidManifest (<code>io.hammerhead.karooext.MANIFEST_URL</code>). Settings › Apps › the app then shows About, Release notes and an <b>UPDATE</b> button that installs <code>latestApkUrl</code>. Seen working on our test Karoo for kDouble (screenshot <code>03</code>).</li>
 <li><b>But the Karoo never tells you.</b> It fetches the manifest only when you open that page (logcat). So without our own check, nobody finds the update.</li>
 <li><b>We can open that page for the rider</b>: <code>io.hammerhead.action.APP_INFO</code> with <code>packageName</code> opens it (tested). A notification card can only open one of our activities, so a tiny invisible activity hands over to that page.</li>
 <li><b>Notifications</b>: <code>SystemNotification(style = UPDATE)</code> puts a card in Control Center › Notifications, like myWindsock's. <code>InRideAlert</code> is for rides only, so we don't use it.</li>
@@ -71,7 +71,7 @@ What's drawn above. Check when the Karoo starts and then once a day, only when n
 <b>C. B, but our own update screen.</b> The card opens a BetterIntervals page (version, notes, Update button that then goes to the Karoo page). More work and a second page saying the same as the Karoo's; only worth it if the Karoo's page ever goes away.
 </div>
 
-<h2>Questions for David</h2>
+<h2>Open questions</h2>
 <div class="box">
 <ul>
 <li><span class="q">1.</span> Option B, with the card as drawn ("UPDATE AVAILABLE" / "BetterIntervals 0.5.3" / "You have 0.5.2. Tap to see what's new and update.")?</li>
