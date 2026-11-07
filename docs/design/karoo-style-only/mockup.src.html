@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Karoo style only</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
+  h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
+  p.d { color:#A9A6A0; margin:0 auto 22px; max-width:780px; text-align:center; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:24px; margin-bottom:30px; }
+  .dev { display:grid; justify-items:center; gap:8px; }
+  .cap { color:#A9A6A0; font-size:13px; max-width:380px; text-align:center; }
+</style>
+</head>
+<body>
+<h1>Settings without the Karoo style switch</h1>
+<p class="d">Karoo style is always on, so its row goes: Appearance is followed straight by Tiles. The introduction's "Look" page loses the same Off / On row and keeps Appearance. Emulator shots.</p>
+<div id="rows"></div>
+<script>/*__KAROO_DEVICE_JS__*/</script>
+<script>
+const FRAME = "__FRAME__";
+const SHOT = { light: ["__L1__", "__L2__"], dark: ["__D1__", "__D2__"] };
+// Karoo style section in shot 1 (divider above → divider below), and how far shot 2 is scrolled past shot 1
+const CUT = { light: [351, 625, 491], dark: [352, 627, 494] };
+const img = src => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
+function without(theme, a, b) {
+  const [top, bottom, scroll] = CUT[theme];
+  return ctx => {
+    ctx.drawImage(a, 0, 0);
+    // everything below the removed section moves up: take it from the second shot
+    const from = bottom - scroll;
+    ctx.drawImage(b, 0, from, 480, 755 - from, 0, top, 480, 755 - from);
+    ctx.drawImage(a, 0, 0, 480, 150, 0, 0, 480, 150);      // header stays on top
+    ctx.drawImage(a, 0, 755, 480, 45, 0, 755, 480, 45);    // nav bar
+  };
+}
+(async () => {
+  const rows = [['Now', 'now'], ['Karoo style always on', 'after']];
+  const shots = {}, devs = {};
+  for (const t of ['light', 'dark']) {
+    shots[t] = [await img(SHOT[t][0]), await img(SHOT[t][1])];
+    devs[t] = await KarooDevice.load({ frame: FRAME, screen: SHOT[t][0] });
+  }
+  for (const [cap, kind] of rows) {
+    const row = document.createElement('div'); row.className = 'devices';
+    for (const t of ['light', 'dark']) {
+      const scr = devs[t].screen({ draw: kind === 'now' ? null : without(t, ...shots[t]), scale: 2 });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(devs[t].device(scr, 380));
+      const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${t})`; el.append(c);
+      row.append(el);
+    }
+    document.getElementById('rows').append(row);
+  }
+})();
+</script>
+</body>
+</html>
