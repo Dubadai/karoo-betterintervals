@@ -42,3 +42,4 @@ itself stays see-through on the Karoo's card, so no grey page any more.
 - `device/06-workout-dark.png`: workout screen, dark, with the measured grey.
 - `device/07-tiles-tonal-dark.png`, `device/08-tiles-outline-dark.png`: built, dark, boundaries on.
 - `device/09-settings-tiles-dark.png`: Settings page with the new Tiles row.
+- `device/10-even-spacing-dark.png`: 12 px under the interval bar, same as between the tiles and Next up (bar margin 5 → 6.5 dp).
