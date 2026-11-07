@@ -43,8 +43,8 @@ const HR_ZONES = ['#60EEB2', '#00B988', '#FFF500', '#FB8C65', '#D60404'];
 const HR_ZONE = 2;   // 132 bpm
 
 // Karoo field metrics on the 480x800 screen (measured on a native 2-across field):
-const LABEL = '500 31.9px PlexCond';   // caps 20 px tall
-const NUM = 92;                        // digits 64 px tall
+const LABEL = '500 28px PlexCond';     // caps 20 px tall (measured on the Karoo)
+const NUM = 89;                        // digits 64 px tall (measured on the Karoo)
 const SMALL = 46;                      // last lap values
 
 function txt(ctx, s, x, y, font, color, align = 'left', sx = 1) {
@@ -94,7 +94,8 @@ function heartOutline(ctx, x, y, s, color) {
 let KAROO_TILES = false;
 function field(ctx, x, y, w, h, bg, icons, label, value, ink) {
   if (bg) { ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect(x, y, w, h, 15); ctx.fill(); }
-  const pr = KAROO_TILES ? 8 : 12, pv = KAROO_TILES ? 8 : 14, pb = KAROO_TILES ? 12 : 20, pl = KAROO_TILES ? 10 : 12;
+  // (the font's own side space is taken off, so the ink ends 8 px from the edge)
+  const pr = KAROO_TILES ? 7 : 12, pv = KAROO_TILES ? 4 : 14, pb = KAROO_TILES ? 12 : 20, pl = KAROO_TILES ? 7 : 12;
   icons(x + pl, y + 18);
   txt(ctx, label, x + w - pr, y + 40, LABEL, ink, 'right');
   num(ctx, value, x + w - pv, y + h - pb, NUM, ink);
@@ -134,14 +135,21 @@ function after(theme, nat, shot, route, noLastLap = false) {
     const lapIcon = tinted(nat, 250, 221, 24, 27, t.green);
     // ...and centred on the clock's digits (clock caps 38 px, label caps 20 px, icon 27 px)
     const mid = L.lap + 2 - 19;
-    ctx.drawImage(lapIcon, 28, mid - 13.5);
-    txt(ctx, 'LAP TIME', 58, mid + 10, LABEL, t.ink);
-    txt(ctx, '10:24', 464, L.lap + 2, '600 54px PlexSemi', t.ink, 'right', 0.9);
+    if (KAROO_TILES) {
+      // icon lined up with the tiles' icons (x 16) and as big (23 px); clock ends where the numbers do
+      ctx.drawImage(lapIcon, 13, mid - 13, 26, 28);
+      txt(ctx, 'LAP TIME', 44, mid + 10, LABEL, t.ink);
+      txt(ctx, '10:24', 467, L.lap + 2, '600 54px PlexSemi', t.ink, 'right', 0.9);
+    } else {
+      ctx.drawImage(lapIcon, 28, mid - 13.5);
+      txt(ctx, 'LAP TIME', 58, mid + 10, LABEL, t.ink);
+      txt(ctx, '10:24', 464, L.lap + 2, '600 54px PlexSemi', t.ink, 'right', 0.9);
+    }
     // Lap avg and HR, the Karoo's 2-across fields
     const lapAvgIcons = tinted(nat, 250, 221, 52, 27, t.green);
     const [x1, x2, tw, th] = KAROO_TILES ? [6, 242, 232, 140] : [16, 246, 218, 145];
-    field(ctx, x1, L.tiles, tw, th, t.tile, (x, y) => KAROO_TILES ? ctx.drawImage(lapAvgIcons, x, y - 3, 57, 30) : ctx.drawImage(lapAvgIcons, x, y - 2), 'LAP AVG', '271', t.ink);
-    field(ctx, x2, L.tiles, tw, th, HR_ZONES[HR_ZONE - 1], (x, y) => KAROO_TILES ? heartOutline(ctx, x - 7, y - 2, 37, '#000000') : heartOutline(ctx, x, y - 2, 27, '#000000'), 'HR', '132', '#000000');
+    field(ctx, x1, L.tiles, tw, th, t.tile, (x, y) => KAROO_TILES ? ctx.drawImage(lapAvgIcons, x, y - 1, 50, 26) : ctx.drawImage(lapAvgIcons, x, y - 2), 'LAP AVG', '271', t.ink);
+    field(ctx, x2, L.tiles, tw, th, HR_ZONES[HR_ZONE - 1], (x, y) => KAROO_TILES ? heartOutline(ctx, x + 1, y + 1, 28, '#000000') : heartOutline(ctx, x, y - 2, 27, '#000000'), 'HR', '132', '#000000');
     // Last lap: the same design as before (small grey label, bold condensed values), a step
     // bigger: label 11 → 12sp, values ~15% bigger, shrinking to fit the space they have.
     if (noLastLap) return;   // first lap: no last lap yet, so nothing (its space stays, nothing moves)
@@ -191,6 +199,7 @@ const img = src => new Promise(ok => { const i = new Image(); i.onload = () => o
   crop(nhr, 0, 195, 480, 160, "The Karoo's own SPEED and HR fields");
   crop(ours, 0, 505, 480, 165, 'Ours now (demo build)');
   const p = devs.light.screen({ draw: tiles(after('light', nat, shots.light, false)), scale: 1 });
+  window.PROP = { light: p, dark: devs.dark.screen({ draw: tiles(after('dark', nat, shots.dark, false)), scale: 1 }), now: devs.light.screen({ draw: after('light', nat, shots.light, false), scale: 1 }) };
   crop(p, 0, LAYOUT.full.tiles - 10, 480, 165, "Ours with the Karoo's geometry");
   for (const [cap, make] of screens) {
     const row = document.createElement('div'); row.className = 'devices';

@@ -43,3 +43,17 @@ Karoo (light, px): the text is identical (labels 20 px caps, numbers 64 px, stro
 tiles are 218 × 144 (Karoo 236 × 140) with a 12 px gap (Karoo 4), 13–14 px padding right of label
 and number (Karoo 8), the number 20 px above the bottom (Karoo 12) and icons 17–21 px (Karoo 23).
 `tiles.html` shows a close-up (Karoo / ours now / ours with the Karoo's geometry) and full screens.
+
+Typography audit (three passes, measured in px on the mockup against the Karoo's own HR / SPEED
+fields on David's Karoo; tile = 232 × 140, gap 4):
+
+| Element | Karoo's own field | Mockup (Karoo geometry) |
+| --- | --- | --- |
+| Label caps | 20 tall, top 20 below the tile, ink 8 from the right | 20, 20, 8–9 |
+| Number | 64 tall, 12 above the bottom, ink 8 from the right | 63–65, 12, 8–9 |
+| Icons | 23 px, 10 from the left, centred on the label | 22–23, 10, centred |
+| LAP TIME row | label as the tiles' labels | 20 caps; icon 23 px at x 16 (in line with the tiles' icons); clock ends at x 464 (in line with the numbers) |
+
+The mockup's label and number fonts were also set to the measured sizes (they were 23 and 66 px).
+The build already draws 20 and 64 px (15sp / 48sp). Our outline heart is 23 × 20; the Karoo's own
+heart shape is 23 × 23.
