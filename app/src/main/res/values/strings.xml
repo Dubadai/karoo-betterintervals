@@ -30,6 +30,8 @@
     <string name="lap_hr">Lap HR</string>
     <string name="bpm_value">%1$d bpm</string>
     <string name="settings_title">Settings</string>
+    <!-- The big title on the Settings page (the Karoo lists the app as app_name) -->
+    <string name="app_title">BetterIntervals</string>
     <string name="appearance">Appearance</string>
     <string name="appearance_dark">Dark</string>
     <string name="appearance_light">Light</string>

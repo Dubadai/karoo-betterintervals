@@ -13,7 +13,7 @@ Each tap on ⏭ or ⏮ moves your choice one step. The box tells you what will h
 
 The chart shows the whole workout and marks your choice with a solid black bar and a ▼ (white
 in dark mode), so it can't be mistaken for a zone colour. The Target tile shows the watts you'd land on after an arrow
-(**300 → 181**).
+(**280 → 150**).
 
 <img src="images/jump-choose.png" width="240" alt="Jumping 1 ahead, with Confirm move and a cancel button"> <img src="images/jump-restart.png" width="240" alt="Restarting interval">
 
@@ -40,7 +40,7 @@ Karoo's workout purple with Karoo style, where **Confirm move** is Karoo yellow)
 Can't wait? Tap the countdown, or press ⏭ / ⏮, to start right away. Once confirmed, the jump
 always happens.
 
-<img src="images/jump-countdown.png" width="240" alt="Countdown showing 4 before the jump">
+<img src="images/jump-countdown.png" width="240" alt="Countdown showing 3 before the jump">
 
 ## Remote buttons
 

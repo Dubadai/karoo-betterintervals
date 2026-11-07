@@ -32,21 +32,21 @@ class SettingsActivity : AppearanceActivity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12), 0, dp(12), dp(24))
         }
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundColor(getColor(R.color.bg))
-        }
-        root.addView(
-            iconButton(R.drawable.ic_back, getString(R.string.cd_back)) { finish() }.apply {
-                (layoutParams as LinearLayout.LayoutParams).setMargins(dp(4), dp(8), 0, 0)
-            },
-        )
-        root.addView(text(getString(R.string.settings_title), 22f, bold = true).apply { setPadding(dp(12), 0, dp(12), dp(4)) })
-        // The workout screen as these settings draw it; stays at the top while the settings scroll.
+        // Bar with back arrow and "Settings" stays; the app's name scrolls away; the Example (the
+        // workout screen as these settings draw it) then stays just under the bar.
         example = ExampleCard(this)
-        root.addView(example, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { setMargins(dp(12), dp(4), dp(12), dp(4)) })
-        root.addView(ScrollView(this).apply { addView(form, MATCH_PARENT, WRAP_CONTENT) }, LinearLayout.LayoutParams(MATCH_PARENT, 0, 1f))
-        setContentView(root)
+        setContentView(
+            SettingsLayout(
+                this,
+                back = iconButton(R.drawable.ic_back, getString(R.string.cd_back)) { finish() },
+                barTitle = getString(R.string.settings_title),
+                title = text(getString(R.string.app_title), 22f, bold = true).apply { setPadding(dp(12), dp(4), dp(12), dp(4)) },
+                card = example,
+                form = form,
+                pageColor = getColor(R.color.bg),
+                textColor = getColor(R.color.text),
+            ),
+        )
         render()
     }
 
