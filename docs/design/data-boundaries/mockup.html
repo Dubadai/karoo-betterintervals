@@ -15,7 +15,7 @@
 </style>
 </head>
 <body>
-<h1>BetterIntervals with data field boundaries on</h1>
+<h1>BetterIntervals with data field boundaries on: round 2</h1>
 <p class="d">Drawn on Karoo 3 screenshots (gauge screen). The Karoo's grey is an estimate until it's measured on the device.</p>
 <div class="devices" id="light"></div>
 <div class="devices" id="dark"></div>
@@ -154,8 +154,7 @@ const VARIANTS = theme => {
   const k = KAROO[theme];
   return [
     ['Now: a white card on the Karoo grey', { status: k.page, page: k.bg, tile: k.tile, nextFill: k.bg }],
-    ['A · Grey page: field takes the Karoo grey', { status: k.page, page: k.page, tile: k.tileA, nextFill: k.page }],
-    ['B · White cards: grey page, tiles and Next up as cards', { status: k.page, page: k.page, tile: k.card, nextFill: k.card, dropOutline: true }],
+    ['Chosen: white tile cards, Next up keeps only its border', { status: k.page, page: k.page, tile: k.card, nextFill: k.page }],
   ];
 };
 

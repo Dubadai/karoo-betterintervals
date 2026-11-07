@@ -12,6 +12,10 @@ Round 1 (mockup, not decided):
 - **A · Grey page**: the field takes the Karoo grey, tiles keep a darker tonal shade, Next up keeps its outline.
 - **B · White cards**: grey page, Lap avg / HR and Next up become white cards (no outline), like stock fields with boundaries.
 
+Round 2 (**decided**, 7 Nov 2026): **white tile cards, Next up keeps only its border.** With
+boundaries on the field takes the Karoo grey, Lap avg / HR become white cards (black in dark mode),
+and the Next up box stays outline-only on the grey.
+
 The Karoo grey (light and dark) is an estimate: measure it on the device before building.
 
 - `mockup.src.html` + `build.py`: the mockup, drawn on device screenshots (run `python3 build.py`).
