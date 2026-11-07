@@ -57,6 +57,25 @@
                 android:resource="@xml/extension_info" />
         </service>
 
+        <!-- Opened by the "Update available" card: hands over to the Karoo's own app page -->
+        <activity
+            android:name=".UpdateActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="${applicationId}.UPDATE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- manifest.json with the latest version: the Karoo's app page shows UPDATE from it,
+             and UpdateCheck reads it to tell the rider (see build.gradle.kts) -->
+        <meta-data
+            android:name="io.hammerhead.karooext.MANIFEST_URL"
+            android:value="${manifestUrl}" />
+
         <!-- Receives taps on the skip / pause buttons drawn in the data field -->
         <receiver
             android:name=".ActionReceiver"

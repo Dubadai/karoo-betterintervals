@@ -80,6 +80,17 @@ class SettingsActivity : AppearanceActivity() {
         form.addView(settingsHelp(getString(R.string.karoo_style_help)))
         form.addView(settingsDivider())
 
+        // Update notices: Off / On (see UpdateCheck)
+        form.addView(settingsHeading(R.drawable.ic_update, getString(R.string.update_notices)))
+        form.addView(
+            segmented(listOf(R.string.off to false, R.string.on to true), UpdateCheck.isEnabled(this)) { on ->
+                UpdateCheck.setEnabled(this, on)
+                render()
+            },
+        )
+        form.addView(settingsHelp(getString(R.string.update_notices_help)))
+        form.addView(settingsDivider())
+
         // intervals.icu: one row, opens the Account page
         val status = getString(if (store.hasCredentials) R.string.connected else R.string.not_connected)
         form.addView(

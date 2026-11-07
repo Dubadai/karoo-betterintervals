@@ -5,6 +5,7 @@ and screenshots from the Karoo 3 (`device/`). Newest work first.
 
 | Folder | Feature |
 | --- | --- |
+| `update-notice/` | "Update available" card in Notifications → Karoo App info page with UPDATE |
 | `screens/` | Clean screens for the README visuals and the Karoo Artboard (no floating Karoo buttons) |
 | `onboarding/` | First-run introduction: connect, look, add to a ride profile, tap the watts |
 | `karoo-style/` | Karoo style setting (round 5: inverted countdown, centred "Move cancelled") (Karoo fonts, native-size cells, icons, yellow buttons), Settings page, Dark / Light / Auto |

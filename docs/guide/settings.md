@@ -30,6 +30,11 @@ Open the **Workouts** page (⚙ on the ride screen), then tap ⚙ in its top rig
 
 Both settings apply right away, also during a ride.
 
+## Update notices
+
+On (the default): a card in the Karoo's Notifications when a new version is out, checked once a
+day and never during a ride. See [Updating the app](updating.md).
+
 ## intervals.icu account
 
 Opens the [Account page](workouts-and-account.md#account) with your API key and athlete ID.
