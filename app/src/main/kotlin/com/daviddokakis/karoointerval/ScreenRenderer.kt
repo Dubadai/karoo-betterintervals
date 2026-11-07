@@ -560,7 +560,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             if (karoo) {
                 listOf(
                     R.id.free_lap_avg to 48f, R.id.free_hr to 48f, R.id.free_lap_label to 15f, R.id.free_hr_label to 15f,
-                    R.id.free_lap_time to 23f,
+                    R.id.free_lap_time to 28f,
                 )
             } else {
                 listOf(
@@ -589,18 +589,18 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (s.showsCadence) showCadenceIcon(v, R.id.free_hr_icon, karoo, onTint = false)
         v.setOnClickPendingIntent(R.id.free_hr_tile, lapHrToggleIntent)
 
-        // The tile's tint follows the heart rate it shows (cadence has no zones).
-        val zoneBg = if (s.showsCadence) null else when (s.zoneOf(s.shownHr)) {
-            1 -> R.drawable.bg_hr_z1
-            2 -> R.drawable.bg_hr_z2
-            3 -> R.drawable.bg_hr_z3
-            4 -> R.drawable.bg_hr_z4
-            5 -> R.drawable.bg_hr_z5
-            else -> null
-        }
-        // Soft tint of the HR zone colour; text keeps the normal colours and the heart stays red.
+        // The tile takes the Karoo's own colour for the heart rate zone it shows, like the Karoo's
+        // HR field with Zone Color on: black text and outline heart (cadence has no zones).
         // No zone: like the Lap avg tile (Tiles setting).
+        val zoneBg = if (s.showsCadence) null else s.zoneOf(s.shownHr)?.let { hrZoneDrawable(it, s.hrZones.size) }
         setBg(v, R.id.free_hr_tile, zoneBg ?: tileDrawable(s.tileOutline, freeTonal))
+        if (zoneBg != null) {
+            val ink = color(R.color.karoo_hr_text)
+            v.setTextColor(R.id.free_hr, ink)
+            v.setTextColor(R.id.free_hr_label, ink)
+            v.setImageViewResource(R.id.free_hr_icon, R.drawable.ic_heart_outline)
+            v.setInt(R.id.free_hr_icon, "setColorFilter", ink)
+        }
 
         v.setTextViewText(R.id.free_lap_number, s.lapNumber?.let { context.getString(R.string.lap_number, it) } ?: "")
         v.setTextViewText(R.id.free_lap_time, s.lapTimeSec?.let(::formatClock) ?: "--:--")
@@ -621,6 +621,23 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setTextViewText(R.id.free_last_lap, last ?: "")
         v.setOnClickPendingIntent(R.id.free_btn_settings, settingsIntent)
         return v
+    }
+
+    /**
+     * The Karoo's HR zone colour for [zone] (1-based) of [zones]: its ride app picks from seven
+     * colours by the number of zones (5 zones: c1 c2 c3 c4 c6).
+     */
+    private fun hrZoneDrawable(zone: Int, zones: Int): Int? {
+        val picks = when (zones) {
+            1 -> listOf(3)
+            2 -> listOf(2, 6)
+            3 -> listOf(2, 3, 6)
+            4 -> listOf(2, 3, 4, 6)
+            5 -> listOf(1, 2, 3, 4, 6)
+            6 -> listOf(1, 2, 3, 4, 6, 7)
+            else -> listOf(1, 2, 3, 4, 5, 6, 7)
+        }
+        return picks.getOrNull(zone - 1)?.let { HR_ZONE_BG[it - 1] }
     }
 
     private fun summary(step: PlanStep): String = if (step.isRange && step.rangeLow != null && step.rangeHigh != null) {
@@ -727,6 +744,11 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     }
 
     companion object {
+        /** The Karoo's seven HR zone colours (hr_colors.xml), picked per zone count by hrZoneDrawable. */
+        private val HR_ZONE_BG = listOf(
+            R.drawable.bg_hr_c1, R.drawable.bg_hr_c2, R.drawable.bg_hr_c3, R.drawable.bg_hr_c4,
+            R.drawable.bg_hr_c5, R.drawable.bg_hr_c6, R.drawable.bg_hr_c7,
+        )
         /** Gear and pause icons: 55% of the text colour. */
         private const val ICON_ALPHA = 140
         private const val REF_W_DP = 255f

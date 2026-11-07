@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Free ride (no workout loaded) with KAROO NATIVE STYLING. Same ids as field_free.xml.
-  Watts first (Plex Sans Medium, 90% wide, capped at 107sp, centred), a "LAP TIME" row like the
+  Watts first (Karoo's number font, Plex Sans Regular 90% wide, up to 124sp, centred between
+  the bottom of the gear and the lap row), a "LAP TIME" row like the
   workout screen's interval row, then Lap avg and HR as full-size Karoo data fields (77dp ≈ 145 px,
-  Karoo's own label and number typography; HR tinted by its zone), and Last lap at the bottom,
+  Karoo's own label and number typography; HR in the Karoo's own zone colours), and Last lap at the bottom,
   between the Karoo's own back and next buttons.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -29,12 +30,11 @@
                 android:id="@+id/free_watts"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginBottom="-8dp"
-                android:autoSizeMaxTextSize="107sp"
+                android:autoSizeMaxTextSize="124sp"
                 android:autoSizeMinTextSize="32sp"
                 android:autoSizeStepGranularity="2sp"
                 android:autoSizeTextType="uniform"
-                android:fontFamily="sans-serif"
+                android:fontFamily="sans-serif-light"
                 android:gravity="center"
                 android:includeFontPadding="false"
                 android:letterSpacing="-0.05"
@@ -44,8 +44,8 @@
                 android:textScaleX="0.9" />
         </FrameLayout>
 
-        <!-- Lap row: "LAP TIME" and its icon at the boxes' label size (15sp, 12dp icon), centred
-             on the lap time's height -->
+        <!-- Lap row: "LAP TIME" and its icon a step above the boxes' label size (17sp, 14dp icon),
+             centred on the lap time's height (28sp) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -56,8 +56,8 @@
 
             <ImageView
                 android:id="@+id/th_free_karoo_1"
-                android:layout_width="12dp"
-                android:layout_height="12dp"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
                 android:layout_marginEnd="3dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_lap"
@@ -74,7 +74,7 @@
                 android:text="@string/lap_time"
                 android:textAllCaps="true"
                 android:textColor="@color/text"
-                android:textSize="15sp" />
+                android:textSize="17sp" />
 
             <TextView
                 android:id="@+id/free_lap_time"
@@ -85,7 +85,7 @@
                 android:letterSpacing="-0.05"
                 android:textColor="@color/text"
                 android:textScaleX="0.9"
-                android:textSize="23sp" />
+                android:textSize="28sp" />
         </LinearLayout>
 
         <!-- Not shown in Karoo style (the row says "LAP TIME"); kept so the code can fill it -->
@@ -193,7 +193,8 @@
                         android:baseline="11dp"
                         android:contentDescription="@string/cd_heart_rate"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/ic_heart" />
+                        android:src="@drawable/ic_heart_outline"
+                        android:tint="@color/text" />
 
                     <TextView
                         android:id="@+id/free_hr_label"
@@ -233,7 +234,7 @@
             android:layout_marginTop="12dp"
             android:gravity="center_horizontal"
             android:orientation="vertical"
-            android:paddingBottom="10dp">
+            android:paddingBottom="4dp">
 
             <TextView
                 android:id="@+id/th_free_karoo_5"
@@ -244,15 +245,15 @@
                 android:text="@string/last_lap_label"
                 android:textAllCaps="true"
                 android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                android:textSize="12sp" />
 
             <!-- Fits between the Karoo's back and next buttons (150dp), shrinking if needed -->
             <TextView
                 android:id="@+id/free_last_lap"
                 android:layout_width="150dp"
-                android:layout_height="24dp"
+                android:layout_height="28dp"
                 android:layout_marginTop="3dp"
-                android:autoSizeMaxTextSize="19sp"
+                android:autoSizeMaxTextSize="22sp"
                 android:autoSizeMinTextSize="11sp"
                 android:autoSizeStepGranularity="1sp"
                 android:autoSizeTextType="uniform"
