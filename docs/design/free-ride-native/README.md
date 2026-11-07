@@ -85,3 +85,15 @@ The label follows Settings › Power, named like the Karoo's own fields: POWER (
 Built (`device/11-power-label-built-dark.png`, David's Karoo, demo): 3S POWER 22 px above the
 digits, the number centred between the gear and the lap row (within 2.5 px), Last lap 20 px above
 its values. Every Power setting checked on the emulator (`gallery/screens/free-*`).
+
+## Lap data and whole-ride data (`ride-data.html`)
+
+David wants whole-ride numbers on endurance rides. Two ways, mocked:
+
+- **A · Each tile cycles on its own:** power LAP AVG → LAP NP → RIDE AVG, HR → LAP HR → RIDE HR.
+- **B · One switch for the screen (recommended):** tap the time row to switch Lap ↔ Ride: RIDE TIME,
+  RIDE AVG and RIDE HR together (the power tile still toggles AVG / NP, so RIDE NP). One tap for
+  an endurance ride, and everything on the screen covers the same stretch.
+
+Ride values from the Karoo: AVERAGE_POWER, NORMALIZED_POWER, AVERAGE_HR and the ride time.
+Ride tiles use the Karoo's ride icon (the bolt without the lap arrow).
