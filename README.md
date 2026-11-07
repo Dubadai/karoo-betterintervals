@@ -8,7 +8,7 @@ you can jump forward **and back** between intervals.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/betterintervals-dark.jpg">
-  <img src="docs/images/betterintervals-light.jpg" alt="BetterIntervals on three Karoo 3s during a ride, in Karoo style: the START WORKOUT screen, the workout screen at 280 watts in range on a green background, and the power gauge">
+  <img src="docs/images/betterintervals-light.jpg" alt="BetterIntervals on four Karoo 3s during a ride: the START WORKOUT screen, the power gauge at 280 watts with the 273–287 target on top, the purple countdown jumping to 3m @ 150W, and the Workout done screen">
 </picture>
 
 - **Big 3-second power:** tap the watts to change how the target range shows: plain, coloured
