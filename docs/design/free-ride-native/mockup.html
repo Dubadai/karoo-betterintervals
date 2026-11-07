@@ -13,9 +13,9 @@
   h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
   h2 { font-size:15px; font-weight:500; margin:30px 0 12px; text-align:center; color:#CFCCC6; }
   p.d { color:#A9A6A0; margin:0 auto 22px; max-width:780px; text-align:center; }
-  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:30px; margin-bottom:30px; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:16px; margin-bottom:30px; }
   .dev { display:grid; justify-items:center; gap:8px; }
-  .cap { color:#A9A6A0; font-size:13px; max-width:250px; text-align:center; }
+  .cap { color:#A9A6A0; font-size:12px; max-width:175px; text-align:center; }
   .tiles { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; }
   .tiles canvas { width:190px; border-radius:6px; }
 </style>
@@ -248,7 +248,7 @@ const img = src => new Promise(ok => { const i = new Image(); i.onload = () => o
     const dev = await KarooDevice.load({ frame: FRAME, screen: SHOTS[theme] });
     for (const [cap, draw] of [['Now', before(theme, shot)], ['Karoo native', after(theme, nat, shot, false)], ['Karoo native, route loaded', after(theme, nat, shot, true)], ['First lap: no last lap yet', after(theme, nat, shot, false, true)]]) {
       const scr = dev.screen({ draw });
-      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 230));
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 175));
       const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${theme})`; el.append(c);
       document.getElementById(theme).append(el);
     }
