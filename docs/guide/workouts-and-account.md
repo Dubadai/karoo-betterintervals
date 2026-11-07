@@ -9,6 +9,7 @@ app list. ⚙ on the Workouts page opens [Settings](settings.md).
 
 - **Sync** loads this week's planned workouts from intervals.icu. The page shows when it last
   synced.
+- Today's workouts come first, then the coming days, then the days already past this week.
 - Each card shows the workout's name, its shape in zone colours, its length and its day.
 - Tap a card to pick it. You go straight back to the ride screen.
 - **Remove workout** takes the current workout off, so the ride screen shows the

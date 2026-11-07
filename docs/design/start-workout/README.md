@@ -14,3 +14,15 @@ Proposal, round 1 (mockup, not decided):
 - Workouts page: today's workouts first, then the coming days, then the earlier days of the week.
 
 - `mockup.src.html` + `build.py`: drawn on the clean gauge screens (`base-*.png`, from `../screens/`).
+
+Decided and built (7 Nov 2026): **B**, big START WORKOUT in the middle; ⏮ / ⏭ pick where to start
+("First up", or "Start at 3 / 16"); the remote's pause button starts it too; a fresh workout always
+waits (no setting). Workouts page: today, then coming days, then past days.
+
+Layouts `field_ready.xml` / `field_ready_karoo.xml` are generated from the workout layouts by
+`tools/gen_ready_layouts.py` (top row, First up box and chart stay the same).
+
+- `device/01-ready-light.png`: the ready screen on David's Karoo (Karoo style, light).
+
+Not checked on the device: ⏮ / ⏭ and START (the Karoo switched ride pages during the test),
+dark mode, the non-Karoo style, and today-first (no workout today in the cached week).

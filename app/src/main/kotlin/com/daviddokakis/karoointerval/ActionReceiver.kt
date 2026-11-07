@@ -22,6 +22,7 @@ class ActionReceiver : BroadcastReceiver() {
             ACTION_TOGGLE_LAP_NP -> session.toggleLapNp()
             ACTION_TOGGLE_LAP_HR -> session.toggleLapHr()
             ACTION_TOGGLE_WATTS_COLOR -> session.toggleWattsColor()
+            ACTION_START -> session.startWorkout()
         }
     }
 
@@ -39,5 +40,6 @@ class ActionReceiver : BroadcastReceiver() {
         const val ACTION_TOGGLE_LAP_NP = "com.daviddokakis.karoointerval.TOGGLE_LAP_NP"
         const val ACTION_TOGGLE_LAP_HR = "com.daviddokakis.karoointerval.TOGGLE_LAP_HR"
         const val ACTION_TOGGLE_WATTS_COLOR = "com.daviddokakis.karoointerval.TOGGLE_WATTS_COLOR"
+        const val ACTION_START = "com.daviddokakis.karoointerval.START"
     }
 }

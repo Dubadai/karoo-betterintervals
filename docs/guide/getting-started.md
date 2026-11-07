@@ -67,7 +67,8 @@ In the Karoo's controller settings you can assign these to remote buttons:
 - **Next interval** and **Previous interval**: the same as tapping ⏭ / ⏮ on the screen. See
   [Jumping between intervals](jumping.md). A choice made with a remote confirms itself after
   5 seconds, so you don't need to touch the screen.
-- **Pause or resume workout**: see [Pausing the workout](pausing.md).
+- **Pause or resume workout**: see [Pausing the workout](pausing.md). Before the workout has
+  started, it starts it (see [Before you start](workout-screen.md#before-you-start)).
 
 ## Good to know
 

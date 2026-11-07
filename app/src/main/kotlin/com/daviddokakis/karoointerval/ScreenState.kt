@@ -33,6 +33,8 @@ data class ScreenState(
     val paused: Boolean = false,
     /** The workout is paused from this screen: interval clock and lap average stop, ride keeps recording. */
     val workoutPaused: Boolean = false,
+    /** A workout is loaded but waits for START WORKOUT (the ready screen); [stepIndex] is where it will start. */
+    val notStarted: Boolean = false,
     /** Seconds left before jumping, or null when no jump is pending. */
     val countdown: Int? = null,
     /** Interval being chosen with ⏮/⏭ (before the countdown), or null. */

@@ -179,6 +179,13 @@ class WorkoutSession(
         scope.launch {
             val st = _state.value
             if (st.plan == null) return@launch
+            if (st.notStarted) {
+                // Ready screen: ⏮ / ⏭ pick the step to start from, no confirm needed.
+                val index = (st.stepIndex + delta).coerceIn(0, st.stepCount - 1)
+                if (index != st.stepIndex) _state.update { it.copy(stepIndex = index, elapsedInStepSec = 0) }
+                Timber.i("Start step -> ${index + 1}")
+                return@launch
+            }
             if (countdownJob?.isActive == true) {
                 jumpNow()
                 return@launch
@@ -344,6 +351,10 @@ class WorkoutSession(
      */
     fun togglePause() {
         scope.launch {
+            if (_state.value.notStarted) {
+                startWorkout() // the remote's pause button starts a waiting workout
+                return@launch
+            }
             val nowPaused = !_state.value.workoutPaused
             if (nowPaused) {
                 cancelCountdown()
@@ -355,26 +366,48 @@ class WorkoutSession(
         }
     }
 
+    /** START WORKOUT (or the remote's pause button on the ready screen): run from the chosen step. */
+    fun startWorkout() {
+        scope.launch {
+            val st = _state.value
+            if (st.plan == null || !st.notStarted) return@launch
+            Timber.i("Workout started at step ${st.stepIndex + 1}")
+            elapsedInStepMs = 0
+            resetLap()
+            _state.update { it.copy(notStarted = false, elapsedInStepSec = 0, lapAvg = null) }
+            if (recording) karoo.dispatch(MarkLap) // the first interval gets its own lap
+            beep(GO_TONE)
+            saveProgress()
+        }
+    }
+
     private fun loadPlan(plan: WorkoutPlan?) {
         cancelCountdown()
         resetLap()
-        val (index, elapsedSec) = plan?.let { store.restoreProgress(it) } ?: (0 to 0)
+        val restored = plan?.let { store.restoreProgress(it) }
+        val (index, elapsedSec) = restored ?: (0 to 0)
+        // A workout waits for START WORKOUT, unless it was already running (app restarted mid-ride).
+        val waiting = plan != null && index == 0 && elapsedSec == 0
         elapsedInStepMs = elapsedSec * 1000L
         _state.update {
-            it.copy(plan = plan, stepIndex = index, elapsedInStepSec = elapsedSec, finished = false, lapAvg = null, workoutPaused = false)
+            it.copy(
+                plan = plan, stepIndex = index, elapsedInStepSec = elapsedSec, finished = false, lapAvg = null,
+                workoutPaused = false, notStarted = waiting,
+            )
         }
         Timber.i("Loaded workout ${plan?.name} at step $index + ${elapsedSec}s")
     }
 
     private fun resetToStart() {
         val st = _state.value
-        if (st.plan == null || (st.stepIndex == 0 && elapsedInStepMs == 0L && !st.finished && !st.workoutPaused)) return
+        // Waiting for START: keep the step the rider picked to start from.
+        if (st.plan == null || st.notStarted) return
         cancelCountdown()
         resetLap()
         elapsedInStepMs = 0
         store.clearProgress()
-        _state.update { it.copy(stepIndex = 0, elapsedInStepSec = 0, finished = false, lapAvg = null, workoutPaused = false) }
-        Timber.i("No ride active: workout reset to the first interval")
+        _state.update { it.copy(stepIndex = 0, elapsedInStepSec = 0, finished = false, lapAvg = null, workoutPaused = false, notStarted = true) }
+        Timber.i("No ride active: workout reset to the first interval, waiting for START")
     }
 
     private suspend fun tickLoop() {
@@ -387,7 +420,7 @@ class WorkoutSession(
             lastTick = now
             val st = _state.value
             val step = st.currentStep ?: continue
-            if (!recording || st.finished || st.workoutPaused) continue
+            if (!recording || st.finished || st.workoutPaused || st.notStarted) continue
 
             val before = (step.durationSec * 1000L - elapsedInStepMs) / 1000
             elapsedInStepMs += dt
@@ -473,7 +506,7 @@ class WorkoutSession(
     private fun onPower(watts: Double?) {
         val st = _state.value
         // The lap average keeps counting while the workout is paused; only the interval timer stops.
-        if (watts != null && recording && st.workoutLoaded && !st.finished) {
+        if (watts != null && recording && st.workoutLoaded && !st.finished && !st.notStarted) {
             lapSum += watts
             lapSamples++
             lapNp.add(SystemClock.elapsedRealtime(), watts)
@@ -492,7 +525,7 @@ class WorkoutSession(
     private fun saveProgress() {
         val st = _state.value
         val plan = st.plan ?: return
-        if (!st.finished) store.saveProgress(plan, st.stepIndex, st.elapsedInStepSec)
+        if (!st.finished && !st.notStarted) store.saveProgress(plan, st.stepIndex, st.elapsedInStepSec)
     }
 
     private fun collectInt(dataTypeId: String, divideBy: Int = 1, onValue: (Int?) -> Unit) {

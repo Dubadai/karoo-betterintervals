@@ -7,7 +7,7 @@ pictures from a real Karoo.
 | --- | --- |
 | [Getting started](getting-started.md) | Install, the introduction (connect intervals.icu, look, add the screen to a ride profile, tap the watts), pick a workout |
 | [Updating the app](updating.md) | Install a new version from GitHub, keeping your settings |
-| [The workout screen](workout-screen.md) | What everything on the screen means, the chart, laps and beeps |
+| [The workout screen](workout-screen.md) | Starting the workout (START WORKOUT, where to start), what everything on the screen means, the chart, laps and beeps |
 | [Watts colours and the power gauge](watts-colours.md) | Tap the watts to show if you're below, in or above the target, or to switch to the gauge |
 | [Jumping between intervals](jumping.md) | Skip ahead, go back or restart an interval with ⏭ / ⏮ |
 | [Lap NP and Target range](tiles.md) | Tap the tiles to switch what they show |
