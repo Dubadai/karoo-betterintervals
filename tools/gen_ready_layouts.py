@@ -18,13 +18,13 @@ STYLES = {
         src='field_interval.xml', watts_font='sans-serif', watts_style='bold', watts_extra='',
         label_font='sans-serif', label_style='bold', label_caps='false',
         total_font='sans-serif', total_style='bold',
-        start_bg='@drawable/bg_start', start_fg='@color/resume_fg'),
+        start_bg='@drawable/progress_start', start_fg='@color/resume_fg'),
     'field_ready_karoo.xml': dict(
         src='field_interval_karoo.xml', watts_font='sans-serif', watts_style='normal',
         watts_extra='\n                android:letterSpacing="-0.05"\n                android:textScaleX="0.9"',
         label_font='ibm-plex-sans-condensed', label_style='normal', label_caps='true',
         total_font='sans-serif-medium', total_style='normal',
-        start_bg='@drawable/bg_start_karoo', start_fg='@color/karoo_yellow_fg'),
+        start_bg='@drawable/progress_start_karoo', start_fg='@color/karoo_yellow_fg'),
 }
 
 UPPER = '''        <!-- Upper part (ready): live watts, START WORKOUT in the middle, the workout's name and
@@ -63,13 +63,22 @@ UPPER = '''        <!-- Upper part (ready): live watts, START WORKOUT in the mid
                 android:textStyle="{watts_style}"{watts_extra} />
         </FrameLayout>
 
-        <!-- START WORKOUT: ▶ above the words, the whole box is the button -->
+        <!-- START WORKOUT: ▶ above the words, the whole box is the button. During the start
+             countdown: the seconds above TAP TO CANCEL, and the button fills with its darker
+             colour as they run down. -->
         <FrameLayout
             android:id="@+id/btn_start"
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:background="{start_bg}"
             android:contentDescription="@string/start_workout">
+
+            <ProgressBar
+                android:id="@+id/start_fill"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:max="1000"
+                android:progressDrawable="{start_bg}" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -85,6 +94,18 @@ UPPER = '''        <!-- Upper part (ready): live watts, START WORKOUT in the mid
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_play_filled"
                     android:tint="{start_fg}" />
+
+                <TextView
+                    android:fontFamily="{total_font}"
+                    android:id="@+id/start_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:textColor="{start_fg}"
+                    android:textSize="44sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
 
                 <TextView
                     android:fontFamily="{label_font}"

@@ -49,8 +49,6 @@ internal object ThemeOverrides {
         R.drawable.bg_segment_track to R.color.segment_track,
         R.drawable.bg_select_fill to R.color.select_fill_jump,
         R.drawable.bg_select_fill_restart to R.color.select_fill_restart,
-        R.drawable.bg_start to R.color.resume_bg,
-        R.drawable.bg_start_karoo to R.color.karoo_yellow,
         R.drawable.bg_tile to R.color.tile,
         R.drawable.bg_tile_boundary to R.color.tile_boundary,
         R.drawable.bg_tile_tonal to R.color.tile_tonal,
@@ -277,8 +275,9 @@ internal object ThemeOverrides {
 
     private val FIELD_READY = listOf(
         Op(R.id.watts, Kind.TEXT, R.color.text),
-        Op(R.id.btn_start, Kind.BG, R.color.resume_bg),
+        Op(R.id.start_fill, Kind.PROGRESS, R.color.resume_bg_alt, R.color.resume_bg),
         Op(R.id.start_icon, Kind.TINT, R.color.resume_fg),
+        Op(R.id.start_count, Kind.TEXT, R.color.resume_fg),
         Op(R.id.start_label, Kind.TEXT, R.color.resume_fg),
         Op(R.id.ready_name, Kind.TEXT, R.color.text),
         Op(R.id.ready_total, Kind.TEXT, R.color.text),
@@ -304,8 +303,9 @@ internal object ThemeOverrides {
 
     private val FIELD_READY_KAROO = listOf(
         Op(R.id.watts, Kind.TEXT, R.color.text),
-        Op(R.id.btn_start, Kind.BG, R.color.karoo_yellow),
+        Op(R.id.start_fill, Kind.PROGRESS, R.color.karoo_yellow_dark, R.color.karoo_yellow),
         Op(R.id.start_icon, Kind.TINT, R.color.karoo_yellow_fg),
+        Op(R.id.start_count, Kind.TEXT, R.color.karoo_yellow_fg),
         Op(R.id.start_label, Kind.TEXT, R.color.karoo_yellow_fg),
         Op(R.id.ready_name, Kind.TEXT, R.color.text),
         Op(R.id.ready_total, Kind.TEXT, R.color.text),

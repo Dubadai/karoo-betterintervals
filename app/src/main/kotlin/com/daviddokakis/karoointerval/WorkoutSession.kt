@@ -357,14 +357,8 @@ class WorkoutSession(
     fun togglePause() {
         scope.launch {
             if (_state.value.notStarted) {
-                // The remote's pause button starts a waiting workout; pressed during the start
-                // countdown, it stops it.
-                if (countdownJob?.isActive == true) {
-                    cancelCountdown()
-                    beep(CANCEL_TONE)
-                } else {
-                    startWorkout()
-                }
+                // The remote's pause button works like START: starts the countdown, or cancels it.
+                startWorkout()
                 return@launch
             }
             val nowPaused = !_state.value.workoutPaused
@@ -380,14 +374,17 @@ class WorkoutSession(
 
     /**
      * START WORKOUT (or the remote's pause button on the ready screen): the usual 5 s countdown,
-     * then the workout runs from the chosen step. Tapped again while counting: start right away.
+     * then the workout runs from the chosen step. Tapped again while counting: cancel (a tap on
+     * the countdown box starts right away instead).
      */
     fun startWorkout() {
         scope.launch {
             val st = _state.value
             if (st.plan == null || !st.notStarted) return@launch
             if (countdownJob?.isActive == true) {
-                jumpNow()
+                Timber.i("Start countdown cancelled")
+                cancelCountdown()
+                beep(CANCEL_TONE)
                 return@launch
             }
             Timber.i("Start countdown, step ${st.stepIndex + 1}")

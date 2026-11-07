@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- START WORKOUT on the ready screen: green, like the resume button. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/resume_bg" />
-    <corners android:radius="12dp" />
-</shape>

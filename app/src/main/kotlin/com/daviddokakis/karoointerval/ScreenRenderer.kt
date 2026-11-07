@@ -464,10 +464,16 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setTextViewText(R.id.ready_name, plan.name)
         v.setTextViewText(R.id.ready_total, formatClock(plan.totalSec))
 
-        // Start countdown (5 s, as for a jump): the First up box becomes the countdown, and the
-        // button starts right away. A tap on the countdown does the same.
+        // Start countdown (5 s): the button counts down too (the seconds above TAP TO CANCEL, filling
+        // with its darker colour) and a tap on it cancels. The First up box becomes the usual jump
+        // countdown, so it looks like any other interval change; a tap on it starts right away.
         val countdown = s.countdown
-        v.setTextViewText(R.id.start_label, context.getString(if (countdown != null) R.string.start_now else R.string.start_workout))
+        val total = WorkoutSession.COUNTDOWN_SECONDS
+        v.setTextViewText(R.id.start_label, context.getString(if (countdown != null) R.string.tap_to_cancel else R.string.start_workout))
+        v.setViewVisibility(R.id.start_icon, if (countdown != null) View.GONE else View.VISIBLE)
+        v.setViewVisibility(R.id.start_count, if (countdown != null) View.VISIBLE else View.GONE)
+        v.setTextViewText(R.id.start_count, countdown?.toString() ?: "")
+        v.setProgressBar(R.id.start_fill, 1000, countdown?.let { ((total - it + 1) * 1000 / total).coerceIn(0, 1000) } ?: 0, false)
         v.setOnClickPendingIntent(R.id.countdown_box, jumpNowIntent)
         if (countdown != null) {
             v.setViewVisibility(R.id.next_box, View.GONE)
@@ -475,7 +481,6 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             v.setTextViewText(R.id.countdown, countdown.toString())
             v.setTextViewText(R.id.countdown_label, context.getString(R.string.starting_with))
             v.setTextViewText(R.id.countdown_value, plan.steps.getOrNull(s.stepIndex)?.let(::summary) ?: "")
-            val total = WorkoutSession.COUNTDOWN_SECONDS
             v.setProgressBar(R.id.countdown_fill, 1000, ((total - countdown + 1) * 1000 / total).coerceIn(0, 1000), false)
         } else {
             v.setViewVisibility(R.id.next_box, View.VISIBLE)

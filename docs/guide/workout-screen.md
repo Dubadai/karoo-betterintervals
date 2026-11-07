@@ -8,10 +8,12 @@ for a while first (warm up on your own, get out of town).
 <img src="images/ready.png" width="240" alt="Ready: START WORKOUT in the middle, the workout's name, First up">
 
 - Your watts and heart rate (or cadence) are live; the workout's clock doesn't run.
-- **START WORKOUT** starts the usual 5-second countdown (the button then says **START NOW**:
-  tap it, or the countdown, to skip the wait). A short rising tune plays when the workout starts.
-  The remote's **Pause or resume workout** button starts it too; pressed again during the
-  countdown, it stops it. ⏭ / ⏮ also stop it.
+- **START WORKOUT** starts the usual 5-second countdown. The button counts down too: tap it
+  again (**TAP TO CANCEL**) to stop. A tap on the purple countdown below starts right away. A
+  short rising tune plays when the workout starts. The remote's **Pause or resume workout** button
+  works like START: it starts the countdown, or cancels it. ⏭ / ⏮ also cancel it.
+
+<img src="images/start-countdown.png" width="240" alt="Start countdown: 3 in the yellow button, TAP TO CANCEL, and the purple countdown below">
 - **First up** shows the interval it will start with. ⏭ / ⏮ choose another one, for example to
   skip the warm-up: the label then says **Start at 3 / 16** and the chart outlines that interval.
 - When the ride ends (or no ride is on), the workout goes back to waiting at the first interval.

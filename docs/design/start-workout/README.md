@@ -43,3 +43,9 @@ Countdown in the button (mockup, not decided): `countdown-in-button.src.html`. D
 show the start countdown in the yellow button instead of the First up box. A · the number and
 START NOW in the button; B · a big number with a small "Starting · tap to start now". In both the
 button darkens from the left as the seconds run, and First up stays as it is.
+
+Decided and built (7 Nov 2026): a mix of A and B. The button counts down (big number above
+**TAP TO CANCEL**, filling with the darker yellow) and a tap cancels; the purple countdown box
+stays too, so it looks like any other interval change (tap it to start right away). The remote's
+pause button works like the button.
+- `device/05-countdown-in-button-light.png`: 3 s left, built.

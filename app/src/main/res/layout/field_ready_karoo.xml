@@ -59,13 +59,22 @@
                 android:textScaleX="0.9" />
         </FrameLayout>
 
-        <!-- START WORKOUT: ▶ above the words, the whole box is the button -->
+        <!-- START WORKOUT: ▶ above the words, the whole box is the button. During the start
+             countdown: the seconds above TAP TO CANCEL, and the button fills with its darker
+             colour as they run down. -->
         <FrameLayout
             android:id="@+id/btn_start"
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:background="@drawable/bg_start_karoo"
             android:contentDescription="@string/start_workout">
+
+            <ProgressBar
+                android:id="@+id/start_fill"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:max="1000"
+                android:progressDrawable="@drawable/progress_start_karoo" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -81,6 +90,18 @@
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_play_filled"
                     android:tint="@color/karoo_yellow_fg" />
+
+                <TextView
+                    android:fontFamily="sans-serif-medium"
+                    android:id="@+id/start_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:textColor="@color/karoo_yellow_fg"
+                    android:textSize="44sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
 
                 <TextView
                     android:fontFamily="ibm-plex-sans-condensed"
