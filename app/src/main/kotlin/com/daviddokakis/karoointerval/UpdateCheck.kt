@@ -74,7 +74,9 @@ class UpdateCheck(
     }
 
     private suspend fun checkOnce(manifestUrl: String) {
-        val m = JSONObject(httpGet(manifestUrl))
+        // No manifest (no normal release yet, or a private repo): nothing to say; try tomorrow.
+        val body = httpGet(manifestUrl) ?: return Timber.i("Update check: no manifest at $manifestUrl")
+        val m = JSONObject(body)
         val latestCode = m.getLong("latestVersionCode")
         val latestName = m.getString("latestVersion")
         require(m.getString("packageName") == context.packageName) { "manifest is for another app" }
@@ -102,8 +104,8 @@ class UpdateCheck(
         awaitClose { karoo.removeConsumer(id) }
     }
 
-    /** GET through the Karoo (Wi-Fi, or the phone over Bluetooth). Fails fast when offline. */
-    private suspend fun httpGet(url: String): String {
+    /** GET through the Karoo (Wi-Fi, or the phone over Bluetooth). Fails fast when offline; null on 404. */
+    private suspend fun httpGet(url: String): String? {
         val done = withTimeout(HTTP_TIMEOUT_MS) {
             callbackFlow {
                 val id = karoo.addConsumer(
@@ -113,6 +115,7 @@ class UpdateCheck(
                 awaitClose { karoo.removeConsumer(id) }
             }.filterIsInstance<HttpResponseState.Complete>().first()
         }
+        if (done.statusCode == 404) return null
         check(done.statusCode in 200..299) { "HTTP ${done.statusCode} ${done.error.orEmpty()}" }
         return done.body?.decodeToString().orEmpty()
     }
