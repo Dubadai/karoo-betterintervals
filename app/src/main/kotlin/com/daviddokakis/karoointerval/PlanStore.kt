@@ -201,7 +201,27 @@ class PlanStore private constructor(context: Context) {
     }
 
     fun clearProgress() {
-        prefs.edit().remove(KEY_PROGRESS).apply()
+        prefs.edit().remove(KEY_PROGRESS).remove(KEY_FINISHED).apply()
+    }
+
+    /**
+     * The workout was finished today with [summary]: kept so the Workout done screen comes back
+     * if the app restarts (the Karoo can restart it, more likely with a route and the map busy)
+     * until DONE is pressed or the ride ends.
+     */
+    fun saveFinished(plan: WorkoutPlan, summary: WorkoutSummary?) {
+        val s = summary
+        prefs.edit()
+            .remove(KEY_PROGRESS)
+            .putString(KEY_FINISHED, "${LocalDate.now()}|${plan.id}|${s?.timeSec ?: 0}|${s?.avgPower ?: ""}|${s?.np ?: ""}|${s?.avgHr ?: ""}|${s?.avgCadence ?: ""}")
+            .apply()
+    }
+
+    /** The summary of [plan] if it was finished today and not closed yet (see [saveFinished]), else null. */
+    fun restoreFinished(plan: WorkoutPlan): WorkoutSummary? {
+        val p = prefs.getString(KEY_FINISHED, null)?.split("|") ?: return null
+        if (p.size != 7 || p[0] != LocalDate.now().toString() || p[1] != plan.id) return null
+        return WorkoutSummary(p[2].toIntOrNull() ?: 0, p[3].toIntOrNull(), p[4].toIntOrNull(), p[5].toIntOrNull(), p[6].toIntOrNull())
     }
 
     /** Only today's selection is restored, so yesterday's workout doesn't show up on today's ride. */
@@ -222,6 +242,7 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_SELECTED_JSON = "selected_json"
         private const val KEY_SELECTED_DATE = "selected_date"
         private const val KEY_PROGRESS = "progress"
+        private const val KEY_FINISHED = "finished"
         private const val KEY_WATTS_COLORED = "watts_colored"
         private const val KEY_WATTS_MODE = "watts_mode"
         private const val KEY_TARGET_RANGE = "target_shows_range"

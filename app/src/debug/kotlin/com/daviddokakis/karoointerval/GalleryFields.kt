@@ -12,11 +12,12 @@ import java.util.concurrent.CountDownLatch
  */
 // gallery: no-power-neighbours (this app shows power itself)
 object GalleryFields {
+    private const val ROUTE_PX = 79
     private val HR_ZONES = listOf(0..119, 120..139, 140..154, 155..169, 170..220)
 
     /** The workout screen's looks and the states the guide explains (Karoo style is the only style). */
     val variants = listOf(
-        "ready", "karoo", "karoo-number", "karoo-colours", "gauge", "free", "free-first-lap", "free-instant", "free-5s", "free-10s", "free-lap-np", "free-ride", "top-target", "top-cadence", "gauge-top-hr", "gauge-top-cadence", "done",
+        "ready", "karoo", "karoo-number", "karoo-colours", "gauge", "free", "free-first-lap", "free-instant", "free-5s", "free-10s", "free-lap-np", "free-ride", "top-target", "top-cadence", "gauge-top-hr", "gauge-top-cadence", "done", "done-route",
         "choose", "restart", "cancelled", "countdown", "paused", "zoomed", "target-range", "lap-np",
         "outline", "cadence",
     )
@@ -48,6 +49,7 @@ object GalleryFields {
             "gauge-top-cadence" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE, topRow = TopRow.CADENCE)
             // The whole workout done: 52:00, averages that fit the showcase ride
             "done" -> k.copy(finished = true, stepIndex = 9, summary = WorkoutSummary(3120, 232, 251, 132, 88))
+            "done-route" -> k.copy(finished = true, stepIndex = 9, summary = WorkoutSummary(3120, 232, 251, 132, 88))
             // Jumping: choosing 1 ahead, restarting, cancelled, the countdown
             "choose" -> k.copy(selectTarget = 4)
             "restart" -> k.copy(selectTarget = 3, selectRestart = true)
@@ -64,8 +66,11 @@ object GalleryFields {
         // Layouts are inflated on the main thread, as on the Karoo.
         var out: Bitmap? = null
         val done = CountDownLatch(1)
-        Handler(Looper.getMainLooper()).post { out = ExampleScreen.draw(context, s, w, h); done.countDown() }
+        // "-route": the field as the Karoo shortens it when a route is loaded (79 px less), drawn at the top
+        val fieldH = if (variant.endsWith("-route")) h - ROUTE_PX else h
+        Handler(Looper.getMainLooper()).post { out = ExampleScreen.draw(context, s, w, fieldH); done.countDown() }
         done.await()
-        return out!!
+        if (fieldH == h) return out!!
+        return Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { android.graphics.Canvas(it).drawBitmap(out!!, 0f, 0f, null) }
     }
 }

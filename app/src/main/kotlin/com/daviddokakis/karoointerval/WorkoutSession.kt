@@ -479,6 +479,19 @@ class WorkoutSession(
         resetWorkoutStats()
         // Progress only carries over a restart mid-ride; with no ride active, start from the top.
         if (rideIdle) store.clearProgress()
+        // Finished earlier in this ride and not closed with DONE: back to the Workout done screen
+        val done = if (rideIdle) null else plan?.let { store.restoreFinished(it) }
+        if (plan != null && done != null) {
+            elapsedInStepMs = plan.steps.last().durationSec * 1000L
+            _state.update {
+                it.copy(
+                    plan = plan, stepIndex = plan.steps.lastIndex, elapsedInStepSec = plan.steps.last().durationSec,
+                    finished = true, summary = done, lapAvg = null, workoutPaused = false, notStarted = false,
+                )
+            }
+            Timber.i("Loaded workout ${plan.name}: finished earlier, showing Workout done")
+            return
+        }
         val restored = if (rideIdle) null else plan?.let { store.restoreProgress(it) }
         val (index, elapsedSec) = restored ?: (0 to 0)
         // A workout waits for START WORKOUT, unless it was already running (app restarted mid-ride).
@@ -531,10 +544,12 @@ class WorkoutSession(
                 if (st.hasNext) {
                     goToStep(st.stepIndex + 1, natural = true)
                 } else {
-                    _state.update { it.copy(finished = true, elapsedInStepSec = step.durationSec, summary = summary()) }
+                    val sum = summary()
+                    _state.update { it.copy(finished = true, elapsedInStepSec = step.durationSec, summary = sum) }
                     karoo.dispatch(MarkLap)
                     beep(GO_TONE)
-                    store.clearProgress()
+                    // Remember it, so a restart of the app shows Workout done again (not START WORKOUT)
+                    st.plan?.let { store.saveFinished(it, sum) }
                 }
             } else {
                 _state.update { it.copy(elapsedInStepSec = (elapsedInStepMs / 1000).toInt()) }
