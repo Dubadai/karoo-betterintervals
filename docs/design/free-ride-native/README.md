@@ -76,3 +76,6 @@ the bolt above ("3S" follows Settings › Power: instant, 3, 5 or 10 s).
 
 Last lap: the values were 27 px under their label on the Karoo (the mockup has 10); pulled up
 (-6dp), now 10 px. `device/10-last-lap-gap-dark.png`.
+
+Chosen: C with "3S POWER" in the secondary grey (like LAST LAP), and Last lap 20 px above its
+values. Top rows of `watts-label.html`.
