@@ -19,7 +19,7 @@ Tap the big watts number to go through five styles:
 4. **Both**
 5. **Power gauge**: see below
 
-The Karoo remembers your choice between rides.
+The power gauge is where you start. The Karoo remembers your choice between rides.
 
 <img src="images/watts-coloured-number.png" width="240" alt="Coloured number: 280 in green"> <img src="images/watts-both.png" width="240" alt="Coloured number and background, in range">
 

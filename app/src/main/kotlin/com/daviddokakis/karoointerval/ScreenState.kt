@@ -50,7 +50,7 @@ data class ScreenState(
     /** Step the pending jump will land on. */
     val jumpTarget: Int? = null,
     /** How the target range is shown (tap the watts to cycle). */
-    val wattsMode: WattsMode = WattsMode.PLAIN,
+    val wattsMode: WattsMode = WattsMode.GAUGE,
     /** The Karoo is navigating (route pill shown, field shorter). */
     val navigating: Boolean = false,
     /** Dark / Light / Auto setting (Auto: follow the Karoo). */

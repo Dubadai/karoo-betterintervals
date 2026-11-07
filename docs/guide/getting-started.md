@@ -44,7 +44,7 @@ the watts shrink to fit.
 ### Tap the watts
 
 During a ride, **tap the big watts number** to switch how it looks: Number, Colour, Background,
-Both, Gauge, then back to Number. The app remembers your pick. See
+Both, Gauge, then back to Number. It starts on the gauge, and the app remembers your pick. See
 [Watts colours and the power gauge](watts-colours.md).
 
 <img src="images/intro-tap-the-watts.png" width="240" alt="Introduction, page 4: the five ways the watts can look">

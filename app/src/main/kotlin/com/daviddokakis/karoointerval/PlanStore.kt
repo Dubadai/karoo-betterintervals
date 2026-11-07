@@ -122,14 +122,15 @@ class PlanStore private constructor(context: Context) {
         _appearance.value = value
     }
 
-    /** How the watts show the target range (remembered between rides). */
+    /** How the watts show the target range (remembered between rides; the gauge until the rider picks one). */
     var wattsMode: WattsMode
         get() {
             prefs.getString(KEY_WATTS_MODE, null)?.let { name ->
-                return WattsMode.entries.firstOrNull { it.name == name } ?: WattsMode.PLAIN
+                return WattsMode.entries.firstOrNull { it.name == name } ?: WattsMode.GAUGE
             }
-            // Earlier versions stored an on/off setting for coloured numbers.
-            return if (prefs.getBoolean(KEY_WATTS_COLORED, false)) WattsMode.TEXT else WattsMode.PLAIN
+            // Earlier versions stored an on/off setting for coloured numbers. Nothing picked yet:
+            // the power gauge (target range above it, Lap avg and HR tiles under it).
+            return if (prefs.getBoolean(KEY_WATTS_COLORED, false)) WattsMode.TEXT else WattsMode.GAUGE
         }
         set(value) = prefs.edit().putString(KEY_WATTS_MODE, value.name).remove(KEY_WATTS_COLORED).apply()
 
