@@ -42,6 +42,8 @@ class WorkoutSession(
     val state: StateFlow<ScreenState> = _state
 
     private var recording = false
+    /** Known once the Karoo has said: no ride is active (not started, finished or discarded). */
+    private var rideIdle = false
     private var elapsedInStepMs = 0L
     private var lastTick = 0L
     private var lapSum = 0.0
@@ -113,6 +115,7 @@ class WorkoutSession(
         scope.launch {
             karoo.consumerFlow<RideState>().collect { ride ->
                 recording = ride is RideState.Recording
+                rideIdle = ride is RideState.Idle
                 _state.update { it.copy(paused = ride is RideState.Paused) }
                 // No ride (not started, finished or discarded): start the workout from the top
                 // next time. Progress is only kept while a ride is recording or paused.
@@ -384,7 +387,9 @@ class WorkoutSession(
     private fun loadPlan(plan: WorkoutPlan?) {
         cancelCountdown()
         resetLap()
-        val restored = plan?.let { store.restoreProgress(it) }
+        // Progress only carries over a restart mid-ride; with no ride active, start from the top.
+        if (rideIdle) store.clearProgress()
+        val restored = if (rideIdle) null else plan?.let { store.restoreProgress(it) }
         val (index, elapsedSec) = restored ?: (0 to 0)
         // A workout waits for START WORKOUT, unless it was already running (app restarted mid-ride).
         val waiting = plan != null && index == 0 && elapsedSec == 0

@@ -23,6 +23,12 @@ Layouts `field_ready.xml` / `field_ready_karoo.xml` are generated from the worko
 `tools/gen_ready_layouts.py` (top row, First up box and chart stay the same).
 
 - `device/01-ready-light.png`: the ready screen on David's Karoo (Karoo style, light).
+- `device/02-start-at-3-light.png`: after ⏭ twice: "Start at 3 / 16", the chart outlines step 3.
+- `device/03-started-at-2-light.png`: ⏮ back to 2, then START: the workout screen at 2 / 16
+  (the clock waits for the ride to record).
 
-Not checked on the device: ⏮ / ⏭ and START (the Karoo switched ride pages during the test),
-dark mode, the non-Karoo style, and today-first (no workout today in the cached week).
+With no ride active, a workout always starts over waiting at the first interval, also after an
+app restart (saved progress only carries over a restart mid-ride).
+
+Not checked on the device: dark mode, the non-Karoo style, and today-first (no workout today in
+the cached week).

@@ -11,7 +11,7 @@ for a while first (warm up on your own, get out of town).
 - **START WORKOUT** starts it. The remote's **Pause or resume workout** button starts it too.
 - **First up** shows the interval it will start with. ⏭ / ⏮ choose another one, for example to
   skip the warm-up: the label then says **Start at 3 / 16** and the chart outlines that interval.
-- When the ride ends, the workout goes back to waiting at the first interval.
+- When the ride ends (or no ride is on), the workout goes back to waiting at the first interval.
 
 ## Once it runs
 
