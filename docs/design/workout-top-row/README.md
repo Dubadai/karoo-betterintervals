@@ -1,6 +1,6 @@
 # Workout screen: what the top row shows
 
-David (2026-11-07): make the top of the workout screen switchable between heart rate, target and
+Request (2026-11-07): make the top of the workout screen switchable between heart rate, target and
 cadence, while the data an interval needs stays on screen.
 
 Proposal (`mockup.html`, drawn from the app's own screens in the field gallery):

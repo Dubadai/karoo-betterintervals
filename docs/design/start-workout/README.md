@@ -1,6 +1,6 @@
 # Start workout (and today first in the list)
 
-David (7 Nov 2026): often the workout is loaded before the ride but should only start some time
+Request (7 Nov 2026): often the workout is loaded before the ride but should only start some time
 into it. Today the workout clock runs as soon as the ride records.
 
 Proposal, round 1 (mockup, not decided):
@@ -22,14 +22,14 @@ waits (no setting). Workouts page: today, then coming days, then past days.
 Layouts `field_ready.xml` / `field_ready_karoo.xml` are generated from the workout layouts by
 `tools/gen_ready_layouts.py` (top row, First up box and chart stay the same).
 
-- `device/01-ready-light.png`: the ready screen on David's Karoo (Karoo style, light).
+- `device/01-ready-light.png`: the ready screen on our test Karoo (Karoo style, light).
 - `device/02-start-at-3-light.png`: after ⏭ twice: "Start at 3 / 16", the chart outlines step 3.
 - `device/03-started-at-2-light.png`: ⏮ back to 2, then START: the workout screen at 2 / 16
   (the clock waits for the ride to record).
 
 - `device/04-start-countdown-light.png`: after START: the 5 s countdown ("Starting with"), START NOW.
 
-START runs the usual 5 s countdown (David, 7 Nov 2026), then a happier start tune (rising E6,
+START runs the usual 5 s countdown (7 Nov 2026), then a happier start tune (rising E6,
 G#6, B6, E7) instead of the plain GO beep. START NOW or a tap on the countdown skips the wait;
 the remote's pause button (or ⏮ / ⏭) stops it.
 
@@ -39,7 +39,7 @@ app restart (saved progress only carries over a restart mid-ride).
 Not checked on the device: dark mode, the non-Karoo style, and today-first (no workout today in
 the cached week).
 
-Countdown in the button (mockup, not decided): `countdown-in-button.src.html`. David asked to
+Countdown in the button (mockup, not decided): `countdown-in-button.src.html`. Asked to
 show the start countdown in the yellow button instead of the First up box. A · the number and
 START NOW in the button; B · a big number with a small "Starting · tap to start now". In both the
 button darkens from the left as the seconds run, and First up stays as it is.

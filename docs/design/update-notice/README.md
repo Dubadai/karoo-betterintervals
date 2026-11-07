@@ -3,10 +3,10 @@
 Tell the rider on the Karoo when a newer BetterIntervals release is on GitHub, and get them to
 the Karoo's own UPDATE button.
 
-**Status:** option B agreed by David (round 1), built and tested on David's Karoo 2026-11-07. Mockup: `mockup.html` (built from `mockup.src.html`
+**Status:** option B agreed (round 1), built and tested on our test Karoo 2026-11-07. Mockup: `mockup.html` (built from `mockup.src.html`
 with `python3 build.py`), also at https://claude.ai/artifact/9nH7QbAPk4MDgVJ6Pr7J56
 
-## Findings (2026-11-07, David's Karoo, ROM 1.665.2548.20)
+## Findings (2026-11-07, our test Karoo, ROM 1.665.2548.20)
 
 - The Karoo's Settings › Apps › <app> page (`io.hammerhead.action.APP_INFO`, extra
   `packageName`) shows About, Release notes and an UPDATE button for side-loaded apps that name a

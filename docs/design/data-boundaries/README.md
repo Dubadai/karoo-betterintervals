@@ -1,7 +1,7 @@
 # Data field boundaries
 
 With **data field boundaries** on (Karoo Settings), the Karoo's page turns light grey and
-BetterIntervals looks like one big white card. David always rides with boundaries on, so that
+BetterIntervals looks like one big white card. We always ride with boundaries on, so that
 look comes first; boundaries off stays as it is.
 
 The Karoo tells each field whether boundaries are on: `ViewConfig.boundariesEnabled`

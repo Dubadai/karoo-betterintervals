@@ -8,7 +8,7 @@ intervals.icu-style colours.
   zone; the Karoo adds Z6 (121–150 %, red) and Z7 (> 150 %, purple).
 - Karoo Z1 is grey, almost the same as today's grey for finished steps, so the two would merge.
 
-Round 1: Now / A · Karoo zone colours / B · past steps faded. David: don't fade finished steps,
+Round 1: Now / A · Karoo zone colours / B · past steps faded. Feedback: don't fade finished steps,
 you may need to jump back to them.
 
 Round 2 (mockup, not decided): Now / A · Karoo zone colours, finished steps grey (as today) /
