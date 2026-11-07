@@ -28,7 +28,17 @@ Open the **Workouts** page (⚙ on the ride screen), then tap ⚙ in its top rig
 
 <img src="images/karoo-style.png" width="240" alt="Karoo style: classic screen"> <img src="images/karoo-style-gauge.png" width="240" alt="Karoo style: power gauge">
 
-Both settings apply right away, also during a ride.
+## Tiles
+
+**Tonal / Outline**: how the Lap avg, Target and Heart rate tiles look.
+
+- **Tonal** (default): a grey fill. With *Data field boundaries* on in the Karoo's settings, it's
+  the same grey as the Karoo's page between fields.
+- **Outline**: no fill, just a thin border like the Next up box.
+
+<img src="images/tiles-tonal-dark.png" width="240" alt="Tonal tiles, dark"> <img src="images/tiles-outline-dark.png" width="240" alt="Outline tiles, dark">
+
+All three settings apply right away, also during a ride.
 
 ## intervals.icu account
 

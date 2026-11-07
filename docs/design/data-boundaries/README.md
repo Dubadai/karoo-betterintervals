@@ -27,6 +27,10 @@ Back to the Karoo's own card colour for the field (white in light, black in dark
 - **A · grey tiles**: tiles in the Karoo's page grey (`#DDDDDD` / `#484848`).
 - **B · outlined tiles**: tiles in the card colour with the same 2 px outline as Next up.
 
+Decided (7 Nov 2026): **both, as a setting.** Settings › Tiles: **Tonal** (default; with boundaries
+on, the Karoo's page grey) or **Outline** (border like Next up), in light and dark. The field
+itself stays see-through on the Karoo's card, so no grey page any more.
+
 - `mockup-round3.src.html`: round 3 options next to what was built.
 - `mockup.src.html` + `build.py`: the mockup, drawn on device screenshots (run `python3 build.py`).
 - `base-light.png`, `base-dark.png`: gauge screen, boundaries off (from `screens/`).
@@ -36,3 +40,5 @@ Back to the Karoo's own card colour for the field (white in light, black in dark
 - `device/04-stock-fields-dark.png`: Karoo's own fields with boundaries on, dark.
 - `device/05-workout-guess-dark.png`: first try with the guessed dark grey (`#1C1C1C`), too dark.
 - `device/06-workout-dark.png`: workout screen, dark, with the measured grey.
+- `device/07-tiles-tonal-dark.png`, `device/08-tiles-outline-dark.png`: built, dark, boundaries on.
+- `device/09-settings-tiles-dark.png`: Settings page with the new Tiles row.
