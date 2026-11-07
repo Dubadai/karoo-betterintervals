@@ -13,7 +13,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 
 /**
- * Settings: Appearance (Dark / Light / Auto) and Karoo style first, both as Karoo's own segmented
+ * Settings: Appearance (Dark / Light / Auto), Karoo style and Tiles (Tonal / Outline) first, both as Karoo's own segmented
  * control (as in Karoo Settings → Display), then the intervals.icu account as one row that opens
  * the Account page.
  */
@@ -78,6 +78,17 @@ class SettingsActivity : AppearanceActivity() {
             },
         )
         form.addView(settingsHelp(getString(R.string.karoo_style_help)))
+        form.addView(settingsDivider())
+
+        // Tiles: Tonal / Outline (the Lap avg, Target and HR tiles on the workout screen)
+        form.addView(settingsHeading(R.drawable.ic_tiles, getString(R.string.tiles)))
+        form.addView(
+            segmented(listOf(R.string.tiles_tonal to false, R.string.tiles_outline to true), store.tileOutline.value) { on ->
+                store.setTileOutline(on)
+                render()
+            },
+        )
+        form.addView(settingsHelp(getString(R.string.tiles_help)))
         form.addView(settingsDivider())
 
         // intervals.icu: one row, opens the Account page

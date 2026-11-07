@@ -48,6 +48,7 @@ internal object ThemeOverrides {
         R.drawable.bg_select_fill to R.color.select_fill_jump,
         R.drawable.bg_select_fill_restart to R.color.select_fill_restart,
         R.drawable.bg_tile to R.color.tile,
+        R.drawable.bg_tile_boundary to R.color.tile_boundary,
         R.drawable.bg_tile_tonal to R.color.tile_tonal,
     )
 
