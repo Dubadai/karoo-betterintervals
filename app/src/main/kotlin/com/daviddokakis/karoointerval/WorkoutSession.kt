@@ -190,6 +190,10 @@ class WorkoutSession(
         collectInt(DataType.Type.AVERAGE_HR_LAST_LAP) { v -> _state.update { it.copy(lastLapHrAvg = v) } }
         collectInt(DataType.Type.CADENCE_LAP) { v -> _state.update { it.copy(lapCadenceAvg = v) } }
         collectInt(DataType.Type.AVERAGE_CADENCE_LAST_LAP) { v -> _state.update { it.copy(lastLapCadenceAvg = v) } }
+        // The whole ride so far, for free ride's tiles
+        collectInt(DataType.Type.AVERAGE_POWER) { v -> _state.update { it.copy(rideAvgPower = v) } }
+        collectInt(DataType.Type.AVERAGE_HR) { v -> _state.update { it.copy(rideAvgHr = v) } }
+        collectInt(DataType.Type.AVERAGE_CADENCE) { v -> _state.update { it.copy(rideAvgCadence = v) } }
         scope.launch {
             store.plan.collect { plan -> loadPlan(plan) }
         }
@@ -198,7 +202,8 @@ class WorkoutSession(
         scope.launch { store.powerSmoothing.collect { p -> _state.update { it.copy(powerSmoothing = p) } } }
         scope.launch { store.tileOutline.collect { on -> _state.update { it.copy(tileOutline = on) } } }
         scope.launch { store.secondField.collect { f -> _state.update { it.copy(secondField = f) } } }
-        _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapShowsNp = store.lapShowsNp, hrShowsLap = store.hrShowsLap) }
+        scope.launch { store.topRow.collect { r -> _state.update { it.copy(topRow = r) } } }
+        _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapShowsNp = store.lapShowsNp, freePower = store.freePower, freeSecond = store.freeSecond) }
     }
 
     fun stop() {
@@ -360,11 +365,21 @@ class WorkoutSession(
     }
 
     /** Free ride: tap on the HR tile switches between the current heart rate and the lap's average. */
-    fun toggleLapHr() {
+    /** Free ride's HR tile: now → the lap's average → the ride's average → now. */
+    fun cycleFreeSecond() {
         scope.launch {
-            val lap = !_state.value.hrShowsLap
-            store.hrShowsLap = lap
-            _state.update { it.copy(hrShowsLap = lap) }
+            val next = _state.value.freeSecond.next()
+            store.freeSecond = next
+            _state.update { it.copy(freeSecond = next) }
+        }
+    }
+
+    /** Free ride's power tile: the lap's average → the lap's NP → the ride's average → back. */
+    fun cycleFreePower() {
+        scope.launch {
+            val next = _state.value.freePower.next()
+            store.freePower = next
+            _state.update { it.copy(freePower = next) }
         }
     }
 

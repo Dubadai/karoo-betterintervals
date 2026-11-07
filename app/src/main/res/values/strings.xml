@@ -32,6 +32,11 @@
     <string name="last_lap_label">Last lap</string>
     <string name="last_lap_value">%1$s · %2$d W</string>
     <string name="lap_hr">Lap HR</string>
+    <string name="ride_avg">Ride avg</string>
+    <string name="ride_hr">Ride HR</string>
+    <string name="ride_cadence">Ride cad</string>
+    <string name="top_row">Top row</string>
+    <string name="top_row_help">What the top of the workout screen shows. Target and Lap avg are always there: with Target at the top, the tile next to Lap avg shows heart rate (or cadence).</string>
     <string name="bpm_value">%1$d bpm</string>
     <string name="settings_title">Settings</string>
     <!-- The big title on the Settings page (the Karoo lists the app as app_name) -->

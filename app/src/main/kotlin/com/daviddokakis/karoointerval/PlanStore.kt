@@ -43,10 +43,26 @@ class PlanStore private constructor(context: Context) {
         get() = prefs.getBoolean(KEY_TARGET_RANGE, false)
         set(value) = prefs.edit().putBoolean(KEY_TARGET_RANGE, value).apply()
 
-    /** Free ride: the HR tile shows the lap's average heart rate instead of the current one (remembered). */
-    var hrShowsLap: Boolean
-        get() = prefs.getBoolean(KEY_HR_LAP, false)
-        set(value) = prefs.edit().putBoolean(KEY_HR_LAP, value).apply()
+    /** Free ride: what the HR tile shows (remembered). Earlier versions stored on/off for the lap's average. */
+    var freeSecond: FreeSecond
+        get() = prefs.getString(KEY_FREE_SECOND, null)?.let { n -> FreeSecond.entries.firstOrNull { it.name == n } }
+            ?: if (prefs.getBoolean(KEY_HR_LAP, false)) FreeSecond.LAP else FreeSecond.NOW
+        set(value) = prefs.edit().putString(KEY_FREE_SECOND, value.name).remove(KEY_HR_LAP).apply()
+
+    /** Free ride: what the power tile shows (remembered). */
+    var freePower: FreePower
+        get() = enumPref(KEY_FREE_POWER, FreePower.entries, FreePower.LAP_AVG)
+        set(value) = prefs.edit().putString(KEY_FREE_POWER, value.name).apply()
+
+    private val _topRow = MutableStateFlow(prefs.getString(KEY_TOP_ROW, null)?.let { n -> TopRow.entries.firstOrNull { it.name == n } })
+
+    /** Settings › Top row (null until picked: each layout as it was). */
+    val topRow: StateFlow<TopRow?> = _topRow
+
+    fun setTopRow(value: TopRow) {
+        prefs.edit().putString(KEY_TOP_ROW, value.name).apply()
+        _topRow.value = value
+    }
 
     /** Lap tile shows NP instead of the lap average (remembered between rides). */
     var lapShowsNp: Boolean
@@ -211,6 +227,9 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_TARGET_RANGE = "target_shows_range"
         private const val KEY_LAP_NP = "lap_shows_np"
         private const val KEY_HR_LAP = "hr_shows_lap"
+        private const val KEY_FREE_SECOND = "free_second"
+        private const val KEY_FREE_POWER = "free_power"
+        private const val KEY_TOP_ROW = "top_row"
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_TILE_OUTLINE = "tile_outline"
         private const val KEY_POWER_SMOOTHING = "power_smoothing"

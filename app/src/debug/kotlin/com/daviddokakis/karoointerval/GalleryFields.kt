@@ -16,7 +16,7 @@ object GalleryFields {
 
     /** The workout screen's looks and the states the guide explains (Karoo style is the only style). */
     val variants = listOf(
-        "ready", "karoo", "karoo-number", "karoo-colours", "gauge", "free", "free-first-lap", "free-instant", "free-5s", "free-10s", "done",
+        "ready", "karoo", "karoo-number", "karoo-colours", "gauge", "free", "free-first-lap", "free-instant", "free-5s", "free-10s", "free-lap-np", "free-ride", "top-target", "top-cadence", "gauge-top-hr", "gauge-top-cadence", "done",
         "choose", "restart", "cancelled", "countdown", "paused", "zoomed", "target-range", "lap-np",
         "outline", "cadence",
     )
@@ -38,6 +38,14 @@ object GalleryFields {
             "free-instant" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES, powerSmoothing = Smoothing.INSTANT)
             "free-5s" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES, powerSmoothing = Smoothing.S5)
             "free-10s" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES, powerSmoothing = Smoothing.S10)
+            // Free ride's tiles, tapped on: LAP NP / LAP HR, then RIDE AVG / RIDE HR
+            "free-lap-np" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES, freePower = FreePower.LAP_NP, freeLapNp = 289, freeSecond = FreeSecond.LAP, lapHrAvg = 138)
+            "free-ride" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES, freePower = FreePower.RIDE_AVG, rideAvgPower = 268, freeSecond = FreeSecond.RIDE, rideAvgHr = 131)
+            // Settings › Top row
+            "top-target" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, topRow = TopRow.TARGET)
+            "top-cadence" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, topRow = TopRow.CADENCE)
+            "gauge-top-hr" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE, topRow = TopRow.HEART_RATE)
+            "gauge-top-cadence" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE, topRow = TopRow.CADENCE)
             // The whole workout done: 52:00, averages that fit the showcase ride
             "done" -> k.copy(finished = true, stepIndex = 9, summary = WorkoutSummary(3120, 232, 251, 132, 88))
             // Jumping: choosing 1 ahead, restarting, cancelled, the countdown

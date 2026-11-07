@@ -119,6 +119,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     private val targetToggleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_TARGET, 12) }
     private val lapHrToggleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_LAP_HR, 14) }
     private val lapNpToggleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_LAP_NP, 13) }
+    private val freePowerCycleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_CYCLE_FREE_POWER, 17) }
     private val wattsColorIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_WATTS_COLOR, 7) }
     private val startIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_START, 15) }
     private val doneIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_DONE, 16) }
@@ -153,7 +154,18 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         targetText = s.targetRange.let { band ->
             if (s.targetShowsRange && band != null) "${band.first}–${band.last}" else s.target?.toString() ?: "--"
         }
-        hrText = s.secondValue?.toString() ?: "--"
+        // Settings › Top row: heart rate, cadence or the target at the top; the other goes in the
+        // second tile next to Lap avg. Not picked: as each layout has it (number styles: heart rate
+        // or cadence, gauge: target). "Swapped": the layout's top spot shows what its tile usually does.
+        val top = s.topRow ?: if (gaugeMode) TopRow.TARGET else if (s.showsCadence) TopRow.CADENCE else TopRow.HEART_RATE
+        val swapped = (top == TopRow.TARGET) != gaugeMode
+        val extraCadence = when (top) { TopRow.CADENCE -> true; TopRow.HEART_RATE -> false; TopRow.TARGET -> s.showsCadence }
+        val extraText = (if (extraCadence) s.cadence else s.heartRate)?.toString() ?: "--"
+        val band0 = s.targetRange
+        val targetTopText = if (band0 != null && band0.first != band0.last) "${band0.first} – ${band0.last}" else s.target?.toString() ?: "--"
+        val targetCellText = if (band0 != null && band0.first != band0.last) "${band0.first}–${band0.last}" else s.target?.toString() ?: "--"
+        hrText = if (swapped && gaugeMode) targetCellText else extraText
+        if (swapped && !gaugeMode) targetText = extraText
         applyTextSizes(v, gaugeMode)
 
         v.setViewVisibility(R.id.content, View.VISIBLE)
@@ -204,10 +216,10 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         else listOf(R.id.icon_timer, R.id.icon_lap, R.id.icon_bolt, R.id.icon_target)
         icons.forEach { v.setInt(it, "setColorFilter", iconColor) }
         v.setOnClickPendingIntent(if (gaugeMode) R.id.gauge else R.id.watts, wattsColorIntent)
-        v.setTextViewText(R.id.hr, s.secondValue?.toString() ?: "--")
-        // Settings › Heart rate or cadence: cadence takes the heart rate's spot (top row, or the
-        // gauge screen's tile) with its own icon; the layout stays the same.
-        if (s.showsCadence) {
+        v.setTextViewText(R.id.hr, extraText)
+        // Cadence (Settings › Top row or Heart rate or cadence) takes the heart rate's spot (top row,
+        // or the gauge screen's tile) with its own icon; the layout stays the same.
+        if (extraCadence) {
             showCadenceIcon(v, R.id.hr_icon, onTint = upperBg != 0)
             if (gaugeMode) v.setTextViewText(R.id.hr_label, cadenceLabel(lap = false))
         }
@@ -309,6 +321,41 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             v.setViewVisibility(R.id.target_next, View.VISIBLE)
         } else {
             v.setViewVisibility(R.id.target_next, View.GONE)
+        }
+        if (swapped) {
+            // The target and the extra trade places (Settings › Top row). The jump preview (→ W)
+            // stays out: it belongs next to the target, and the swapped spots have no room for it.
+            v.setViewVisibility(R.id.target_next, View.GONE)
+            val targetIconColor = color(if (upperBg != 0) R.color.text else R.color.karoo_green)
+            fun extraIcon(id: Int) {
+                if (extraCadence) {
+                    showCadenceIcon(v, id, onTint = upperBg != 0)
+                } else {
+                    v.setImageViewResource(id, R.drawable.ic_heart)
+                    v.setInt(id, "setColorFilter", color(R.color.heart_icon))
+                    v.setContentDescription(id, context.getString(R.string.cd_heart_rate))
+                }
+            }
+            if (gaugeMode) {
+                // Heart rate (or cadence) at the top, the target in the tile
+                v.setTextViewText(R.id.target, extraText)
+                extraIcon(R.id.icon_target_top)
+                v.setTextViewText(R.id.hr_label, context.getString(R.string.target))
+                v.setTextViewText(R.id.hr, targetCellText)
+                v.setImageViewResource(R.id.hr_icon, R.drawable.ic_target)
+                v.setInt(R.id.hr_icon, "setColorFilter", targetIconColor)
+                v.setContentDescription(R.id.hr_icon, context.getString(R.string.target))
+            } else {
+                // The target at the top, heart rate (or cadence) in the tile
+                v.setTextViewText(R.id.hr, targetTopText)
+                v.setImageViewResource(R.id.hr_icon, R.drawable.ic_target)
+                v.setInt(R.id.hr_icon, "setColorFilter", targetIconColor)
+                v.setContentDescription(R.id.hr_icon, context.getString(R.string.target))
+                v.setTextViewText(R.id.target_label, if (extraCadence) cadenceLabel(lap = false) else context.getString(R.string.hr))
+                v.setTextViewText(R.id.target, extraText)
+                extraIcon(R.id.icon_target)
+                v.setOnClickPendingIntent(R.id.target_tile, null)
+            }
         }
 
         // Next up box / countdown box
@@ -463,8 +510,10 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         applyAppearance(v, layout)
 
         v.setTextViewText(R.id.watts, s.powerShown?.toString() ?: "--")
-        v.setTextViewText(R.id.hr, s.secondValue?.toString() ?: "--")
-        if (s.showsCadence) showCadenceIcon(v, R.id.hr_icon, onTint = false)
+        // Heart rate or cadence at the top (Settings › Top row, else Heart rate or cadence)
+        val readyCadence = s.topRow == TopRow.CADENCE || (s.topRow != TopRow.HEART_RATE && s.showsCadence)
+        v.setTextViewText(R.id.hr, (if (readyCadence) s.cadence else s.heartRate)?.toString() ?: "--")
+        if (readyCadence) showCadenceIcon(v, R.id.hr_icon, onTint = false)
         v.setViewVisibility(R.id.btn_pause, View.GONE)     // nothing runs yet
         v.setViewVisibility(R.id.btn_resume, View.GONE)
         v.setOnClickPendingIntent(R.id.btn_settings, settingsIntent)
@@ -545,18 +594,26 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setTextViewText(R.id.free_watts_label, context.getString(s.powerSmoothing.powerName))
         v.setTextViewTextSize(R.id.free_watts_label, TypedValue.COMPLEX_UNIT_PX, 15f * density * scale)
         v.setViewPadding(R.id.free_watts_label, 0, (24 * density).toInt(), 0, wattsLabelLift(watts, s.navigating))
-        v.setTextViewText(R.id.free_lap_label, context.getString(if (s.lapShowsNp) R.string.np else R.string.lap_avg))
-        v.setTextViewText(R.id.free_lap_avg, (if (s.lapShowsNp) s.freeLapNp else s.lapPowerAvg)?.toString() ?: "--")
-        v.setOnClickPendingIntent(R.id.free_lap_tile, lapNpToggleIntent)
-        // HR tile: tap to switch between the current heart rate and the lap's average ("LAP HR").
-        // With cadence instead (Settings), the same tile shows cadence / lap cadence.
+        // Power tile: tap to go on: LAP AVG → LAP NP → RIDE AVG. The ride's average has the
+        // Karoo's ride icon (the bolt without the lap arrow).
+        v.setTextViewText(
+            R.id.free_lap_label,
+            context.getString(
+                when (s.freePower) { FreePower.LAP_AVG -> R.string.lap_avg; FreePower.LAP_NP -> R.string.np; FreePower.RIDE_AVG -> R.string.ride_avg },
+            ),
+        )
+        v.setTextViewText(R.id.free_lap_avg, s.shownFreePower?.toString() ?: "--")
+        v.setViewVisibility(R.id.th_free_karoo_3, if (s.freePower == FreePower.RIDE_AVG) View.GONE else View.VISIBLE)
+        v.setOnClickPendingIntent(R.id.free_lap_tile, freePowerCycleIntent)
+        // HR tile: tap to go on: HR → LAP HR → RIDE HR. With cadence instead (Settings), the same
+        // tile shows CADENCE → LAP CAD → RIDE CAD.
         v.setTextViewText(R.id.free_hr, s.shownSecond?.toString() ?: "--")
         v.setTextViewText(
             R.id.free_hr_label,
             if (s.showsCadence) {
-                cadenceLabel(lap = s.hrShowsLap)
+                if (s.freeSecond == FreeSecond.RIDE) context.getString(R.string.ride_cadence).uppercase() else cadenceLabel(lap = s.freeSecond == FreeSecond.LAP)
             } else {
-                context.getString(if (s.hrShowsLap) R.string.lap_hr else R.string.hr)
+                context.getString(when (s.freeSecond) { FreeSecond.NOW -> R.string.hr; FreeSecond.LAP -> R.string.lap_hr; FreeSecond.RIDE -> R.string.ride_hr })
             },
         )
         if (s.showsCadence) showCadenceIcon(v, R.id.free_hr_icon, onTint = false)

@@ -46,7 +46,7 @@ stroke; 3 s (default) is steady and still quick; 5 s and 10 s are calmer for lon
 ## Heart rate or cadence
 
 **Heart rate / Cadence**: what shows in the heart rate spots: next to the watts at the top, in the
-HR tile on the gauge screen, and in the free-ride HR tile (tap it for the lap average). With
+HR tile on the gauge screen, and in the free-ride HR tile (tap it for the lap's and the ride's average). With
 **Cadence**, a cadence icon replaces the heart, the free-ride tile has no heart-rate zone colour,
 and the last lap shows rpm instead of bpm.
 
@@ -54,6 +54,13 @@ With Cadence picked, a **Cadence** row appears: **Instant** (default, like the K
 field), **3 s**, **5 s** or **10 s**.
 
 <img src="images/settings-cadence.png" width="240" alt="Settings: Heart rate or cadence, Cadence smoothing"> <img src="images/workout-cadence.png" width="240" alt="Workout screen with cadence at the top">
+
+## Top row
+
+**Heart rate / Cadence / Target**: what the top of the workout screen shows. The target and Lap
+avg are always on the screen: whatever isn't at the top goes in the tile next to Lap avg. With
+**Target** at the top, that tile shows heart rate (or cadence, if Heart rate or cadence says so).
+Until you pick one, the number styles have heart rate at the top and the gauge has the target.
 
 All settings apply right away, also during a ride.
 
