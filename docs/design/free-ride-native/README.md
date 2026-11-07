@@ -34,3 +34,4 @@ the clock's digits.
 Lap avg tile darker in light mode: `#DDDDDD`, the Karoo's own page grey (was `#EBEBEB`).
 No last lap yet (first lap): LAST LAP and its values are hidden; the space stays, so nothing moves
 when the first lap ends.
+- `03-built-no-ride-dark.png`: the build on David's Karoo, dark mode, no ride (Last lap hidden).
