@@ -82,4 +82,9 @@
     <!-- Countdown (regular style): the darker blue it fills with, and "Jumping to" on the pale blue -->
     <color name="countdown_fill">#FF85B7EB</color>
     <color name="countdown_sub">#FF2E5A85</color>
+    <!-- Data field boundaries on (Karoo Settings): the Karoo's page grey (measured on the Karoo 3),
+         tiles as cards on it, and a gauge track that still shows on the grey. -->
+    <color name="boundary_page">#FFDDDDDD</color>
+    <color name="card">#FFFFFFFF</color>
+    <color name="gauge_track_boundaries">#FFC4C2BB</color>
 </resources>

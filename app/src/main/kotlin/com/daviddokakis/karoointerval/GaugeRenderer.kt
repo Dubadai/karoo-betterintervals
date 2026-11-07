@@ -90,10 +90,12 @@ class GaugeRenderer(private val context: Context) {
      * @param height bitmap height in px: the gauge's space on screen.
      * @param numberColor colour of the watts digits (plain text colour, or a range colour).
      * @param karooStyle Karoo native styling: Karoo green band and Karoo's number font.
+     * @param onGrey data field boundaries on: a darker track for the Karoo's grey page.
      */
     fun render(
         width: Int, height: Int, watts: Int?, target: Int?, range: IntRange?, numberColor: Int,
         karooStyle: Boolean = false,
+        onGrey: Boolean = false,
     ): Bitmap {
         val w = width.coerceAtLeast(1)
         val h = height.coerceAtLeast(1)
@@ -111,7 +113,8 @@ class GaugeRenderer(private val context: Context) {
             strokeWidth = g.sw
             strokeCap = Paint.Cap.ROUND
         }
-        arc.color = color(R.color.gauge_track)
+        // On the Karoo's grey page (data field boundaries on) the usual track would disappear.
+        arc.color = color(if (onGrey) R.color.gauge_track_boundaries else R.color.gauge_track)
         c.drawArc(oval, start, g.sweep, false, arc)
 
         val center = target ?: range?.let { (it.first + it.last) / 2 }

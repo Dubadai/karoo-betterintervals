@@ -16,7 +16,12 @@ Round 2 (**decided**, 7 Nov 2026): **white tile cards, Next up keeps only its bo
 boundaries on the field takes the Karoo grey, Lap avg / HR become white cards (black in dark mode),
 and the Next up box stays outline-only on the grey.
 
-The Karoo grey (light and dark) is an estimate: measure it on the device before building.
+Measured on the Karoo 3 (light): page grey `#DDDDDD`; with boundaries on the Karoo puts every
+field, ours included, in a white card with a 1 px `#7D7D7D` border and rounded corners. Our
+field paints the page grey inside that card; the Karoo keeps its border and corners on top.
+Dark mode grey is still an estimate (`#1C1C1C`): measure it with the Karoo in dark mode.
 
 - `mockup.src.html` + `build.py`: the mockup, drawn on device screenshots (run `python3 build.py`).
 - `base-light.png`, `base-dark.png`: gauge screen, boundaries off (from `screens/`).
+- `device/00-stock-fields-light.png`: Karoo's own fields with boundaries on (white cards on grey).
+- `device/01-free-ride-before-light.png`, `device/02-free-ride-after-light.png`: free ride before / after.
