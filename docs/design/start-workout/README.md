@@ -49,3 +49,9 @@ Decided and built (7 Nov 2026): a mix of A and B. The button counts down (big nu
 stays too, so it looks like any other interval change (tap it to start right away). The remote's
 pause button works like the button.
 - `device/05-countdown-in-button-light.png`: 3 s left, built.
+
+Workout done (mockup, not decided): `done-screen.src.html`. When the last interval ends: a
+"Workout done!" screen, a DONE button that takes the workout off (back to the free-ride screen),
+and a note that the ride keeps recording. A · big green check, title, name and length; B · check
+and title with the workout's numbers (time, average power, NP, average HR; numbers in the mockup
+are made up).
