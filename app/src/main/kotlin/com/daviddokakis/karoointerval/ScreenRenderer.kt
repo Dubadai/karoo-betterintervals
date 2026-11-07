@@ -120,6 +120,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     private val lapHrToggleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_LAP_HR, 14) }
     private val lapNpToggleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_LAP_NP, 13) }
     private val wattsColorIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_WATTS_COLOR, 7) }
+    private val startIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_START, 15) }
+    private val doneIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_DONE, 16) }
     private val settingsIntent: PendingIntent by lazy {
         PendingIntent.getActivity(
             context,
@@ -137,6 +139,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         val s = if (demo) DemoData.apply(state) else state
         useAppearance(s.appearance)
         val plan = s.plan ?: return renderFree(s)
+        if (s.notStarted) return renderReady(s, plan)
+        if (s.finished) return renderDone(s, plan)
         // The Gauge watts mode has its own layout; the other four share the classic one. Each has
         // a "Karoo native styling" twin (setting on the Account page).
         val gaugeMode = s.wattsMode == WattsMode.GAUGE
@@ -437,6 +441,105 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             p > range.last -> RangeState.OVER
             else -> RangeState.IN
         }
+    }
+
+    /**
+     * Workout done: a big green check, the workout's own numbers (time, average power, NP, average
+     * heart rate or cadence), DONE to take the workout off, and a note that the ride keeps
+     * recording. No heart rate row. Design: docs/design/start-workout/ (done screen).
+     */
+    private fun renderDone(s: ScreenState, plan: WorkoutPlan): RemoteViews {
+        val karoo = s.karooStyle
+        val layout = if (karoo) R.layout.field_done_karoo else R.layout.field_done
+        val v = RemoteViews(context.packageName, layout)
+        applyAppearance(v, layout)
+        val sum = s.summary
+        v.setTextViewText(R.id.done_name, plan.name)
+        v.setTextViewText(R.id.done_value_1, sum?.timeSec?.takeIf { it > 0 }?.let(::formatClock) ?: formatClock(plan.totalSec))
+        v.setTextViewText(R.id.done_value_2, sum?.avgPower?.toString() ?: "--")
+        v.setTextViewText(R.id.done_value_3, sum?.np?.toString() ?: "--")
+        if (s.showsCadence) {
+            v.setTextViewText(R.id.done_label_4, context.getString(R.string.avg_cadence))
+            v.setTextViewText(R.id.done_value_4, sum?.avgCadence?.toString() ?: "--")
+        } else {
+            v.setTextViewText(R.id.done_value_4, sum?.avgHr?.toString() ?: "--")
+        }
+        applyTiles(v, listOf(R.id.done_tile_1, R.id.done_tile_2, R.id.done_tile_3, R.id.done_tile_4), s.tileOutline, R.drawable.bg_tile_tonal)
+        v.setOnClickPendingIntent(R.id.btn_done, doneIntent)
+        v.setOnClickPendingIntent(R.id.btn_settings, settingsIntent)
+        return v
+    }
+
+    /**
+     * Ready (workout loaded, not started): live watts and heart rate, a big START WORKOUT in the
+     * middle, the workout's name and length, and "First up" with ⏮ / ⏭ to pick the step to start
+     * from; the chart outlines that step. Nothing runs until START (or the remote's pause button).
+     * Design: docs/design/start-workout/ (B).
+     */
+    private fun renderReady(s: ScreenState, plan: WorkoutPlan): RemoteViews {
+        val karoo = s.karooStyle
+        val layout = if (karoo) R.layout.field_ready_karoo else R.layout.field_ready
+        val v = RemoteViews(context.packageName, layout)
+        applyAppearance(v, layout)
+
+        v.setTextViewText(R.id.watts, s.powerShown?.toString() ?: "--")
+        v.setTextViewText(R.id.hr, s.secondValue?.toString() ?: "--")
+        if (s.showsCadence) showCadenceIcon(v, R.id.hr_icon, karoo, onTint = false)
+        v.setViewVisibility(R.id.btn_pause, View.GONE)     // nothing runs yet
+        v.setViewVisibility(R.id.btn_resume, View.GONE)
+        v.setOnClickPendingIntent(R.id.btn_settings, settingsIntent)
+        v.setOnClickPendingIntent(R.id.btn_start, startIntent)
+
+        v.setTextViewText(R.id.ready_name, plan.name)
+        v.setTextViewText(R.id.ready_total, formatClock(plan.totalSec))
+
+        // Start countdown (5 s): the button counts down too (the seconds above TAP TO CANCEL, filling
+        // with its darker colour) and a tap on it cancels. The First up box becomes the usual jump
+        // countdown, so it looks like any other interval change; a tap on it starts right away.
+        val countdown = s.countdown
+        val total = WorkoutSession.COUNTDOWN_SECONDS
+        v.setTextViewText(R.id.start_label, context.getString(if (countdown != null) R.string.tap_to_cancel else R.string.start_workout))
+        v.setViewVisibility(R.id.start_icon, if (countdown != null) View.GONE else View.VISIBLE)
+        v.setViewVisibility(R.id.start_count, if (countdown != null) View.VISIBLE else View.GONE)
+        v.setTextViewText(R.id.start_count, countdown?.toString() ?: "")
+        v.setProgressBar(R.id.start_fill, 1000, countdown?.let { ((total - it + 1) * 1000 / total).coerceIn(0, 1000) } ?: 0, false)
+        v.setOnClickPendingIntent(R.id.countdown_box, jumpNowIntent)
+        if (countdown != null) {
+            v.setViewVisibility(R.id.next_box, View.GONE)
+            v.setViewVisibility(R.id.countdown_box, View.VISIBLE)
+            v.setTextViewText(R.id.countdown, countdown.toString())
+            v.setTextViewText(R.id.countdown_label, context.getString(R.string.starting_with))
+            v.setTextViewText(R.id.countdown_value, plan.steps.getOrNull(s.stepIndex)?.let(::summary) ?: "")
+            v.setProgressBar(R.id.countdown_fill, 1000, ((total - countdown + 1) * 1000 / total).coerceIn(0, 1000), false)
+        } else {
+            v.setViewVisibility(R.id.next_box, View.VISIBLE)
+            v.setViewVisibility(R.id.countdown_box, View.GONE)
+        }
+
+        // First up: the step it will start from. ⏮ / ⏭ move it (hidden at the ends).
+        val index = s.stepIndex
+        v.setViewVisibility(R.id.select_fill, View.GONE)
+        v.setTextViewText(
+            R.id.next_label,
+            if (index == 0) context.getString(R.string.first_up) else context.getString(R.string.start_at, index + 1, s.stepCount),
+        )
+        v.setViewVisibility(R.id.next_label, View.VISIBLE)
+        v.setTextViewText(R.id.next_value, plan.steps.getOrNull(index)?.let(::summary) ?: "")
+        v.setTextColor(R.id.next_value, color(R.color.text))
+        v.setViewVisibility(R.id.btn_previous, if (index > 0) View.VISIBLE else View.INVISIBLE)
+        v.setViewVisibility(R.id.btn_skip, if (index < s.stepCount - 1) View.VISIBLE else View.INVISIBLE)
+        setBg(v, R.id.skip_bg, if (karoo) R.drawable.bg_btn_skip_inverted else R.drawable.bg_btn_skip)
+        v.setInt(R.id.skip_icon, "setColorFilter", color(if (karoo) R.color.bg else R.color.skip_fg))
+        v.setOnClickPendingIntent(R.id.btn_skip, nextIntent)
+        v.setOnClickPendingIntent(R.id.btn_previous, previousIntent)
+
+        val chartW = (config.viewSize.first - 16 * density).toInt()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            v.setViewLayoutHeight(R.id.chart, chartHeightPx.toFloat(), TypedValue.COMPLEX_UNIT_PX)
+        }
+        if (chartW > 0) v.setImageViewBitmap(R.id.chart, chart.render(s, chartW, chartHeightPx, scale))
+        v.setOnClickPendingIntent(R.id.chart, chartIntent)
+        return v
     }
 
     /**

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Start countdown in the button</title>
+<style>
+  @font-face { font-family: PlexCond; src: url(__FONT_COND__); font-weight: 500; }
+  @font-face { font-family: PlexSemi; src: url(__FONT_SEMI__); font-weight: 600; }
+  :root { color-scheme: dark; }
+  body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
+  h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
+  p.d { color:#A9A6A0; margin:0 auto 22px; max-width:780px; text-align:center; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:30px; }
+  .dev { display:grid; justify-items:center; gap:8px; }
+  .cap { color:#A9A6A0; font-size:13px; max-width:240px; text-align:center; }
+</style>
+</head>
+<body>
+<h1>Start countdown inside the yellow button</h1>
+<p class="d">On the device screenshot, 3 seconds left of 5. First up stays as it is. The button darkens from the left as the seconds run (like the jump countdown fills); a tap starts right away.</p>
+<div class="devices" id="row"></div>
+
+<script>/*__KAROO_DEVICE_JS__*/</script>
+<script>
+const FRAME = "__FRAME__";
+const READY = "__READY_light__", BUILT = "__COUNTDOWN_light__";
+const YELLOW = '#FFE900', YELLOW_DONE = '#E8D400', INK = '#0B0B0B';
+const BTN = [16, 301, 448, 180], R = 22, N = 3, TOTAL = 5;
+
+function button(ctx, look) {
+  const [x, y, w, h] = BTN;
+  ctx.save();
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, R); ctx.clip();
+  ctx.fillStyle = YELLOW; ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = YELLOW_DONE; ctx.fillRect(x, y, w * (TOTAL - N + 1) / TOTAL, h);   // seconds gone
+  ctx.restore();
+  ctx.fillStyle = INK; ctx.textAlign = 'center';
+  if (look === 'A') {
+    ctx.font = '600 84px PlexSemi'; ctx.fillText(String(N), x + w / 2, y + 96);
+    ctx.font = '500 34px PlexCond'; ctx.fillText('START NOW', x + w / 2, y + 150);
+  } else {
+    ctx.font = '600 120px PlexSemi'; ctx.fillText(String(N), x + w / 2, y + 120);
+    ctx.font = '500 22px PlexCond'; ctx.fillText('STARTING · TAP TO START NOW', x + w / 2, y + 160);
+  }
+}
+
+(async () => {
+  await Promise.all(['500 20px PlexCond', '600 20px PlexSemi'].map(f => document.fonts.load(f)));
+  const row = document.getElementById('row');
+  const add = (dev, scr, cap) => {
+    const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 250));
+    const c = document.createElement('div'); c.className = 'cap'; c.textContent = cap; el.append(c); row.append(el);
+  };
+  const built = await KarooDevice.load({ frame: FRAME, screen: BUILT });
+  add(built, built.screen({}), 'Now (built): countdown replaces First up');
+  const dev = await KarooDevice.load({ frame: FRAME, screen: READY });
+  add(dev, dev.screen({ draw: ctx => button(ctx, 'A') }), 'A · Number and START NOW in the button');
+  add(dev, dev.screen({ draw: ctx => button(ctx, 'B') }), 'B · Big number, small hint');
+})();
+</script>
+</body>
+</html>

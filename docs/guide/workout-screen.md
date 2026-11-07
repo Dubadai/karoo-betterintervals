@@ -1,5 +1,25 @@
 # The workout screen
 
+## Before you start
+
+A workout you've picked waits until you start it, so you can load it before the ride and ride
+for a while first (warm up on your own, get out of town).
+
+<img src="images/ready.png" width="240" alt="Ready: START WORKOUT in the middle, the workout's name, First up">
+
+- Your watts and heart rate (or cadence) are live; the workout's clock doesn't run.
+- **START WORKOUT** starts the usual 5-second countdown. The button counts down too: tap it
+  again (**TAP TO CANCEL**) to stop. A tap on the purple countdown below starts right away. A
+  short rising tune plays when the workout starts. The remote's **Pause or resume workout** button
+  works like START: it starts the countdown, or cancels it. ⏭ / ⏮ also cancel it.
+
+<img src="images/start-countdown.png" width="240" alt="Start countdown: 3 in the yellow button, TAP TO CANCEL, and the purple countdown below">
+- **First up** shows the interval it will start with. ⏭ / ⏮ choose another one, for example to
+  skip the warm-up: the label then says **Start at 3 / 16** and the chart outlines that interval.
+- When the ride ends (or no ride is on), the workout goes back to waiting at the first interval.
+
+## Once it runs
+
 <img src="images/workout-screen.png" width="240" alt="Workout screen in range: 295 watts on a green background">
 
 From top to bottom:
@@ -9,7 +29,7 @@ From top to bottom:
 | ⚙ (top left) | Opens the [Workouts page](workouts-and-account.md) |
 | ❤ number | Heart rate |
 | ⏸ (top right) | [Pauses the workout](pausing.md) |
-| Big number | 3-second power. Tap it to [change the colours](watts-colours.md) |
+| Big number | Power (3 s by default, see [Settings](settings.md)). Tap it to [change the colours](watts-colours.md) |
 | Interval 1 / 16 | Which interval you're in, out of how many |
 | Time | Time left in this interval, counting down (−2:18) |
 | Bar | How much of the interval is done |

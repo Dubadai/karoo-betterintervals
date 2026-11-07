@@ -33,6 +33,10 @@ data class ScreenState(
     val paused: Boolean = false,
     /** The workout is paused from this screen: interval clock and lap average stop, ride keeps recording. */
     val workoutPaused: Boolean = false,
+    /** A workout is loaded but waits for START WORKOUT (the ready screen); [stepIndex] is where it will start. */
+    val notStarted: Boolean = false,
+    /** The finished workout's own numbers, for the done screen. */
+    val summary: WorkoutSummary? = null,
     /** Seconds left before jumping, or null when no jump is pending. */
     val countdown: Int? = null,
     /** Interval being chosen with ⏮/⏭ (before the countdown), or null. */
@@ -143,3 +147,12 @@ enum class WattsMode {
 
     fun next(): WattsMode = entries[(ordinal + 1) % entries.size]
 }
+
+/** The workout's own time and averages (only while it ran), shown when it's done. */
+data class WorkoutSummary(
+    val timeSec: Int,
+    val avgPower: Int?,
+    val np: Int?,
+    val avgHr: Int?,
+    val avgCadence: Int?,
+)

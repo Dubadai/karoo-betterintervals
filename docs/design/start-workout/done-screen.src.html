@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workout done</title>
+<style>
+  @font-face { font-family: PlexCond; src: url(__FONT_COND__); font-weight: 500; }
+  @font-face { font-family: PlexSemi; src: url(__FONT_SEMI__); font-weight: 600; }
+  @font-face { font-family: PlexMed; src: url(__FONT_MED__); font-weight: 500; }
+  :root { color-scheme: dark; }
+  body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
+  h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
+  p.d { color:#A9A6A0; margin:0 auto 22px; max-width:780px; text-align:center; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:30px; margin-bottom:30px; }
+  .dev { display:grid; justify-items:center; gap:8px; }
+  .cap { color:#A9A6A0; font-size:13px; max-width:250px; text-align:center; }
+</style>
+</head>
+<body>
+<h1>Workout done</h1>
+<p class="d">Shown when the last interval ends. The ride keeps recording; DONE takes the workout off and shows the free-ride screen. Karoo style, W7.1 Stair Climb.</p>
+<div class="devices" id="light"></div>
+<div class="devices" id="dark"></div>
+
+<script>/*__KAROO_DEVICE_JS__*/</script>
+<script>
+const FRAME = "__FRAME__";
+const SHOTS = { light: "__SHOT_light__", dark: "__SHOT_dark__" };
+const C = {
+  light: { bg: '#FFFFFF', ink: '#0B0B0B', sub: '#444441', tile: '#EBEBEB', heart: '#C62F3A', green: '#129A5E', rec: '#D93025' },
+  dark:  { bg: '#000000', ink: '#FFFFFF', sub: '#D3D1C7', tile: '#1F1F1F', heart: '#FF5C66', green: '#1DB872', rec: '#FF5C5C' },
+};
+const YELLOW = '#FFE900', YELLOW_INK = '#0B0B0B';
+
+function text(ctx, s, x, y, font, color, align = 'center') { ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.fillText(s, x, y); }
+function heart(ctx, x, y, s, color) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(s / 24, s / 24);
+  ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+  const p = new Path2D('M19.5,12.572L12,20l-7.5,-7.428A5,5 0,1 1,12 6.006a5,5 0,1 1,7.5 6.572'); ctx.fill(p); ctx.stroke(p); ctx.restore();
+}
+function check(ctx, cx, cy, r, c) {
+  ctx.fillStyle = c.green; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = r * 0.16; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(cx - r * 0.42, cy + r * 0.02); ctx.lineTo(cx - r * 0.12, cy + r * 0.32); ctx.lineTo(cx + r * 0.45, cy - r * 0.3); ctx.stroke();
+}
+function doneButton(ctx, x, y, w, h) {
+  ctx.fillStyle = YELLOW; ctx.beginPath(); ctx.roundRect(x, y, w, h, 22); ctx.fill();
+  text(ctx, 'DONE', x + w / 2, y + h / 2 + 15, '500 44px PlexCond', YELLOW_INK);
+}
+function recording(ctx, y, c) {
+  ctx.font = '500 22px PlexCond';
+  const t = 'THE RIDE KEEPS RECORDING', w = ctx.measureText(t).width, x0 = 240 - (w + 22) / 2;
+  ctx.fillStyle = c.rec; ctx.beginPath(); ctx.arc(x0 + 7, y - 8, 7, 0, Math.PI * 2); ctx.fill();
+  text(ctx, t, x0 + 22, y, '500 22px PlexCond', c.sub, 'left');
+}
+function tile(ctx, x, y, w, h, label, value, c) {
+  ctx.fillStyle = c.tile; ctx.beginPath(); ctx.roundRect(x, y, w, h, 15); ctx.fill();
+  text(ctx, label, x + w - 14, y + 34, '500 26px PlexCond', c.ink, 'right');
+  text(ctx, value, x + w - 14, y + h - 16, '600 50px PlexSemi', c.ink, 'right');
+}
+
+function done(theme, layout) {
+  return ctx => {
+    const c = C[theme], snap = ctx.getImageData(0, 0, 480, 800);
+    ctx.fillStyle = c.bg; ctx.fillRect(0, 64, 480, 736);
+    ctx.putImageData(snap, 0, 0, 0, 70, 66, 56);                       // gear
+    heart(ctx, 188, 82, 32, c.heart); text(ctx, '138', 230, 112, '600 38px PlexSemi', c.ink, 'left');
+    if (layout === 'A') {
+      check(ctx, 240, 225, 84, c);
+      text(ctx, 'WORKOUT DONE!', 240, 368, '500 46px PlexCond', c.ink);
+      text(ctx, 'W7.1 · STAIR CLIMB · 2:00:00', 240, 408, '500 24px PlexCond', c.sub);
+      doneButton(ctx, 16, 470, 448, 150);
+      recording(ctx, 670, c);
+    } else {
+      check(ctx, 72, 196, 50, c);
+      text(ctx, 'WORKOUT DONE!', 140, 192, '500 40px PlexCond', c.ink, 'left');
+      text(ctx, 'W7.1 · STAIR CLIMB', 140, 226, '500 22px PlexCond', c.sub, 'left');
+      tile(ctx, 16, 268, 218, 101, 'TIME', '2:00:00', c);
+      tile(ctx, 246, 268, 218, 101, 'AVG POWER', '214', c);
+      tile(ctx, 16, 381, 218, 101, 'NP', '231', c);
+      tile(ctx, 246, 381, 218, 101, 'AVG HR', '141', c);
+      doneButton(ctx, 16, 506, 448, 120);
+      recording(ctx, 676, c);
+    }
+  };
+}
+
+const VARIANTS = [
+  ['A · Big green check, WORKOUT DONE!, DONE', 'A'],
+  ['B · Check and title, the workout\'s numbers, DONE', 'B'],
+];
+
+(async () => {
+  await Promise.all(['500 20px PlexCond', '600 20px PlexSemi', '500 20px PlexMed'].map(f => document.fonts.load(f)));
+  for (const t of ['light', 'dark']) {
+    const dev = await KarooDevice.load({ frame: FRAME, screen: SHOTS[t] });
+    for (const [cap, layout] of VARIANTS) {
+      const scr = dev.screen({ draw: done(t, layout) });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 250));
+      const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${t})`; el.append(c);
+      document.getElementById(t).append(el);
+    }
+  }
+})();
+</script>
+</body>
+</html>

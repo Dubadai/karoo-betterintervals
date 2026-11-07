@@ -42,12 +42,48 @@ class WorkoutSession(
     val state: StateFlow<ScreenState> = _state
 
     private var recording = false
+    /** Known once the Karoo has said: no ride is active (not started, finished or discarded). */
+    private var rideIdle = false
     private var elapsedInStepMs = 0L
     private var lastTick = 0L
     private var lapSum = 0.0
     private var lapSamples = 0
     private val lapNp = LapNp()
     private val freeLapNp = LapNp()
+
+    // The workout's own numbers for the done screen: only while it runs (started, not paused,
+    // ride recording), so riding before START or a traffic pause doesn't count.
+    private var workoutMs = 0L
+    private var workoutPowerSum = 0.0
+    private var workoutPowerSamples = 0
+    private val workoutNp = LapNp()
+    private var workoutHrSum = 0L
+    private var workoutHrSamples = 0
+    private var workoutCadSum = 0L
+    private var workoutCadSamples = 0
+
+    private fun workoutRunning(st: ScreenState = _state.value) =
+        recording && st.plan != null && !st.finished && !st.workoutPaused && !st.notStarted
+
+    private fun resetWorkoutStats() {
+        workoutMs = 0
+        workoutPowerSum = 0.0
+        workoutPowerSamples = 0
+        workoutNp.reset()
+        workoutHrSum = 0
+        workoutHrSamples = 0
+        workoutCadSum = 0
+        workoutCadSamples = 0
+        _state.update { it.copy(summary = null) }
+    }
+
+    private fun summary() = WorkoutSummary(
+        timeSec = (workoutMs / 1000).toInt(),
+        avgPower = if (workoutPowerSamples > 0) (workoutPowerSum / workoutPowerSamples).roundToInt() else null,
+        np = workoutNp.value,
+        avgHr = if (workoutHrSamples > 0) (workoutHrSum / workoutHrSamples).toInt() else null,
+        avgCadence = if (workoutCadSamples > 0) (workoutCadSum / workoutCadSamples).toInt() else null,
+    )
     private var countdownJob: Job? = null
     /** Jump being chosen (3 s confirmation), see [jumpStops]. */
     private var selectionPos: Int? = null
@@ -102,17 +138,22 @@ class WorkoutSession(
         scope.launch {
             // Cadence, for when it replaces heart rate (Settings › Cadence picks the smoothing).
             store.cadenceSmoothing.flatMapLatest { karoo.streamDataFlow(it.cadence) }.collect { s ->
-                _state.update { it.copy(cadence = s.single()?.roundToInt()) }
+                val cad = s.single()?.roundToInt()
+                if (cad != null && cad > 0 && workoutRunning()) { workoutCadSum += cad; workoutCadSamples++ }
+                _state.update { it.copy(cadence = cad) }
             }
         }
         scope.launch {
             karoo.streamDataFlow(DataType.Type.HEART_RATE).collect { s ->
-                _state.update { it.copy(heartRate = s.single()?.roundToInt()) }
+                val hr = s.single()?.roundToInt()
+                if (hr != null && hr > 0 && workoutRunning()) { workoutHrSum += hr; workoutHrSamples++ }
+                _state.update { it.copy(heartRate = hr) }
             }
         }
         scope.launch {
             karoo.consumerFlow<RideState>().collect { ride ->
                 recording = ride is RideState.Recording
+                rideIdle = ride is RideState.Idle
                 _state.update { it.copy(paused = ride is RideState.Paused) }
                 // No ride (not started, finished or discarded): start the workout from the top
                 // next time. Progress is only kept while a ride is recording or paused.
@@ -179,6 +220,15 @@ class WorkoutSession(
         scope.launch {
             val st = _state.value
             if (st.plan == null) return@launch
+            if (st.notStarted) {
+                // Ready screen: ⏮ / ⏭ pick the step to start from, no confirm needed (and stop a
+                // start countdown that's running).
+                cancelCountdown()
+                val index = (st.stepIndex + delta).coerceIn(0, st.stepCount - 1)
+                if (index != st.stepIndex) _state.update { it.copy(stepIndex = index, elapsedInStepSec = 0) }
+                Timber.i("Start step -> ${index + 1}")
+                return@launch
+            }
             if (countdownJob?.isActive == true) {
                 jumpNow()
                 return@launch
@@ -219,7 +269,7 @@ class WorkoutSession(
             if (countdownJob?.isActive != true) return@launch
             countdownJob?.cancel()
             countdownJob = null
-            goToStep(target, natural = false)
+            if (_state.value.notStarted) beginWorkout(target) else goToStep(target, natural = false)
         }
     }
 
@@ -344,6 +394,15 @@ class WorkoutSession(
      */
     fun togglePause() {
         scope.launch {
+            if (_state.value.notStarted) {
+                // The remote's pause button works like START: starts the countdown, or cancels it.
+                startWorkout()
+                return@launch
+            }
+            if (_state.value.finished) {
+                closeWorkout() // …and like DONE on the workout done screen
+                return@launch
+            }
             val nowPaused = !_state.value.workoutPaused
             if (nowPaused) {
                 cancelCountdown()
@@ -355,26 +414,81 @@ class WorkoutSession(
         }
     }
 
+    /**
+     * START WORKOUT (or the remote's pause button on the ready screen): the usual 5 s countdown,
+     * then the workout runs from the chosen step. Tapped again while counting: cancel (a tap on
+     * the countdown box starts right away instead).
+     */
+    fun startWorkout() {
+        scope.launch {
+            val st = _state.value
+            if (st.plan == null || !st.notStarted) return@launch
+            if (countdownJob?.isActive == true) {
+                Timber.i("Start countdown cancelled")
+                cancelCountdown()
+                beep(CANCEL_TONE)
+                return@launch
+            }
+            Timber.i("Start countdown, step ${st.stepIndex + 1}")
+            startCountdown(st.stepIndex)
+        }
+    }
+
+    /** End of the start countdown: the workout runs, with a happy little tune. */
+    private fun beginWorkout(index: Int) {
+        Timber.i("Workout started at step ${index + 1}")
+        elapsedInStepMs = 0
+        resetLap()
+        resetWorkoutStats()
+        _state.update {
+            it.copy(notStarted = false, stepIndex = index, elapsedInStepSec = 0, lapAvg = null, countdown = null, jumpTarget = null)
+        }
+        if (recording) karoo.dispatch(MarkLap) // the first interval gets its own lap
+        karoo.dispatch(PlayBeepPattern(START_TUNE))
+        saveProgress()
+    }
+
+    /** DONE on the workout done screen: take the workout off; the ride carries on (free-ride screen). */
+    fun closeWorkout() {
+        scope.launch {
+            if (!_state.value.finished) return@launch
+            Timber.i("Workout done, closed")
+            store.clearProgress()
+            store.clearSelection()
+        }
+    }
+
     private fun loadPlan(plan: WorkoutPlan?) {
         cancelCountdown()
         resetLap()
-        val (index, elapsedSec) = plan?.let { store.restoreProgress(it) } ?: (0 to 0)
+        resetWorkoutStats()
+        // Progress only carries over a restart mid-ride; with no ride active, start from the top.
+        if (rideIdle) store.clearProgress()
+        val restored = if (rideIdle) null else plan?.let { store.restoreProgress(it) }
+        val (index, elapsedSec) = restored ?: (0 to 0)
+        // A workout waits for START WORKOUT, unless it was already running (app restarted mid-ride).
+        val waiting = plan != null && index == 0 && elapsedSec == 0
         elapsedInStepMs = elapsedSec * 1000L
         _state.update {
-            it.copy(plan = plan, stepIndex = index, elapsedInStepSec = elapsedSec, finished = false, lapAvg = null, workoutPaused = false)
+            it.copy(
+                plan = plan, stepIndex = index, elapsedInStepSec = elapsedSec, finished = false, lapAvg = null,
+                workoutPaused = false, notStarted = waiting,
+            )
         }
         Timber.i("Loaded workout ${plan?.name} at step $index + ${elapsedSec}s")
     }
 
     private fun resetToStart() {
         val st = _state.value
-        if (st.plan == null || (st.stepIndex == 0 && elapsedInStepMs == 0L && !st.finished && !st.workoutPaused)) return
+        // Waiting for START: keep the step the rider picked to start from.
+        if (st.plan == null || st.notStarted) return
         cancelCountdown()
         resetLap()
+        resetWorkoutStats()
         elapsedInStepMs = 0
         store.clearProgress()
-        _state.update { it.copy(stepIndex = 0, elapsedInStepSec = 0, finished = false, lapAvg = null, workoutPaused = false) }
-        Timber.i("No ride active: workout reset to the first interval")
+        _state.update { it.copy(stepIndex = 0, elapsedInStepSec = 0, finished = false, lapAvg = null, workoutPaused = false, notStarted = true) }
+        Timber.i("No ride active: workout reset to the first interval, waiting for START")
     }
 
     private suspend fun tickLoop() {
@@ -387,7 +501,8 @@ class WorkoutSession(
             lastTick = now
             val st = _state.value
             val step = st.currentStep ?: continue
-            if (!recording || st.finished || st.workoutPaused) continue
+            if (!recording || st.finished || st.workoutPaused || st.notStarted) continue
+            workoutMs += dt
 
             val before = (step.durationSec * 1000L - elapsedInStepMs) / 1000
             elapsedInStepMs += dt
@@ -401,7 +516,7 @@ class WorkoutSession(
                 if (st.hasNext) {
                     goToStep(st.stepIndex + 1, natural = true)
                 } else {
-                    _state.update { it.copy(finished = true, elapsedInStepSec = step.durationSec) }
+                    _state.update { it.copy(finished = true, elapsedInStepSec = step.durationSec, summary = summary()) }
                     karoo.dispatch(MarkLap)
                     beep(GO_TONE)
                     store.clearProgress()
@@ -427,7 +542,7 @@ class WorkoutSession(
                 delay(1000)
             }
             countdownJob = null
-            goToStep(target, natural = false)
+            if (_state.value.notStarted) beginWorkout(target) else goToStep(target, natural = false)
         }
     }
 
@@ -473,12 +588,17 @@ class WorkoutSession(
     private fun onPower(watts: Double?) {
         val st = _state.value
         // The lap average keeps counting while the workout is paused; only the interval timer stops.
-        if (watts != null && recording && st.workoutLoaded && !st.finished) {
+        if (watts != null && recording && st.workoutLoaded && !st.finished && !st.notStarted) {
             lapSum += watts
             lapSamples++
             lapNp.add(SystemClock.elapsedRealtime(), watts)
         }
         if (watts != null && recording) freeLapNp.add(SystemClock.elapsedRealtime(), watts)
+        if (watts != null && workoutRunning(st)) {
+            workoutPowerSum += watts
+            workoutPowerSamples++
+            workoutNp.add(SystemClock.elapsedRealtime(), watts)
+        }
         _state.update {
             it.copy(
                 power = watts?.roundToInt(),
@@ -492,7 +612,7 @@ class WorkoutSession(
     private fun saveProgress() {
         val st = _state.value
         val plan = st.plan ?: return
-        if (!st.finished) store.saveProgress(plan, st.stepIndex, st.elapsedInStepSec)
+        if (!st.finished && !st.notStarted) store.saveProgress(plan, st.stepIndex, st.elapsedInStepSec)
     }
 
     private fun collectInt(dataTypeId: String, divideBy: Int = 1, onValue: (Int?) -> Unit) {
@@ -520,5 +640,15 @@ class WorkoutSession(
         private val WARN_TONE = PlayBeepPattern.Tone(frequency = 1500, durationMs = 80)
         private val GO_TONE = PlayBeepPattern.Tone(frequency = 3000, durationMs = 400)
         private val CANCEL_TONE = PlayBeepPattern.Tone(frequency = 1000, durationMs = 200)
+        /** Workout starts: a rising major arpeggio (E6, G#6, B6, E7), happier than the plain GO beep. */
+        private val START_TUNE = listOf(
+            PlayBeepPattern.Tone(frequency = 1319, durationMs = 110),
+            PlayBeepPattern.Tone(frequency = null, durationMs = 20),
+            PlayBeepPattern.Tone(frequency = 1661, durationMs = 110),
+            PlayBeepPattern.Tone(frequency = null, durationMs = 20),
+            PlayBeepPattern.Tone(frequency = 1976, durationMs = 110),
+            PlayBeepPattern.Tone(frequency = null, durationMs = 20),
+            PlayBeepPattern.Tone(frequency = 2637, durationMs = 360),
+        )
     }
 }

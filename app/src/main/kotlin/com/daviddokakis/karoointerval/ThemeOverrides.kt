@@ -15,6 +15,10 @@ internal object ThemeOverrides {
         R.layout.field_interval_gauge_karoo -> FIELD_INTERVAL_GAUGE_KAROO
         R.layout.field_free -> FIELD_FREE
         R.layout.field_free_karoo -> FIELD_FREE_KAROO
+        R.layout.field_ready -> FIELD_READY
+        R.layout.field_ready_karoo -> FIELD_READY_KAROO
+        R.layout.field_done -> FIELD_DONE
+        R.layout.field_done_karoo -> FIELD_DONE_KAROO
         else -> emptyList()
     }
 
@@ -28,6 +32,8 @@ internal object ThemeOverrides {
         R.drawable.bg_confirm to R.color.resume_bg,
         R.drawable.bg_confirm_karoo to R.color.karoo_yellow,
         R.drawable.bg_countdown to R.color.countdown_bg,
+        R.drawable.bg_done to R.color.resume_bg,
+        R.drawable.bg_done_karoo to R.color.karoo_yellow,
         R.drawable.bg_hr_z1 to R.color.hr_z1,
         R.drawable.bg_hr_z2 to R.color.hr_z2,
         R.drawable.bg_hr_z3 to R.color.hr_z3,
@@ -269,5 +275,107 @@ internal object ThemeOverrides {
         Op(R.id.th_free_karoo_5, Kind.TEXT, R.color.text_secondary),
         Op(R.id.free_last_lap, Kind.TEXT, R.color.text),
         Op(R.id.th_free_karoo_6, Kind.TINT, R.color.text),
+    )
+
+    private val FIELD_READY = listOf(
+        Op(R.id.watts, Kind.TEXT, R.color.text),
+        Op(R.id.start_fill, Kind.PROGRESS, R.color.resume_bg_alt, R.color.resume_bg),
+        Op(R.id.start_icon, Kind.TINT, R.color.resume_fg),
+        Op(R.id.start_count, Kind.TEXT, R.color.resume_fg),
+        Op(R.id.start_label, Kind.TEXT, R.color.resume_fg),
+        Op(R.id.ready_name, Kind.TEXT, R.color.text),
+        Op(R.id.ready_total, Kind.TEXT, R.color.text),
+        Op(R.id.next_box, Kind.BG, R.color.done),
+        Op(R.id.select_fill, Kind.TINT, R.color.select_fill_jump),
+        Op(R.id.th_ready_4, Kind.BG, R.color.track),
+        Op(R.id.th_ready_5, Kind.TINT, R.color.text),
+        Op(R.id.next_label, Kind.TEXT, R.color.text_secondary),
+        Op(R.id.next_value, Kind.TEXT, R.color.text),
+        Op(R.id.skip_bg, Kind.BG, R.color.skip_bg),
+        Op(R.id.skip_icon, Kind.TINT, R.color.skip_fg),
+        Op(R.id.countdown_fill, Kind.PROGRESS, R.color.countdown_fill, R.color.countdown_bg),
+        Op(R.id.countdown, Kind.TEXT, R.color.countdown_fg),
+        Op(R.id.countdown_label, Kind.TEXT, R.color.countdown_sub),
+        Op(R.id.countdown_value, Kind.TEXT, R.color.countdown_fg),
+        Op(R.id.th_ready_6, Kind.TINT, R.color.text),
+        Op(R.id.btn_pause_icon, Kind.TINT, R.color.text),
+        Op(R.id.hr_icon, Kind.TINT, R.color.heart_icon),
+        Op(R.id.hr, Kind.TEXT, R.color.text),
+        Op(R.id.btn_resume, Kind.BG, R.color.resume_bg),
+        Op(R.id.th_ready_8, Kind.TINT, R.color.resume_fg),
+    )
+
+    private val FIELD_READY_KAROO = listOf(
+        Op(R.id.watts, Kind.TEXT, R.color.text),
+        Op(R.id.start_fill, Kind.PROGRESS, R.color.karoo_yellow_dark, R.color.karoo_yellow),
+        Op(R.id.start_icon, Kind.TINT, R.color.karoo_yellow_fg),
+        Op(R.id.start_count, Kind.TEXT, R.color.karoo_yellow_fg),
+        Op(R.id.start_label, Kind.TEXT, R.color.karoo_yellow_fg),
+        Op(R.id.ready_name, Kind.TEXT, R.color.text),
+        Op(R.id.ready_total, Kind.TEXT, R.color.text),
+        Op(R.id.next_box, Kind.BG, R.color.done),
+        Op(R.id.select_fill, Kind.TINT, R.color.select_fill_jump),
+        Op(R.id.th_ready_karoo_7, Kind.BG, R.color.track),
+        Op(R.id.th_ready_karoo_8, Kind.TINT, R.color.text),
+        Op(R.id.next_label, Kind.TEXT, R.color.text_secondary),
+        Op(R.id.next_value, Kind.TEXT, R.color.text),
+        Op(R.id.skip_bg, Kind.BG, R.color.text),
+        Op(R.id.skip_icon, Kind.TINT, R.color.bg),
+        Op(R.id.countdown_fill, Kind.PROGRESS, R.color.karoo_purple_dark, R.color.karoo_purple),
+        Op(R.id.countdown, Kind.TEXT, R.color.karoo_purple_fg),
+        Op(R.id.countdown_label, Kind.TEXT, R.color.karoo_purple_sub),
+        Op(R.id.countdown_value, Kind.TEXT, R.color.karoo_purple_fg),
+        Op(R.id.th_ready_karoo_9, Kind.TINT, R.color.text),
+        Op(R.id.btn_pause_icon, Kind.TINT, R.color.text),
+        Op(R.id.hr_icon, Kind.TINT, R.color.heart_icon),
+        Op(R.id.hr, Kind.TEXT, R.color.text),
+        Op(R.id.btn_resume, Kind.BG, R.color.karoo_yellow),
+        Op(R.id.th_ready_karoo_11, Kind.TINT, R.color.karoo_yellow_fg),
+    )
+
+    private val FIELD_DONE = listOf(
+        Op(R.id.done_check, Kind.TINT, R.color.karoo_green),
+        Op(R.id.done_title, Kind.TEXT, R.color.text),
+        Op(R.id.done_name, Kind.TEXT, R.color.text_secondary),
+        Op(R.id.done_tile_1, Kind.BG, R.color.tile_tonal),
+        Op(R.id.done_label_1, Kind.TEXT, R.color.text_secondary),
+        Op(R.id.done_value_1, Kind.TEXT, R.color.text),
+        Op(R.id.done_tile_2, Kind.BG, R.color.tile_tonal),
+        Op(R.id.done_label_2, Kind.TEXT, R.color.text_secondary),
+        Op(R.id.done_value_2, Kind.TEXT, R.color.text),
+        Op(R.id.done_tile_3, Kind.BG, R.color.tile_tonal),
+        Op(R.id.done_label_3, Kind.TEXT, R.color.text_secondary),
+        Op(R.id.done_value_3, Kind.TEXT, R.color.text),
+        Op(R.id.done_tile_4, Kind.BG, R.color.tile_tonal),
+        Op(R.id.done_label_4, Kind.TEXT, R.color.text_secondary),
+        Op(R.id.done_value_4, Kind.TEXT, R.color.text),
+        Op(R.id.btn_done, Kind.BG, R.color.resume_bg),
+        Op(R.id.th_done_1, Kind.TEXT, R.color.resume_fg),
+        Op(R.id.th_done_2, Kind.TINT, R.color.recording),
+        Op(R.id.th_done_3, Kind.TEXT, R.color.text_secondary),
+        Op(R.id.done_gear_icon, Kind.TINT, R.color.text),
+    )
+
+    private val FIELD_DONE_KAROO = listOf(
+        Op(R.id.done_check, Kind.TINT, R.color.karoo_green),
+        Op(R.id.done_title, Kind.TEXT, R.color.text),
+        Op(R.id.done_name, Kind.TEXT, R.color.text_secondary),
+        Op(R.id.done_tile_1, Kind.BG, R.color.tile_tonal),
+        Op(R.id.done_label_1, Kind.TEXT, R.color.text),
+        Op(R.id.done_value_1, Kind.TEXT, R.color.text),
+        Op(R.id.done_tile_2, Kind.BG, R.color.tile_tonal),
+        Op(R.id.done_label_2, Kind.TEXT, R.color.text),
+        Op(R.id.done_value_2, Kind.TEXT, R.color.text),
+        Op(R.id.done_tile_3, Kind.BG, R.color.tile_tonal),
+        Op(R.id.done_label_3, Kind.TEXT, R.color.text),
+        Op(R.id.done_value_3, Kind.TEXT, R.color.text),
+        Op(R.id.done_tile_4, Kind.BG, R.color.tile_tonal),
+        Op(R.id.done_label_4, Kind.TEXT, R.color.text),
+        Op(R.id.done_value_4, Kind.TEXT, R.color.text),
+        Op(R.id.btn_done, Kind.BG, R.color.karoo_yellow),
+        Op(R.id.th_done_karoo_1, Kind.TEXT, R.color.karoo_yellow_fg),
+        Op(R.id.th_done_karoo_2, Kind.TINT, R.color.recording),
+        Op(R.id.th_done_karoo_3, Kind.TEXT, R.color.text_secondary),
+        Op(R.id.done_gear_icon, Kind.TINT, R.color.text),
     )
 }
