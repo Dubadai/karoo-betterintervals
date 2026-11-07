@@ -38,7 +38,7 @@
     <string name="karoo_style">Karoo style</string>
     <string name="karoo_style_help">Karoo\'s own fonts, labels, icons and yellow buttons on the workout screen.</string>
     <string name="example">Example</string>
-    <string name="example_description">Example of the workout screen with these settings: interval 4 of 10 at 300 watts.</string>
+    <string name="example_description">Example of the workout screen with these settings: interval 4 of 10 at 280 watts.</string>
     <string name="off">Off</string>
     <string name="on">On</string>
     <string name="intervals_account">intervals.icu account</string>

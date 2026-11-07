@@ -99,9 +99,10 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         )
     }
 
-    fun render(state: ScreenState): RemoteViews {
+    /** [demo]: false for pictures (Settings example, field gallery), which bring their own values. */
+    fun render(state: ScreenState, demo: Boolean = true): RemoteViews {
         // Debug builds show demo data; in release builds this returns the real state unchanged.
-        val s = DemoData.apply(state)
+        val s = if (demo) DemoData.apply(state) else state
         useAppearance(s.appearance)
         val plan = s.plan ?: return renderFree(s)
         // The Gauge watts mode has its own layout; the other four share the classic one. Each has

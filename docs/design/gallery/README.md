@@ -11,5 +11,6 @@ page (478×336), light and dark. Drawn by the real ScreenRenderer on the Karoo 3
 bash ../design-assets/tools/field-gallery/gallery.sh karoo-betterintervals
 ```
 
-Debug builds add demo data (watts and HR move), so numbers differ a little from run to run.
+Numbers are the showcase values (design-assets/tools/field-gallery/showcase.json): 280 W, 132 bpm,
+ride time 1:12:40, clock 10:24; no debug demo data.
 Seen on the first run: at half page the gauge look loses its gauge and the tile values.
