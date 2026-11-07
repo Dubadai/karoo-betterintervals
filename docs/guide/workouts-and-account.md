@@ -1,6 +1,6 @@
 # Workouts and Account
 
-Open the **Workouts** page with ⚙ on the ride screen, or open **BetterIntervals** from the Karoo's
+Open the **Workouts** page with ⚙ on the ride screen, or open **DDB BetterIntervals** from the Karoo's
 app list. ⚙ on the Workouts page opens [Settings](settings.md).
 
 ## Workouts

@@ -1,6 +1,6 @@
 # BetterIntervals for Karoo 3
 
-*Formerly Interval Screen.*
+*Formerly Interval Screen. On the Karoo it is listed as **DDB BetterIntervals**, next to David's other apps.*
 
 A full-page data field for the Hammerhead Karoo 3 that makes structured workouts easy to follow.
 It loads your planned workouts from [intervals.icu](https://intervals.icu) and runs them itself, so
@@ -34,10 +34,10 @@ Developers: read `../CLAUDE.md` (the Karoo playbook) first.
 1. On your phone, open the latest [release](../../releases/latest) and share the `.apk` download
    link to the **Hammerhead Companion** app. It installs the app on your paired Karoo.
    (With a computer: `adb install betterintervals.apk`.)
-2. On the Karoo, open **BetterIntervals** from the app list, tap the person icon and enter your
+2. On the Karoo, open **DDB BetterIntervals** from the app list, tap the person icon and enter your
    intervals.icu API key (intervals.icu → Settings → Developer settings). Keep Athlete ID `0`.
 3. Pick a workout from this week's list.
-4. In a ride profile, add a page with one field and choose **BetterIntervals → Workout screen**.
+4. In a ride profile, add a page with one field and choose **DDB BetterIntervals → Workout screen**.
 5. Optional: assign *Next interval*, *Previous interval* and *Pause or resume workout* to remote buttons.
 
 Syncing uses the Karoo's Wi-Fi, or your phone through the Companion app. Your API key is stored
