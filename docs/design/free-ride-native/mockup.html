@@ -200,9 +200,9 @@ function after(theme, nat, shot, route) {
       statusBar(ctx, null, t);
     } else card(ctx, t);
     ctx.drawImage(shot, 0, 70, 66, 56, 0, 70, 66, 56);                          // gear (from the shot)
-    // Watts: the Karoo's number font, centred between the bottom of the settings icon and the
-    // top of the lap row
-    const top = 125, bottom = L.lap - 26;
+    // Watts: the Karoo's number font, centred between the bottom of the visible settings icon
+    // (y 115, not its larger touch area) and the top of the lap row (the clock's digits)
+    const top = 115, bottom = L.lap - 36;
     const ws = Math.min(232, (bottom - top - 30) / 0.7, fit(ctx, '280', f => `400 ${f}px PlexReg`, 400, 440, 0.9));
     num(ctx, '280', 240, (top + bottom) / 2 + ws * 0.7 / 2, ws, t.ink, 'center');
     // Lap time: the same one-line row as before, a step bigger (label 15 → 17sp, clock 23 → 28sp)
