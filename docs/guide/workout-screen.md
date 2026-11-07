@@ -20,7 +20,7 @@ for a while first (warm up on your own, get out of town).
 
 ## Once it runs
 
-<img src="images/workout-screen.png" width="240" alt="Workout screen in range: 295 watts on a green background">
+<img src="images/workout-screen.png" width="240" alt="Workout screen in range: 280 watts on a green background">
 
 From top to bottom:
 
@@ -48,6 +48,14 @@ is outlined, and a black marker (white in dark mode) shows where you are. The en
 Tap the chart to zoom in on the current interval. Tap again to see the whole workout.
 
 <img src="images/chart-zoomed.png" width="240" alt="Chart zoomed in on the current interval">
+
+## When the workout is done
+
+After the last interval a **Workout done!** screen shows the workout's own numbers: its time,
+average power, NP and average heart rate. Tap **DONE** to take the workout off and go back to the
+free-ride screen. The ride itself keeps recording.
+
+<img src="images/done.png" width="240" alt="Workout done: a green check, the workout's name, time 52:00, average power 232, NP 251, average HR 132, and a yellow DONE button">
 
 ## Laps and beeps
 

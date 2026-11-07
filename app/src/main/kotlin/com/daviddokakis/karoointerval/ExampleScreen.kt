@@ -16,7 +16,7 @@ object ExampleScreen {
     /** 10 min warm-up, 4 × (5 min at 280 W, 3 min easy), cool-down. */
     private val plan = WorkoutPlan(
         id = "example",
-        name = "Example",
+        name = "Threshold 4 × 5 min",
         steps = listOf(PlanStep(600, 150, 210, ramp = true)) +
             List(4) { listOf(PlanStep(300, 280, 280, rangeLow = 273, rangeHigh = 287), PlanStep(180, 150, 150)) }.flatten() +
             PlanStep(600, 180, 120, ramp = true),
@@ -30,6 +30,7 @@ object ExampleScreen {
         appearance: Appearance = Appearance.AUTO,
         tileOutline: Boolean = false,
         secondField: SecondField = SecondField.HEART_RATE,
+        notStarted: Boolean = false,
     ) = ScreenState(
         plan = plan,
         stepIndex = 3,
@@ -45,6 +46,25 @@ object ExampleScreen {
         karooStyle = karooStyle,
         tileOutline = tileOutline,
         secondField = secondField,
+        notStarted = notStarted,
+    )
+
+    /** No workout loaded (free ride): lap 4 at 4:21, lap average 282 W, last lap 8:20 at 271 W. */
+    fun freeRide(karooStyle: Boolean, appearance: Appearance = Appearance.AUTO, tileOutline: Boolean = false) = ScreenState(
+        power = 280,
+        powerShown = 280,
+        heartRate = 132,
+        cadence = 88,
+        lapNumber = 4,
+        lapTimeSec = 261,
+        lapPowerAvg = 282,
+        lapHrAvg = 128,
+        lastLapTimeSec = 500,
+        lastLapPowerAvg = 271,
+        lastLapHrAvg = 126,
+        appearance = appearance,
+        karooStyle = karooStyle,
+        tileOutline = tileOutline,
     )
 
     /** [s] drawn as a [w] × [h] px Karoo field would show it. [context] decides light or dark (Auto). */

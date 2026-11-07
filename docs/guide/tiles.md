@@ -3,7 +3,7 @@
 The two tiles under the progress bar can each show one of two things. Tap a tile to switch. The
 Karoo remembers your choice between rides.
 
-<img src="images/tiles-lap-np-range.png" width="240" alt="Lap NP 307 and Target range 293–308">
+<img src="images/tiles-lap-np-range.png" width="240" alt="Lap NP 289 and Target range 273–287">
 
 ## Lap avg ↔ Lap NP
 
@@ -21,4 +21,4 @@ The same switch works on the [free-ride screen](free-ride.md), using the Karoo's
 - **Target range**: the range you should stay in, for example `293–308`. It's the same range the
   [watts colours](watts-colours.md) use. On ramps it moves with the target.
 
-<img src="images/tiles-target-dark.png" width="240" alt="Target 300"> <img src="images/tiles-target-range-dark.png" width="240" alt="Target range 293–308">
+<img src="images/tiles-target-dark.png" width="240" alt="Target 280"> <img src="images/tiles-target-range-dark.png" width="240" alt="Target range 273–287">

@@ -21,7 +21,7 @@ Tap the big watts number to go through five styles:
 
 The Karoo remembers your choice between rides.
 
-<img src="images/watts-coloured-number.png" width="240" alt="Coloured number: 300 in green"> <img src="images/watts-both.png" width="240" alt="Coloured number and background, in range">
+<img src="images/watts-coloured-number.png" width="240" alt="Coloured number: 280 in green"> <img src="images/watts-both.png" width="240" alt="Coloured number and background, in range">
 
 With a coloured background, the tiles, progress bar and corner icons are see-through, so they
 take on the tint too.
@@ -34,7 +34,7 @@ The fifth style turns the watts into a gauge: a grey arc with the target range i
 needle at your 3-second power. The target range moves to the top of the screen, and the right tile
 shows your heart rate instead of the target. The interval time and the tiles stay where they are.
 
-<img src="images/watts-gauge.png" width="240" alt="Power gauge: 310 watts, needle just above the green target range">
+<img src="images/watts-gauge.png" width="240" alt="Power gauge: 280 watts, needle in the green target range">
 
 The arc reaches well past the range on both sides (four times the range, and at least ±10% of the
 target), so the green part is about a quarter of the arc. Past either end, the needle stops at the
