@@ -13,9 +13,9 @@
   h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
   h2 { font-size:15px; font-weight:500; margin:30px 0 12px; text-align:center; color:#CFCCC6; }
   p.d { color:#A9A6A0; margin:0 auto 22px; max-width:780px; text-align:center; }
-  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:16px; margin-bottom:30px; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:24px; margin-bottom:30px; }
   .dev { display:grid; justify-items:center; gap:8px; }
-  .cap { color:#A9A6A0; font-size:12px; max-width:175px; text-align:center; }
+  .cap { color:#A9A6A0; font-size:13px; max-width:380px; text-align:center; }
   .tiles { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; }
   .tiles canvas { width:190px; border-radius:6px; }
 </style>
@@ -57,7 +57,7 @@ const num = (ctx, s, x, y, size, color, align = 'right') => txt(ctx, s, x, y, `4
 function statusBar(ctx, snap, t) {
   const bg = t.page.match(/\w\w/g).map(h => parseInt(h, 16)), ink = t === T.light ? [0, 0, 0] : [255, 255, 255];
   const base = t === T.light ? [255, 255, 255] : [0, 0, 0];
-  const d = ctx.getImageData(0, 0, 480, 60);
+  const s = ctx.canvas.width / 480, d = ctx.getImageData(0, 0, 480 * s, 60 * s);
   for (let i = 0; i < d.data.length; i += 4) {
     const a = Math.abs(d.data[i] - base[0]) / 255;     // 0 = background, 1 = ink
     for (let k = 0; k < 3; k++) d.data[i + k] = Math.round(bg[k] + a * (ink[k] - bg[k]));
@@ -166,8 +166,8 @@ const img = src => new Promise(ok => { const i = new Image(); i.onload = () => o
     const shot = await img(SHOTS[theme]);
     const dev = await KarooDevice.load({ frame: FRAME, screen: SHOTS[theme] });
     for (const [cap, draw] of [['Now', before(theme, shot)], ['Karoo native', after(theme, nat, shot, false)], ['Karoo native, route loaded', after(theme, nat, shot, true)], ['First lap: no last lap yet', after(theme, nat, shot, false, true)]]) {
-      const scr = dev.screen({ draw });
-      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 175));
+      const scr = dev.screen({ draw, scale: 2 });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 380));
       const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${theme})`; el.append(c);
       document.getElementById(theme).append(el);
     }
