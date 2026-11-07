@@ -53,20 +53,6 @@ class PlanStore private constructor(context: Context) {
         get() = prefs.getBoolean(KEY_LAP_NP, false)
         set(value) = prefs.edit().putBoolean(KEY_LAP_NP, value).apply()
 
-    private val _karooStyle = MutableStateFlow(prefs.getBoolean(KEY_KAROO_STYLE, false))
-
-    /**
-     * "Karoo native styling" (Account page): Karoo's condensed font, uppercase labels with green
-     * icons and no tile backgrounds on the interval screen. A flow, so a ride already showing the
-     * screen picks up the change.
-     */
-    val karooStyle: StateFlow<Boolean> = _karooStyle
-
-    fun setKarooStyle(on: Boolean) {
-        prefs.edit().putBoolean(KEY_KAROO_STYLE, on).apply()
-        _karooStyle.value = on
-    }
-
     private fun <E : Enum<E>> enumPref(key: String, entries: List<E>, default: E): E =
         entries.firstOrNull { it.name == prefs.getString(key, null) } ?: default
 
@@ -225,7 +211,6 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_TARGET_RANGE = "target_shows_range"
         private const val KEY_LAP_NP = "lap_shows_np"
         private const val KEY_HR_LAP = "hr_shows_lap"
-        private const val KEY_KAROO_STYLE = "karoo_style"
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_TILE_OUTLINE = "tile_outline"
         private const val KEY_POWER_SMOOTHING = "power_smoothing"

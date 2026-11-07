@@ -1,7 +1,6 @@
 """Generates the "ready" layouts (workout loaded, not started) from the workout layouts.
 
-field_ready.xml       <- field_interval.xml
-field_ready_karoo.xml <- field_interval_karoo.xml
+field_ready_karoo.xml <- field_interval_karoo.xml (Karoo style is the only style)
 
 Everything stays the same (top row with gear and heart rate, the Next up box used as "First up",
 the chart) except the upper part, which becomes: live watts (smaller), a big START WORKOUT button
@@ -14,11 +13,6 @@ root = pathlib.Path(__file__).resolve().parents[1]
 layouts = root / 'app/src/main/res/layout'
 
 STYLES = {
-    'field_ready.xml': dict(
-        src='field_interval.xml', watts_font='sans-serif', watts_style='bold', watts_extra='',
-        label_font='sans-serif', label_style='bold', label_caps='false',
-        total_font='sans-serif', total_style='bold',
-        start_bg='@drawable/progress_start', start_fg='@color/resume_fg'),
     'field_ready_karoo.xml': dict(
         src='field_interval_karoo.xml', watts_font='sans-serif', watts_style='normal',
         watts_extra='\n                android:letterSpacing="-0.05"\n                android:textScaleX="0.9"',

@@ -34,8 +34,8 @@ You can also cancel by tapping ⏮ / ⏭ back to the interval you're in. If you 
 
 After **Confirm move**, a 5-second countdown with beeps gives you time to get ready, then the new
 interval starts. Your lap is marked at that moment. The box shows the seconds left on the left and
-the interval you're jumping to on the right, and fills up as the seconds run down (blue, or the
-Karoo's workout purple with Karoo style, where **Confirm move** is Karoo yellow).
+the interval you're jumping to on the right, and fills up as the seconds run down (the Karoo's
+workout purple; **Confirm move** is Karoo yellow).
 
 Can't wait? Tap the countdown, or press ⏭ / ⏮, to start right away. Once confirmed, the jump
 always happens.

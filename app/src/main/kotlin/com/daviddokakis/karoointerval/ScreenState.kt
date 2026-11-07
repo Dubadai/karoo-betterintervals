@@ -55,8 +55,6 @@ data class ScreenState(
     val navigating: Boolean = false,
     /** Dark / Light / Auto setting (Auto: follow the Karoo). */
     val appearance: Appearance = Appearance.AUTO,
-    /** "Karoo native styling" setting: Karoo's font, labels and icons on the interval screen. */
-    val karooStyle: Boolean = false,
     /** Tiles setting: Outline (border only) instead of Tonal (grey fill). */
     val tileOutline: Boolean = false,
     /** Target tile shows the target range instead of the single target (tap to toggle). */

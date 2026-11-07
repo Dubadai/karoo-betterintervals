@@ -84,16 +84,16 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         tiles.forEach { setBg(v, it, tileDrawable(outline, tonal)) }
     }
 
-    /** The heart icon swapped for the cadence icon: Karoo green in Karoo style (text colour on a tint), else the text colour. */
-    private fun showCadenceIcon(v: RemoteViews, id: Int, karoo: Boolean, onTint: Boolean) {
+    /** The heart icon swapped for the cadence icon: Karoo green (the text colour on a tint). */
+    private fun showCadenceIcon(v: RemoteViews, id: Int, onTint: Boolean) {
         v.setImageViewResource(id, R.drawable.ic_cadence)
-        v.setInt(id, "setColorFilter", color(if (karoo && !onTint) R.color.karoo_green else R.color.text))
+        v.setInt(id, "setColorFilter", color(if (!onTint) R.color.karoo_green else R.color.text))
         v.setContentDescription(id, context.getString(R.string.cadence))
     }
 
-    /** "Cadence" / "Lap cad", in capitals for Karoo style. */
-    private fun cadenceLabel(karoo: Boolean, lap: Boolean): String =
-        context.getString(if (lap) R.string.lap_cadence else R.string.cadence).let { if (karoo) it.uppercase() else it }
+    /** "CADENCE" / "LAP CAD", in capitals like the Karoo's labels. */
+    private fun cadenceLabel(lap: Boolean): String =
+        context.getString(if (lap) R.string.lap_cadence else R.string.cadence).uppercase()
 
     /** A tint that replaces a drawable's colour but keeps its alpha. */
     private fun opaque(c: Int) = android.content.res.ColorStateList.valueOf(c or 0xFF000000.toInt())
@@ -141,16 +141,10 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         val plan = s.plan ?: return renderFree(s)
         if (s.notStarted) return renderReady(s, plan)
         if (s.finished) return renderDone(s, plan)
-        // The Gauge watts mode has its own layout; the other four share the classic one. Each has
-        // a "Karoo native styling" twin (setting on the Account page).
+        // The Gauge watts mode has its own layout; the other four share the number one. Both in the
+        // Karoo's own style (fonts, labels, icons, yellow buttons).
         val gaugeMode = s.wattsMode == WattsMode.GAUGE
-        val karoo = s.karooStyle
-        val layout = when {
-            gaugeMode && karoo -> R.layout.field_interval_gauge_karoo
-            gaugeMode -> R.layout.field_interval_gauge
-            karoo -> R.layout.field_interval_karoo
-            else -> R.layout.field_interval
-        }
+        val layout = if (gaugeMode) R.layout.field_interval_gauge_karoo else R.layout.field_interval_karoo
         val v = RemoteViews(context.packageName, layout)
         applyAppearance(v, layout)
         applyTiles(v, listOf(R.id.lap_tile, if (gaugeMode) R.id.hr_tile else R.id.target_tile), s.tileOutline, R.drawable.bg_tile_tonal)
@@ -160,7 +154,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             if (s.targetShowsRange && band != null) "${band.first}–${band.last}" else s.target?.toString() ?: "--"
         }
         hrText = s.secondValue?.toString() ?: "--"
-        applyTextSizes(v, gaugeMode, karoo)
+        applyTextSizes(v, gaugeMode)
 
         v.setViewVisibility(R.id.content, View.VISIBLE)
         v.setViewVisibility(R.id.btn_settings, View.VISIBLE)
@@ -182,7 +176,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (gaugeMode) {
             val gaugeW = (config.viewSize.first - 16 * density).toInt()
             if (gaugeW > 0) {
-                v.setImageViewBitmap(R.id.gauge, gauge.render(gaugeW, gaugeHeightPx(karoo, s.navigating), s.powerShown, s.target, s.targetRange, color(wattsColor), karoo))
+                v.setImageViewBitmap(R.id.gauge, gauge.render(gaugeW, gaugeHeightPx(s.navigating), s.powerShown, s.target, s.targetRange, color(wattsColor)))
             }
         } else {
             v.setTextViewText(R.id.watts, s.powerShown?.toString() ?: "--")
@@ -200,25 +194,22 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // The range tint is the background of the upper part: the bottom layer, behind the watts,
         // tiles and everything else there, in every theme.
         if (upperBg != 0) setBg(v, R.id.upper, upperBg) else v.setInt(R.id.upper, "setBackgroundResource", 0)
-        // On a tint, the tile labels use the full text colour so they stay readable (>= 7:1).
-        // Karoo native styling: labels in the text colour, like Karoo's own fields.
-        val labelColor = color(if (upperBg != 0 || karoo) R.color.text else R.color.text_secondary)
+        // Labels in the text colour, like Karoo's own fields.
+        val labelColor = color(R.color.text)
         v.setTextColor(R.id.lap_avg_label, labelColor)
         v.setTextColor(if (gaugeMode) R.id.hr_label else R.id.target_label, labelColor)
-        // Karoo style: green icons turn black (the text colour) on the range tint, so they show.
-        if (karoo) {
-            val iconColor = color(if (upperBg != 0) R.color.text else R.color.karoo_green)
-            val icons = if (gaugeMode) listOf(R.id.icon_timer, R.id.icon_lap, R.id.icon_bolt)
-            else listOf(R.id.icon_timer, R.id.icon_lap, R.id.icon_bolt, R.id.icon_target)
-            icons.forEach { v.setInt(it, "setColorFilter", iconColor) }
-        }
+        // Green icons turn black (the text colour) on the range tint, so they show.
+        val iconColor = color(if (upperBg != 0) R.color.text else R.color.karoo_green)
+        val icons = if (gaugeMode) listOf(R.id.icon_timer, R.id.icon_lap, R.id.icon_bolt)
+        else listOf(R.id.icon_timer, R.id.icon_lap, R.id.icon_bolt, R.id.icon_target)
+        icons.forEach { v.setInt(it, "setColorFilter", iconColor) }
         v.setOnClickPendingIntent(if (gaugeMode) R.id.gauge else R.id.watts, wattsColorIntent)
         v.setTextViewText(R.id.hr, s.secondValue?.toString() ?: "--")
         // Settings › Heart rate or cadence: cadence takes the heart rate's spot (top row, or the
         // gauge screen's tile) with its own icon; the layout stays the same.
         if (s.showsCadence) {
-            showCadenceIcon(v, R.id.hr_icon, karoo, onTint = upperBg != 0 && (gaugeMode || karoo))
-            if (gaugeMode) v.setTextViewText(R.id.hr_label, cadenceLabel(karoo, lap = false))
+            showCadenceIcon(v, R.id.hr_icon, onTint = upperBg != 0)
+            if (gaugeMode) v.setTextViewText(R.id.hr_label, cadenceLabel(lap = false))
         }
 
         // Pause / resume (top right). Paused by you: green half-pill with a filled play symbol.
@@ -246,8 +237,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (ridePaused || s.workoutPaused) {
             v.setViewVisibility(R.id.interval_label, View.GONE)
             v.setViewVisibility(R.id.paused_box, View.VISIBLE)
-            if (karoo) v.setViewVisibility(R.id.icon_timer, View.GONE)
-            if (karoo) v.setViewVisibility(R.id.paused_spacer, View.VISIBLE)
+            v.setViewVisibility(R.id.icon_timer, View.GONE)
+            v.setViewVisibility(R.id.paused_spacer, View.VISIBLE)
             v.setTextViewText(
                 R.id.paused_text,
                 context.getString(if (ridePaused) R.string.workout_auto_paused else R.string.workout_paused),
@@ -257,20 +248,19 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             v.setInt(R.id.paused_icon, "setImageAlpha", if (blinkOn) 255 else 70)
             // The resume button pulses in step, between its two greens.
             if (resumeShown) {
-                val (on, off) = if (karoo) R.drawable.bg_resume_karoo to R.drawable.bg_resume_karoo_alt else R.drawable.bg_resume to R.drawable.bg_resume_alt
-                setBg(v, R.id.btn_resume, if (blinkOn) on else off)
+                setBg(v, R.id.btn_resume, if (blinkOn) R.drawable.bg_resume_karoo else R.drawable.bg_resume_karoo_alt)
             }
         } else {
             v.setViewVisibility(R.id.interval_label, View.VISIBLE)
             v.setViewVisibility(R.id.paused_box, View.GONE)
-            if (karoo) v.setViewVisibility(R.id.icon_timer, View.VISIBLE)
-            if (karoo) v.setViewVisibility(R.id.paused_spacer, View.GONE)
+            v.setViewVisibility(R.id.icon_timer, View.VISIBLE)
+            v.setViewVisibility(R.id.paused_spacer, View.GONE)
             if (s.finished) {
                 v.setTextViewText(R.id.interval_label, context.getString(R.string.workout_complete))
                 v.setTextColor(R.id.interval_label, color(R.color.watts_in_range))
             } else {
                 v.setTextViewText(R.id.interval_label, context.getString(R.string.interval_of, s.stepIndex + 1, s.stepCount))
-                v.setTextColor(R.id.interval_label, color(if (karoo) R.color.text else R.color.text_secondary))
+                v.setTextColor(R.id.interval_label, color(R.color.text))
             }
         }
         // Time left in the interval, with a minus so it reads as counting down.
@@ -293,10 +283,10 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             )
         } else {
             // Target tile: tap to switch between the target and the target range.
-            // (Karoo native styling keeps the label "TARGET": "TARGET RANGE" doesn't fit at Karoo's
-            // label size, and the value shows whether it's a range.)
+            // (The label stays "TARGET": "TARGET RANGE" doesn't fit at Karoo's label size, and the
+            // value shows whether it's a range.)
             if (s.targetShowsRange && band != null) {
-                v.setTextViewText(R.id.target_label, context.getString(if (karoo) R.string.target else R.string.target_range))
+                v.setTextViewText(R.id.target_label, context.getString(R.string.target))
                 v.setTextViewText(R.id.target, "${band.first}–${band.last}")
             } else {
                 v.setTextViewText(R.id.target_label, context.getString(R.string.target))
@@ -310,9 +300,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             val next = "→ ${land.targetAt(0)}"
             v.setTextViewText(
                 R.id.target_next,
-                // The number in the text colour; only the arrow in the jump colour (Karoo purple, or blue).
+                // The number in the text colour; only the arrow in the jump colour (Karoo purple).
                 android.text.SpannableString(next).apply {
-                    val arrow = color(if (karoo) R.color.karoo_purple else R.color.land)
+                    val arrow = color(R.color.karoo_purple)
                     setSpan(android.text.style.ForegroundColorSpan(arrow), 0, 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                 },
             )
@@ -390,20 +380,12 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             v.setViewVisibility(R.id.btn_previous, View.VISIBLE)
         }
         // The skip button is grey and not tappable while the ride or workout is paused, so the play
-        // button (Karoo's, or our resume button) is the one to press. Blue normally; with Karoo
-        // native styling inverted (black in light mode, white in dark), so Karoo's yellow stays
-        // for its own navigation (route pill, page arrows).
+        // button (Karoo's, or our resume button) is the one to press. Inverted normally (black in
+        // light mode, white in dark), so Karoo's yellow stays for its own navigation (route pill,
+        // page arrows).
         val skipEnabled = !(ridePaused || s.workoutPaused)
-        val skipBg = when {
-            !skipEnabled -> R.drawable.bg_btn_skip_disabled
-            karoo -> R.drawable.bg_btn_skip_inverted
-            else -> R.drawable.bg_btn_skip
-        }
-        val skipFg = when {
-            !skipEnabled -> R.color.skip_disabled_fg
-            karoo -> R.color.bg
-            else -> R.color.skip_fg
-        }
+        val skipBg = if (skipEnabled) R.drawable.bg_btn_skip_inverted else R.drawable.bg_btn_skip_disabled
+        val skipFg = if (skipEnabled) R.color.bg else R.color.skip_disabled_fg
         setBg(v, R.id.skip_bg, skipBg)
         v.setInt(R.id.skip_icon, "setColorFilter", color(skipFg))
         // Taps may or may not reach a data field on Karoo; the bonus actions (remote buttons) always work.
@@ -449,8 +431,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
      * recording. No heart rate row. Design: docs/design/start-workout/ (done screen).
      */
     private fun renderDone(s: ScreenState, plan: WorkoutPlan): RemoteViews {
-        val karoo = s.karooStyle
-        val layout = if (karoo) R.layout.field_done_karoo else R.layout.field_done
+        val layout = R.layout.field_done_karoo
         val v = RemoteViews(context.packageName, layout)
         applyAppearance(v, layout)
         val sum = s.summary
@@ -477,14 +458,13 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
      * Design: docs/design/start-workout/ (B).
      */
     private fun renderReady(s: ScreenState, plan: WorkoutPlan): RemoteViews {
-        val karoo = s.karooStyle
-        val layout = if (karoo) R.layout.field_ready_karoo else R.layout.field_ready
+        val layout = R.layout.field_ready_karoo
         val v = RemoteViews(context.packageName, layout)
         applyAppearance(v, layout)
 
         v.setTextViewText(R.id.watts, s.powerShown?.toString() ?: "--")
         v.setTextViewText(R.id.hr, s.secondValue?.toString() ?: "--")
-        if (s.showsCadence) showCadenceIcon(v, R.id.hr_icon, karoo, onTint = false)
+        if (s.showsCadence) showCadenceIcon(v, R.id.hr_icon, onTint = false)
         v.setViewVisibility(R.id.btn_pause, View.GONE)     // nothing runs yet
         v.setViewVisibility(R.id.btn_resume, View.GONE)
         v.setOnClickPendingIntent(R.id.btn_settings, settingsIntent)
@@ -528,8 +508,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setTextColor(R.id.next_value, color(R.color.text))
         v.setViewVisibility(R.id.btn_previous, if (index > 0) View.VISIBLE else View.INVISIBLE)
         v.setViewVisibility(R.id.btn_skip, if (index < s.stepCount - 1) View.VISIBLE else View.INVISIBLE)
-        setBg(v, R.id.skip_bg, if (karoo) R.drawable.bg_btn_skip_inverted else R.drawable.bg_btn_skip)
-        v.setInt(R.id.skip_icon, "setColorFilter", color(if (karoo) R.color.bg else R.color.skip_fg))
+        setBg(v, R.id.skip_bg, R.drawable.bg_btn_skip_inverted)
+        v.setInt(R.id.skip_icon, "setColorFilter", color(R.color.bg))
         v.setOnClickPendingIntent(R.id.btn_skip, nextIntent)
         v.setOnClickPendingIntent(R.id.btn_previous, previousIntent)
 
@@ -548,27 +528,16 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
      * last lap. The gear opens the Workouts page to load a workout.
      */
     private fun renderFree(s: ScreenState): RemoteViews {
-        // Karoo native styling: watts first, a LAP TIME row, Lap avg and HR as full-size Karoo data
-        // fields and Last lap at the bottom (field_free_karoo.xml).
-        val karoo = s.karooStyle
-        val layout = if (karoo) R.layout.field_free_karoo else R.layout.field_free
+        // Watts first, a LAP TIME row, Lap avg and HR as full-size Karoo data fields and Last lap at
+        // the bottom (field_free_karoo.xml).
+        val layout = R.layout.field_free_karoo
         val v = RemoteViews(context.packageName, layout)
         applyAppearance(v, layout)
-        val freeTonal = if (karoo) R.drawable.bg_tile_tonal else R.drawable.bg_tile
+        val freeTonal = R.drawable.bg_tile_tonal
         applyTiles(v, listOf(R.id.free_lap_tile), s.tileOutline, freeTonal)
-        (
-            if (karoo) {
-                listOf(
-                    R.id.free_lap_avg to 48f, R.id.free_hr to 48f, R.id.free_lap_label to 15f, R.id.free_hr_label to 15f,
-                    R.id.free_lap_time to 28f,
-                )
-            } else {
-                listOf(
-                    R.id.free_lap_avg to 36f, R.id.free_hr to 36f,
-                    R.id.free_lap_label to 13f, R.id.free_hr_label to 13f,
-                    R.id.free_lap_number to 15f, R.id.free_lap_time to 40f, R.id.free_last_lap to 14f,
-                )
-            }
+        listOf(
+            R.id.free_lap_avg to 48f, R.id.free_hr to 48f, R.id.free_lap_label to 15f, R.id.free_hr_label to 15f,
+            R.id.free_lap_time to 28f,
         ).forEach { (id, sp) -> v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_PX, sp * density * scale) }
 
         v.setTextViewText(R.id.free_watts, s.powerShown?.toString() ?: "--")
@@ -581,12 +550,12 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setTextViewText(
             R.id.free_hr_label,
             if (s.showsCadence) {
-                cadenceLabel(karoo, lap = s.hrShowsLap)
+                cadenceLabel(lap = s.hrShowsLap)
             } else {
-                context.getString(if (s.hrShowsLap) R.string.lap_hr else if (karoo) R.string.hr else R.string.heart_rate)
+                context.getString(if (s.hrShowsLap) R.string.lap_hr else R.string.hr)
             },
         )
-        if (s.showsCadence) showCadenceIcon(v, R.id.free_hr_icon, karoo, onTint = false)
+        if (s.showsCadence) showCadenceIcon(v, R.id.free_hr_icon, onTint = false)
         v.setOnClickPendingIntent(R.id.free_hr_tile, lapHrToggleIntent)
 
         // The tile takes the Karoo's own colour for the heart rate zone it shows, like the Karoo's
@@ -616,12 +585,12 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
                     s.lastLapHrAvg?.takeIf { it > 0 }?.let { context.getString(R.string.bpm_value, it) }
                 },
             ).joinToString(" · ")
-            if (karoo) parts else context.getString(R.string.last_lap_no_power, parts)
+            parts
         }
         v.setTextViewText(R.id.free_last_lap, last ?: "")
         // No last lap yet (first lap): hide the "LAST LAP" label too. Its space stays, so nothing
         // moves when the first lap ends.
-        if (karoo) v.setViewVisibility(R.id.th_free_karoo_5, if (last == null) View.INVISIBLE else View.VISIBLE)
+        v.setViewVisibility(R.id.th_free_karoo_5, if (last == null) View.INVISIBLE else View.VISIBLE)
         v.setOnClickPendingIntent(R.id.free_btn_settings, settingsIntent)
         return v
     }
@@ -668,8 +637,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
      * route makes the field shorter, so it's worked out from the layout (measured on a Karoo 3)
      * and the navigation state; the bitmap is drawn at that size so the arc can use all of it.
      */
-    private fun gaugeHeightPx(karoo: Boolean, navigating: Boolean): Int {
-        val dp = (if (karoo) GAUGE_KAROO_DP else GAUGE_REGULAR_DP) - (if (navigating) ROUTE_DP else 0f)
+    private fun gaugeHeightPx(navigating: Boolean): Int {
+        val dp = GAUGE_KAROO_DP - (if (navigating) ROUTE_DP else 0f)
         return (dp * density * scale).toInt().coerceAtLeast(1)
     }
 
@@ -689,40 +658,29 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     private var targetText = ""
     private var hrText = ""
 
-    private fun applyTextSizes(v: RemoteViews, gaugeMode: Boolean, karoo: Boolean) {
+    private fun applyTextSizes(v: RemoteViews, gaugeMode: Boolean) {
         // Must match the sp sizes in the layouts (the reference size).
         val sizes = mutableListOf(
             R.id.paused_text to 13f, R.id.next_label to 11f, R.id.confirm_text to 17f,
             R.id.move_cancelled_text to 16f, R.id.countdown to 31f,
         )
-        if (karoo) {
-            // Karoo native styling: one compact block under the watts, the same on every screen:
-            // 13sp labels, 28sp values (smaller only if a value doesn't fit), 23sp time.
-            sizes += listOf(R.id.lap_avg to cellValueSp(lapText), R.id.lap_avg_label to 13f, R.id.interval_label to 13f, R.id.time_left to 23f)
-            sizes += if (gaugeMode) {
-                // top row: target range in the top-row HR's type; HR is a cell
-                listOf(R.id.hr to cellValueSp(hrText), R.id.hr_label to 13f, R.id.target to 20f, R.id.target_next to 14f)
-            } else {
-                // top row: heart rate (Plex Sans SemiBold); Target is a cell
-                listOf(R.id.hr to 20f, R.id.target to cellValueSp(targetText), R.id.target_label to 13f)
-            }
+        // One compact block under the watts, the same on every screen: 13sp labels, 28sp values
+        // (smaller only if a value doesn't fit), 23sp time.
+        sizes += listOf(R.id.lap_avg to cellValueSp(lapText), R.id.lap_avg_label to 13f, R.id.interval_label to 13f, R.id.time_left to 23f)
+        sizes += if (gaugeMode) {
+            // top row: target range in the top-row HR's type; HR is a cell
+            listOf(R.id.hr to cellValueSp(hrText), R.id.hr_label to 13f, R.id.target to 20f, R.id.target_next to 14f)
         } else {
-            sizes += listOf(R.id.interval_label to 13f, R.id.time_left to 30f, R.id.lap_avg to 22f)
-            sizes += if (gaugeMode) {
-                listOf(R.id.hr to 22f, R.id.hr_label to 11f, R.id.lap_avg_label to 11f, R.id.target_label to 11f, R.id.target to 18f, R.id.target_next to 14f)
-            } else {
-                listOf(R.id.hr to 18f, R.id.target to 22f, R.id.target_next to 16f)
-            }
+            // top row: heart rate (Plex Sans SemiBold); Target is a cell
+            listOf(R.id.hr to 20f, R.id.target to cellValueSp(targetText), R.id.target_label to 13f)
         }
         sizes.forEach { (id, sp) -> v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_PX, sp * density * scale) }
-        if (karoo) {
-            // A shrunk cell value has less room under its baseline, so it would sit lower than a
-            // full-size one: pad it up by the difference, so every value sits on the same line.
-            listOf(R.id.lap_avg to lapText, R.id.target to targetText, R.id.hr to hrText).forEach { (id, text) ->
-                if (id == R.id.hr && !gaugeMode) return@forEach      // the top-row HR, not a cell
-                if (id == R.id.target && gaugeMode) return@forEach   // the top-row target, not a cell
-                v.setViewPadding(id, 0, 0, 0, baselineLift(cellValueSp(text)))
-            }
+        // A shrunk cell value has less room under its baseline, so it would sit lower than a
+        // full-size one: pad it up by the difference, so every value sits on the same line.
+        listOf(R.id.lap_avg to lapText, R.id.target to targetText, R.id.hr to hrText).forEach { (id, text) ->
+            if (id == R.id.hr && !gaugeMode) return@forEach      // the top-row HR, not a cell
+            if (id == R.id.target && gaugeMode) return@forEach   // the top-row target, not a cell
+            v.setViewPadding(id, 0, 0, 0, baselineLift(cellValueSp(text)))
         }
     }
 
@@ -760,7 +718,6 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         private const val CELL_VALUE_SP = 28f
         /** Height of the gauge's space on a full page without a route (measured), and how much a route takes. */
         private const val GAUGE_KAROO_DP = 128.7f   // 241 px on a Karoo 3 (162 px with a route)
-        private const val GAUGE_REGULAR_DP = 119.2f  // 224 px on a Karoo 3 (145 px with a route)
         private const val ROUTE_DP = 42.1f          // a route makes the field 79 px shorter
 
 

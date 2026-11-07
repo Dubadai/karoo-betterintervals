@@ -22,8 +22,8 @@ you can jump forward **and back** between intervals.
   interval in your ride file, and short beeps before each interval ends.
 - **Without a workout:** big watts, lap time, lap average and heart rate (tap HR for the lap's
   average), and the last lap.
-- **Karoo style** (Settings): the Karoo's own fonts, field sizes and colours. **Dark / Light / Auto**
-  follows the Karoo or stays fixed.
+- **The Karoo's own look:** its fonts, field sizes and colours. **Dark / Light / Auto** follows the
+  Karoo or stays fixed.
 - **Remote button actions:** next interval, previous interval, pause or resume the workout.
 
 Values show `--` when a sensor isn't connected. There's a step-by-step

@@ -37,8 +37,6 @@
     <string name="appearance_light">Light</string>
     <string name="appearance_auto">Auto</string>
     <string name="appearance_help">Auto follows the Karoo\'s In-Ride Appearance. Dark and Light apply to the workout screen and these pages.</string>
-    <string name="karoo_style">Karoo style</string>
-    <string name="karoo_style_help">Karoo\'s own fonts, labels, icons and yellow buttons on the workout screen.</string>
     <string name="tiles">Tiles</string>
     <string name="tiles_tonal">Tonal</string>
     <string name="tiles_outline">Outline</string>
@@ -121,7 +119,6 @@
     <string name="heart_rate">Heart rate</string>
     <string name="lap_number">Lap %1$d</string>
     <string name="last_lap">Last lap %1$s · %2$d W</string>
-    <string name="last_lap_no_power">Last lap %1$s</string>
     <string name="workout_paused">Workout paused</string>
     <string name="workout_auto_paused">Workout auto-paused</string>
     <string name="next_up">Next up</string>
@@ -138,7 +135,6 @@
     <string name="confirming">Confirming… %1$d</string>
     <string name="cd_cancel_jump">Cancel jump</string>
     <string name="move_cancelled">Move cancelled</string>
-    <string name="target_range">Target range</string>
 
     <!-- First-run introduction -->
     <string name="intro_skip">Skip</string>
@@ -152,7 +148,6 @@
     <string name="intro_key_help">On intervals.icu: Settings → Developer settings.</string>
     <string name="intro_athlete_help">Leave it at 0: that\'s your own account.</string>
     <string name="intro_look_title">Choose a look</string>
-    <string name="intro_karoo_style_help">Karoo\'s fonts, icons and buttons.</string>
     <string name="intro_ride_title">Add it to a ride</string>
     <string name="intro_ride_1">1  In Profiles, open a profile, then Data Pages, and add a page with +.</string>
     <string name="intro_ride_2">2  Tap ADD FIELD and pick DDB BetterIntervals. It fills the whole page.</string>

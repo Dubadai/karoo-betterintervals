@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- DONE on the workout done screen: green, like START WORKOUT. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/resume_bg" />
-    <corners android:radius="12dp" />
-</shape>

@@ -209,7 +209,7 @@ class IntroActivity : AppearanceActivity() {
         setPadding(paddingLeft, dp(6), paddingRight, dp(8))
     }
 
-    // 2 Appearance and Karoo style, as on the Settings page. Taps apply at once.
+    // 2 Appearance, as on the Settings page. Taps apply at once.
     private fun look() {
         title(R.string.intro_look_title)
         content.addView(settingsHeading(R.drawable.ic_appearance, getString(R.string.appearance)).apply { setPadding(0, dp(2), 0, dp(8)) })
@@ -225,15 +225,6 @@ class IntroActivity : AppearanceActivity() {
             },
         )
         content.addView(settingsHelp(getString(R.string.appearance_help)).apply { setPadding(0, dp(6), 0, dp(6)) })
-        content.addView(settingsDivider())
-        content.addView(settingsHeading(R.drawable.ic_style, getString(R.string.karoo_style)).apply { setPadding(0, dp(6), 0, dp(8)) })
-        content.addView(
-            segmented(listOf(R.string.off to false, R.string.on to true), store.karooStyle.value) { on ->
-                store.setKarooStyle(on)
-                render()
-            },
-        )
-        content.addView(settingsHelp(getString(R.string.intro_karoo_style_help)).apply { setPadding(0, dp(8), 0, 0) })
     }
 
     // 3 How to add the field to a ride profile, with the Karoo's own screens

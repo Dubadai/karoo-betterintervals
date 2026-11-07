@@ -13,12 +13,12 @@ With no workout picked, BetterIntervals shows a free-ride screen instead.
 
 Tap ⚙ to open the [Workouts page](workouts-and-account.md) and pick a workout.
 
-With [Karoo style](settings.md) on, the screen takes the Karoo's own look: the watts first, a
-**LAP TIME** row, Lap avg and HR as full-size Karoo data fields (the HR field in its zone colour),
-and the last lap at the bottom.
+The screen takes the Karoo's own look: the watts first, a **LAP TIME** row, Lap avg and HR as
+full-size Karoo data fields (the HR field in its zone colour), and the last lap at the bottom
+(hidden until your first lap is done).
 
 Tap the heart rate tile to switch between your current heart rate and the lap's average
 (**Lap HR**); the app remembers your choice. The last lap shows its time, average watts and
 average heart rate.
 
-<img src="images/free-ride-karoo.png" width="240" alt="Free ride in Karoo style">
+<img src="images/free-ride-karoo.png" width="240" alt="Free ride">

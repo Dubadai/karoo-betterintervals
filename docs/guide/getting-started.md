@@ -28,8 +28,7 @@ key is stored only on the Karoo. No key yet? Tap **Next** anyway and add it late
 
 ### Choose a look
 
-**Appearance** (Dark / Light / Auto) and **Karoo style** (Off / On), the same as in
-[Settings](settings.md). The page itself changes as you tap.
+**Appearance** (Dark / Light / Auto), the same as in [Settings](settings.md). The page itself changes as you tap.
 
 ### Add it to a ride
 
@@ -58,7 +57,7 @@ week's list; the app goes straight back to the ride screen. See
 ## 4. Changing it later
 
 Tap ⚙ on the ride screen, then ⚙ on the Workouts page, for [Settings](settings.md): Appearance,
-Karoo style, Tiles, your intervals.icu account, and **Show introduction**.
+Tiles, your intervals.icu account, and **Show introduction**.
 
 ## 5. Optional: remote buttons
 

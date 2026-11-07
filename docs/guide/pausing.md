@@ -6,7 +6,7 @@ Stopped at a traffic light or a café? Pause the workout so the interval doesn't
 
 1. Tap ⏸ in the top right corner (or use the remote button **Pause or resume workout**).
 2. A yellow **Workout paused** box replaces the interval number. Its icon blinks.
-3. ⏸ turns into a large green ▶ button (Karoo yellow with [Karoo style](settings.md)). Tap it to
+3. ⏸ turns into a large Karoo-yellow ▶ button. Tap it to
    carry on where you stopped.
 4. The ⏭ button turns grey and can't be tapped, so the play button is the one to press.
 
