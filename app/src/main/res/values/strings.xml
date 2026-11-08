@@ -20,6 +20,15 @@
     <string name="lands_at">Lands at %1$s</string>
     <string name="step_summary">%1$s @ %2$dW</string>
     <string name="step_summary_ramp">%1$s @ %2$d–%3$dW</string>
+    <!-- A heart-rate step in Next up: bpm, or % of LTHR (tap the Target tile) -->
+    <string name="step_summary_bpm">%1$s @ %2$d bpm</string>
+    <string name="step_summary_bpm_range">%1$s @ %2$d–%3$d bpm</string>
+    <string name="step_summary_lthr">%1$s @ %2$d%% LTHR</string>
+    <string name="step_summary_lthr_range">%1$s @ %2$d–%3$d%% LTHR</string>
+    <!-- The Target tile's label on a heart-rate step with % of LTHR on -->
+    <string name="lthr_label" formatted="false">% LTHR</string>
+    <!-- Where heart rate would show on a heart-rate step: the power instead -->
+    <string name="power_label">Power</string>
     <string name="cd_power">Power</string>
     <string name="cd_heart_rate">Heart rate</string>
     <string name="hr">HR</string>
@@ -36,7 +45,11 @@
     <string name="ride_hr">Ride HR</string>
     <string name="ride_cadence">Ride cad</string>
     <string name="top_row">Top row</string>
-    <string name="top_row_help">What the top of the workout screen shows. Target and Lap avg are always there: with Target at the top, the tile next to Lap avg shows heart rate (or cadence).</string>
+    <string name="top_row_help">What the top of the workout screen shows: one value or two side by side. Lap avg and Target are always on screen; whatever isn\'t at the top shows in the tile next to Lap avg.</string>
+    <string name="top_row_one">One</string>
+    <string name="top_row_two">Two</string>
+    <string name="top_row_left">Left</string>
+    <string name="top_row_right">Right</string>
     <string name="bpm_value">%1$d bpm</string>
     <string name="settings_title">Settings</string>
     <!-- The big title on the Settings page (the Karoo lists the app as app_name) -->
@@ -110,6 +123,11 @@
     <string name="connect_intervals">Connect intervals.icu</string>
     <string name="save_and_load">Save and load workouts</string>
     <string name="current_workout">Current workout</string>
+    <!-- Workouts page, while a workout is loaded: its power targets in % (1% a tap) -->
+    <string name="scale_workout">Scale workout</string>
+    <string name="scale_pct">%1$d%%</string>
+    <string name="cd_scale_down">Easier: 1% less</string>
+    <string name="cd_scale_up">Harder: 1% more</string>
     <string name="no_current_workout">None. Pick one below.</string>
     <string name="stop_workout">Remove workout</string>
     <string name="this_week">This week</string>
@@ -130,6 +148,9 @@
     <string name="last_lap">Last lap %1$s · %2$d W</string>
     <string name="workout_paused">Workout paused</string>
     <string name="workout_auto_paused">Workout auto-paused</string>
+    <!-- Ride paused by the Karoo: shorter, next to the gear that comes down then -->
+    <string name="ride_paused_short">Paused</string>
+    <string name="ride_auto_paused_short">Auto-paused</string>
     <string name="next_up">Next up</string>
     <string name="restarting_interval">Restarting interval</string>
     <plurals name="jumping_ahead">

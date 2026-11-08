@@ -1,5 +1,7 @@
 package com.daviddokakis.karoointerval
 
+import kotlin.math.roundToInt
+
 /** Everything the interval screen needs to draw one frame. */
 data class ScreenState(
     val plan: WorkoutPlan? = null,
@@ -34,11 +36,17 @@ data class ScreenState(
     val rideAvgCadence: Int? = null,
     /** Settings › Top row; null: as each layout has it (number styles: heart rate, gauge: target). */
     val topRow: TopRow? = null,
+    /** Settings › Top row › Two: the second value at the top, or null for one value. */
+    val topRowRight: TopRow? = null,
+    /** A heart-rate step's target as % of LTHR instead of bpm (tap the Target tile). */
+    val hrTargetLthr: Boolean = false,
     /** Karoo's average heart rate this lap, and in the last lap (free ride). */
     val lapHrAvg: Int? = null,
     val lastLapHrAvg: Int? = null,
     /** The ride is paused (Karoo's own pause). */
     val paused: Boolean = false,
+    /** …by the Karoo's auto-pause (not by the rider). */
+    val autoPaused: Boolean = false,
     /** The workout is paused from this screen: interval clock and lap average stop, ride keeps recording. */
     val workoutPaused: Boolean = false,
     /** A workout is loaded but waits for START WORKOUT (the ready screen); [stepIndex] is where it will start. */
@@ -135,6 +143,18 @@ data class ScreenState(
             else -> null
         }
     }
+
+    /** The current step runs on heart rate: heart rate is the big number, power goes where heart rate was. */
+    val hrStep: Boolean get() = currentStep?.hr == true
+
+    /** The big number: heart rate on a heart-rate step, else the (smoothed) power. */
+    val mainValue: Int? get() = if (hrStep) heartRate else powerShown
+
+    /** % of LTHR is possible: the workout says the rider's LTHR. */
+    val showsLthr: Boolean get() = hrTargetLthr && (plan?.lthr ?: 0) > 0
+
+    /** [bpm] as % of the workout's LTHR. */
+    fun lthrPct(bpm: Int): Int = plan?.lthr?.takeIf { it > 0 }?.let { (bpm * 100.0 / it).roundToInt() } ?: bpm
 
     val target: Int? get() = currentStep?.targetAt(elapsedInStepSec)
     val targetRange: IntRange? get() = currentStep?.rangeAt(elapsedInStepSec)

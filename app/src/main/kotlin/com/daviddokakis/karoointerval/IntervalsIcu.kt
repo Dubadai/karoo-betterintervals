@@ -61,56 +61,63 @@ class IntervalsIcu(private val athleteId: String, private val apiKey: String) {
         fun parseEvent(event: JSONObject): WorkoutPlan? {
             val doc = event.optJSONObject("workout_doc") ?: return null
             val ftp = doc.optPositiveInt("ftp") ?: event.optPositiveInt("icu_ftp")
+            val lthr = doc.optPositiveInt("lthr")
             val steps = mutableListOf<PlanStep>()
-            addSteps(doc.optJSONArray("steps") ?: return null, ftp, steps)
+            addSteps(doc.optJSONArray("steps") ?: return null, ftp, lthr, steps)
             if (steps.isEmpty()) return null
             return WorkoutPlan(
                 id = event.opt("id")?.toString() ?: event.optString("name"),
                 name = event.optString("name", "Workout"),
                 steps = steps,
                 ftp = ftp,
+                lthr = lthr,
             )
         }
 
-        private fun addSteps(array: JSONArray, ftp: Int?, out: MutableList<PlanStep>) {
+        private fun addSteps(array: JSONArray, ftp: Int?, lthr: Int?, out: MutableList<PlanStep>) {
             for (i in 0 until array.length()) {
                 val step = array.optJSONObject(i) ?: continue
                 val children = step.optJSONArray("steps")
                 if (children != null) {
                     // Repeat block, e.g. "3x": expand it into its individual steps.
-                    repeat(step.optInt("reps", 1).coerceAtLeast(1)) { addSteps(children, ftp, out) }
+                    repeat(step.optInt("reps", 1).coerceAtLeast(1)) { addSteps(children, ftp, lthr, out) }
                     continue
                 }
                 val duration = step.optInt("duration", 0)
                 if (duration <= 0) continue // distance-based or empty steps aren't supported yet
-                out += stepOf(step, duration, ftp)
+                out += stepOf(step, duration, ftp, lthr)
             }
         }
 
         /**
-         * Converts one step. Uses the resolved watts in `_power` when present: for ramps its
-         * start/end are the ramp ends; otherwise `value` is the target and start/end the range.
+         * Converts one step. A power target wins; a step with only a heart-rate target (`hr`,
+         * resolved to bpm in `_hr`) becomes an HR step. Uses the resolved values when present: for
+         * ramps their start/end are the ramp ends; otherwise `value` is the target and start/end
+         * the range. Real example of an HR step:
+         * `{"duration":240,"hr":{"value":85,"units":"%hr"},"_hr":{"value":175.0,"start":172.0,"end":178.0}}`
          */
-        private fun stepOf(step: JSONObject, duration: Int, ftp: Int?): PlanStep {
+        private fun stepOf(step: JSONObject, duration: Int, ftp: Int?, lthr: Int?): PlanStep {
+            val hr = !step.has("power") && (step.has("_hr") || step.has("hr"))
+            val written = step.optJSONObject(if (hr) "hr" else "power")
+            val resolved = step.optJSONObject(if (hr) "_hr" else "_power")
             val ramp = step.optBoolean("ramp", false)
-            val power = step.optJSONObject("power")
-            val writtenAsRange = !ramp && power != null && power.has("start") && power.has("end") && !power.has("value")
-            val resolved = step.optJSONObject("_power")
-            val toWatts: (Double) -> Double = when (power?.optString("units")) {
-                "w", "W", "watts" -> { v -> v }
-                "%ftp", "", null -> { v -> if (ftp != null) v * ftp / 100.0 else 0.0 }
-                else -> { _ -> 0.0 } // zones, %MMP etc. need the resolved values
+            val writtenAsRange = !ramp && written != null && written.has("start") && written.has("end") && !written.has("value")
+            val convert: (Double) -> Double = when (written?.optString("units")) {
+                "w", "W", "watts", "bpm" -> { v -> v }
+                "%ftp", "", null -> { v -> if (!hr && ftp != null) v * ftp / 100.0 else 0.0 }
+                "%lthr" -> { v -> if (lthr != null) v * lthr / 100.0 else 0.0 }
+                else -> { _ -> 0.0 } // zones, %MMP, % of max HR etc. need the resolved values
             }
             fun resolvedOr(key: String): Int? =
-                resolved?.optDoubleOrNull(key)?.roundToInt() ?: power?.optDoubleOrNull(key)?.let(toWatts)?.roundToInt()
+                resolved?.optDoubleOrNull(key)?.roundToInt() ?: written?.optDoubleOrNull(key)?.let(convert)?.roundToInt()
 
             val low = resolvedOr("start")
             val high = resolvedOr("end")
             if (ramp && low != null && high != null) {
-                return PlanStep(duration, low, high, ramp = true)
+                return PlanStep(duration, low, high, ramp = true, hr = hr)
             }
             val target = resolvedOr("value") ?: if (low != null && high != null) (low + high) / 2 else 0
-            return PlanStep(duration, target, target, rangeLow = low, rangeHigh = high, isRange = writtenAsRange)
+            return PlanStep(duration, target, target, rangeLow = low, rangeHigh = high, isRange = writtenAsRange, hr = hr)
         }
 
         internal fun JSONObject.optDoubleOrNull(key: String): Double? =

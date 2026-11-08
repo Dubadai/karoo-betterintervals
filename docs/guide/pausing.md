@@ -17,6 +17,12 @@ counting.
 
 ## When the Karoo pauses the ride
 
-If the Karoo pauses the ride itself, for example with auto-pause, the box says **Workout
-auto-paused**. There's no resume button then: the workout carries on when the ride does. ⏭ is
+If the Karoo pauses the ride (you paused it, or auto-pause did), the box says **Paused** or
+**Auto-paused**. There's no resume button then: the workout carries on when the ride does. ⏭ is
 grey here too.
+
+The Karoo's yellow paused bar covers the top of the screen, so the ⚙ comes down next to the box.
+Tap it to change the workout at the roadside, for example to [scale it](workouts-and-account.md#scale-workout).
+Pausing only the workout while you keep riding leaves the ⚙ at the top.
+
+<img src="images/ride-paused.png" width="240" alt="Ride paused by the Karoo: the gear next to the Auto-paused box">

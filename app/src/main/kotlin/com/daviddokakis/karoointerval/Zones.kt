@@ -39,4 +39,56 @@ object Zones {
         },
         null,
     )
+
+    /**
+     * The Karoo's colour for heart rate zone [zone] (1-based) of [zones]: its ride app picks from
+     * seven colours by the number of zones (5 zones: c1 c2 c3 c4 c6).
+     */
+    @ColorRes
+    fun hrZoneColor(zone: Int, zones: Int): Int? {
+        val picks = when (zones) {
+            1 -> listOf(3)
+            2 -> listOf(2, 6)
+            3 -> listOf(2, 3, 6)
+            4 -> listOf(2, 3, 4, 6)
+            5 -> listOf(1, 2, 3, 4, 6)
+            6 -> listOf(1, 2, 3, 4, 6, 7)
+            else -> listOf(1, 2, 3, 4, 5, 6, 7)
+        }
+        return picks.getOrNull(zone - 1)?.let { HR_COLORS[it - 1] }
+    }
+
+    private val HR_COLORS = listOf(
+        R.color.karoo_hr_c1, R.color.karoo_hr_c2, R.color.karoo_hr_c3, R.color.karoo_hr_c4,
+        R.color.karoo_hr_c5, R.color.karoo_hr_c6, R.color.karoo_hr_c7,
+    )
+
+    /**
+     * Chart colour for a heart-rate target: its zone in the Karoo rider profile's zones, else by
+     * % of LTHR in five zones (below 81 %, 81–89, 90–93, 94–99, 100+), else the middle colour.
+     */
+    @ColorRes
+    fun hrBarColor(bpm: Int, profileZones: List<IntRange>, lthr: Int?): Int {
+        if (profileZones.isNotEmpty()) {
+            val i = profileZones.indexOfFirst { bpm in it }
+            val zone = when {
+                i >= 0 -> i + 1
+                bpm > profileZones.last().last -> profileZones.size
+                else -> 1
+            }
+            hrZoneColor(zone, profileZones.size)?.let { return it }
+        }
+        if (lthr != null && lthr > 0) {
+            val pct = bpm * 100 / lthr
+            val zone = when {
+                pct < 81 -> 1
+                pct < 90 -> 2
+                pct < 94 -> 3
+                pct < 100 -> 4
+                else -> 5
+            }
+            return hrZoneColor(zone, 5) ?: R.color.karoo_hr_c3
+        }
+        return R.color.karoo_hr_c3
+    }
 }

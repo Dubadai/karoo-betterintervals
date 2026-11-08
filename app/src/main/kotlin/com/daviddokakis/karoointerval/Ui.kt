@@ -28,13 +28,14 @@ fun Context.text(value: String, sp: Float, bold: Boolean = false, secondary: Boo
         setPadding(0, dp(4), 0, dp(4))
     }
 
-fun Context.button(label: String, primary: Boolean, onClick: () -> Unit) = TextView(this).apply {
+/** [yellow]: the page's main action in Karoo yellow (black text in both modes), e.g. Back to ride. */
+fun Context.button(label: String, primary: Boolean, yellow: Boolean = false, onClick: () -> Unit) = TextView(this).apply {
     text = label
     setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
     setTypeface(typeface, Typeface.BOLD)
     gravity = Gravity.CENTER
-    setTextColor(getColor(if (primary) R.color.skip_fg else R.color.text))
-    setBackgroundResource(if (primary) R.drawable.bg_btn_skip else R.drawable.bg_btn_pause)
+    setTextColor(getColor(if (yellow) R.color.karoo_yellow_fg else if (primary) R.color.skip_fg else R.color.text))
+    setBackgroundResource(if (yellow) R.drawable.bg_btn_skip_karoo else if (primary) R.drawable.bg_btn_skip else R.drawable.bg_btn_pause)
     setPadding(dp(14), dp(10), dp(14), dp(10))
     minHeight = dp(44)
     isClickable = true
@@ -108,8 +109,19 @@ fun Context.settingsDivider() = View(this).apply {
     layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(1))
 }
 
-/** Karoo's segmented control: a pale pill track, the selected option as a blue-grey pill. */
-fun <T> Context.segmented(options: List<Pair<Int, T>>, selected: T, onPick: (T) -> Unit) = LinearLayout(this).apply {
+/** A small label above a control inside a settings section ("Left", "Right"). */
+fun Context.settingsSubLabel(value: String) = TextView(this).apply {
+    text = value
+    setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+    setTextColor(getColor(R.color.settings_help))
+    setPadding(0, dp(10), 0, dp(4))
+}
+
+/**
+ * Karoo's segmented control: a pale pill track, the selected option as a blue-grey pill.
+ * [disabled]: an option shown greyed out and not tappable (e.g. already picked elsewhere).
+ */
+fun <T> Context.segmented(options: List<Pair<Int, T>>, selected: T, disabled: T? = null, onPick: (T) -> Unit) = LinearLayout(this).apply {
     orientation = LinearLayout.HORIZONTAL
     setBackgroundResource(R.drawable.bg_segment_track)
     setPadding(dp(2), dp(2), dp(2), dp(2))
@@ -121,11 +133,14 @@ fun <T> Context.segmented(options: List<Pair<Int, T>>, selected: T, onPick: (T) 
                 gravity = Gravity.CENTER
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
                 setTextColor(getColor(if (value == selected) R.color.segment_text_selected else R.color.segment_text))
+                val off = value == disabled && value != selected
+                if (off) alpha = 0.35f
                 if (value == selected) setBackgroundResource(R.drawable.bg_segment_selected)
                 contentDescription = getString(label)
                 isSelected = value == selected
-                isClickable = true
-                setOnClickListener { onPick(value) }
+                isClickable = !off
+                isEnabled = !off
+                if (!off) setOnClickListener { onPick(value) }
             },
             LinearLayout.LayoutParams(0, MATCH_PARENT, 1f),
         )

@@ -207,7 +207,7 @@ class SetupActivity : AppearanceActivity() {
         )
         content.addView(
             row(
-                button(getString(R.string.back_to_ride), primary = true) { goToRide() }.apply {
+                button(getString(R.string.back_to_ride), primary = true, yellow = true) { goToRide() }.apply {
                     layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginEnd = dp(8) }
                 },
                 button(getString(if (loading) R.string.syncing else R.string.sync), primary = false) {
@@ -220,15 +220,24 @@ class SetupActivity : AppearanceActivity() {
             content.addView(text(getString(R.string.synced_at, time), 12f, secondary = true))
         }
 
-        // Current workout
+        // Scale workout (only with a workout loaded): its power targets in % of the plan, 1% a tap,
+        // like the Karoo's own SCALE − 100% +. Design: docs/design/hr-targets/ (scale.html).
         val current = store.plan.value
+        val pct = store.scalePct.value
+        // (not for a workout with only heart-rate targets: there's no power to scale)
+        if (current != null && !current.hrOnly) {
+            content.addView(sectionHeader(getString(R.string.scale_workout)))
+            content.addView(scaleControl(pct))
+        }
+
+        // Current workout (drawn at its scale)
         content.addView(sectionHeader(getString(R.string.current_workout)))
         if (current == null) {
             content.addView(text(getString(R.string.no_current_workout), 14f, secondary = true))
         } else {
             val currentWorkout = week.firstOrNull { it.plan.id == current.id }
             content.addView(
-                card(current, currentWorkout?.date, selected = false, onClick = null).apply {
+                card(current.scaled(pct), currentWorkout?.date, selected = false, onClick = null).apply {
                     addView(
                         button(getString(R.string.stop_workout), primary = false) {
                             store.clearSelection()
@@ -306,7 +315,8 @@ class SetupActivity : AppearanceActivity() {
             addView(text(plan.name, 16f, bold = true).apply { setPadding(0, 0, 0, dp(6)) })
             addView(thumbnail(plan))
             val dateText = date?.let { if (it == LocalDate.now()) getString(R.string.today) else it.format(DAY_FORMAT) }
-            val details = listOfNotNull(formatClock(plan.totalSec), dateText).joinToString(" · ")
+            val scale = plan.scalePct.takeIf { it != 100 && !plan.hrOnly }?.let { getString(R.string.scale_pct, it) }
+            val details = listOfNotNull(formatClock(plan.totalSec), dateText, scale).joinToString(" · ")
             addView(
                 text(
                     if (selected) "$details · ${getString(R.string.selected)}" else details,
@@ -320,11 +330,41 @@ class SetupActivity : AppearanceActivity() {
             if (onClick != null) setOnClickListener { onClick() }
         }
 
+    /** − 100% +: an outlined box (like Next up on the ride screen), only the buttons filled. */
+    private fun scaleControl(pct: Int) = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setBackgroundResource(R.drawable.bg_outline)
+        setPadding(dp(8), dp(8), dp(8), dp(8))
+        layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+        fun step(icon: Int, description: Int, delta: Int) = android.widget.FrameLayout(this@SetupActivity).apply {
+            setBackgroundResource(R.drawable.bg_btn_skip_inverted)   // black (white in dark mode)
+            contentDescription = getString(description)
+            isClickable = true
+            setOnClickListener {
+                store.setScalePct(store.scalePct.value + delta)
+                render()
+            }
+            addView(
+                ImageView(this@SetupActivity).apply { setImageResource(icon) },
+                android.widget.FrameLayout.LayoutParams(dp(24), dp(24), Gravity.CENTER),
+            )
+            layoutParams = LinearLayout.LayoutParams(dp(48), dp(48))
+        }
+        addView(step(R.drawable.ic_minus, R.string.cd_scale_down, -1))
+        addView(
+            text(getString(R.string.scale_pct, pct), 24f).apply { gravity = Gravity.CENTER },
+            LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f),
+        )
+        addView(step(R.drawable.ic_plus, R.string.cd_scale_up, +1))
+    }
+
     private fun thumbnail(plan: WorkoutPlan): ImageView {
         val w = resources.displayMetrics.widthPixels - dp(44)
         val h = dp(48)
         return ImageView(this).apply {
-            setImageBitmap(ChartRenderer(this@SetupActivity).render(ScreenState(plan = plan), w, h, 1f, ChartRenderer.Style.CARD))
+            // The rider's own heart rate zones, so heart-rate steps have the ride screen's colours
+            setImageBitmap(ChartRenderer(this@SetupActivity).render(ScreenState(plan = plan, hrZones = store.hrZones), w, h, 1f, ChartRenderer.Style.CARD))
             scaleType = ImageView.ScaleType.FIT_XY
             contentDescription = getString(R.string.cd_chart)
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, h)

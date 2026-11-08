@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The heart for the top row: a 24-unit box with the heart's shape centred in it (top row
+     icons are centred on their digits). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path
+        android:pathData="M19.5,12.572L12,20l-7.5,-7.428A5,5 0,1 1,12 6.006a5,5 0,1 1,7.5 6.572"
+        android:strokeColor="@color/heart_icon"
+        android:strokeWidth="2"
+        android:strokeLineJoin="round"
+        android:fillColor="@color/heart_icon" />
+</vector>

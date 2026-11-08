@@ -78,6 +78,26 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
+            <!-- Ride paused by the Karoo: its yellow bar covers the gear at the top, so the gear
+                 comes down here, before the paused box (only then) -->
+            <FrameLayout
+                android:id="@+id/btn_settings_paused"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_btn_pause"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/settings_paused_icon"
+                    android:layout_width="19dp"
+                    android:layout_height="19dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/cd_settings"
+                    android:src="@drawable/ic_settings"
+                    android:tint="@color/text" />
+            </FrameLayout>
+
             <!-- Timer icon on the label's capitals (12dp icon, baseline 10dp from its top) -->
             <ImageView
                 android:id="@+id/icon_timer"
@@ -251,7 +271,7 @@
             </FrameLayout>
 
             <FrameLayout
-                android:id="@+id/target_tile"
+                android:id="@+id/tile2"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -268,7 +288,7 @@
                     android:orientation="horizontal">
 
                     <ImageView
-                        android:id="@+id/icon_target"
+                        android:id="@+id/tile2_icon"
                         android:layout_width="13dp"
                         android:layout_height="13dp"
                         android:layout_marginEnd="3dp"
@@ -277,8 +297,18 @@
                         android:src="@drawable/ic_target"
                         android:tint="@color/karoo_green" />
 
+                    <ImageView
+                        android:id="@+id/tile2_icon2"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:layout_marginEnd="3dp"
+                        android:baseline="11dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_heart"
+                        android:visibility="gone" />
+
                     <TextView
-                        android:id="@+id/target_label"
+                        android:id="@+id/tile2_label"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
@@ -301,7 +331,7 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/target"
+                        android:id="@+id/tile2_value"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif"
@@ -675,41 +705,75 @@
             android:src="@drawable/ic_pause" />
     </FrameLayout>
 
-    <!-- Heart rate, centred on the same line as the gear and pause icons (40dp row: icons are
-         24dp, 8dp from the top, clear of Karoo's swipe-down strip). -->
+    <!-- Top row, centred between the gear and pause on the gear's line (Settings › Top row): one
+         or two values, each an icon centred on its digits (18dp icon box, baseline 16dp: the box's
+         middle sits 7dp above the baseline, the middle of 20sp digits). During a jump, "→ 250"
+         (target_next) shows where it would land, next to the target. -->
     <FrameLayout
+        android:id="@+id/top_block"
         android:layout_width="wrap_content"
         android:layout_height="40dp"
         android:layout_gravity="top|center_horizontal">
 
         <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:baselineAligned="true"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/top1_icon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginEnd="4dp"
+                android:baseline="16dp"
+                android:contentDescription="@string/cd_heart_rate"
+                android:src="@drawable/ic_top_heart" />
+
+            <TextView
+                android:id="@+id/top1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:baselineAligned="true"
-                android:orientation="horizontal">
+                android:fontFamily="sans-serif"
+                android:includeFontPadding="false"
+                android:textColor="@color/text"
+                android:textScaleX="0.9"
+                android:textSize="20sp" />
 
-                <!-- Bottom on the text baseline; the heart itself is about as tall as the digits -->
-                <ImageView
-                    android:id="@+id/hr_icon"
-                    android:layout_width="17dp"
-                    android:layout_height="15.5dp"
-                    android:layout_marginEnd="5dp"
-                    android:baselineAlignBottom="true"
-                    android:contentDescription="@string/cd_heart_rate"
-                    android:scaleType="fitXY"
-                    android:src="@drawable/ic_heart" />
+            <TextView
+                android:id="@+id/target_next_top"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:fontFamily="sans-serif"
+                android:includeFontPadding="false"
+                android:textColor="@color/text"
+                android:textSize="14sp"
+                android:visibility="gone" />
 
-                <TextView
-                    android:fontFamily="sans-serif"
-                    android:id="@+id/hr"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:includeFontPadding="false"
-                    android:textColor="@color/text"
-                    android:textScaleX="0.9"
-                    android:textSize="20sp" />
-            </LinearLayout>
+            <ImageView
+                android:id="@+id/top2_icon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="4dp"
+                android:baseline="16dp"
+                android:contentDescription="@string/cadence"
+                android:src="@drawable/ic_top_cadence"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/top2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:includeFontPadding="false"
+                android:textColor="@color/text"
+                android:textScaleX="0.9"
+                android:textSize="20sp"
+                android:visibility="gone" />
+        </LinearLayout>
     </FrameLayout>
 
     <!-- Resume button while you've paused the workout: a green half-pill, rounded on the left and
