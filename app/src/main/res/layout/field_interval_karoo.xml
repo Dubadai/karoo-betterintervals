@@ -106,7 +106,8 @@
                 android:layout_marginEnd="4dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_timer"
-                android:tint="@color/karoo_green" />
+                android:tint="@color/karoo_green"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/interval_label"
@@ -174,7 +175,8 @@
                 android:letterSpacing="-0.05"
                 android:textColor="@color/text"
                 android:textScaleX="0.9"
-                android:textSize="28sp" />
+                android:textSize="28sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <ProgressBar
@@ -197,7 +199,7 @@
         <LinearLayout
             android:id="@+id/tiles_row"
             android:layout_width="match_parent"
-            android:layout_height="54dp"
+            android:layout_height="68dp"
             android:layout_marginStart="-5dp"
             android:layout_marginEnd="-5dp"
             android:orientation="horizontal">
@@ -267,7 +269,8 @@
                     android:gravity="end|bottom"
                     android:maxLines="1"
                     android:textColor="@color/text"
-                    android:textSize="31sp" />
+                    android:textSize="40sp"
+                android:textStyle="bold" />
             </FrameLayout>
 
             <FrameLayout
@@ -341,7 +344,8 @@
                         android:gravity="end|bottom"
                         android:maxLines="1"
                         android:textColor="@color/text"
-                        android:textSize="31sp" />
+                        android:textSize="40sp"
+                android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/target_next"
@@ -361,7 +365,7 @@
         <LinearLayout
             android:id="@+id/confirm_row"
             android:layout_width="match_parent"
-            android:layout_height="54dp"
+            android:layout_height="68dp"
             android:orientation="horizontal"
             android:visibility="gone">
 
@@ -432,7 +436,7 @@
         <LinearLayout
             android:id="@+id/move_cancelled"
             android:layout_width="match_parent"
-            android:layout_height="54dp"
+            android:layout_height="68dp"
             android:background="@drawable/bg_info"
             android:gravity="center"
             android:orientation="horizontal"
@@ -739,7 +743,8 @@
                 android:includeFontPadding="false"
                 android:textColor="@color/text"
                 android:textScaleX="0.9"
-                android:textSize="20sp" />
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/target_next_top"
@@ -772,7 +777,8 @@
                 android:textColor="@color/text"
                 android:textScaleX="0.9"
                 android:textSize="20sp"
-                android:visibility="gone" />
+                android:visibility="gone"
+                android:textStyle="bold" />
         </LinearLayout>
     </FrameLayout>
 

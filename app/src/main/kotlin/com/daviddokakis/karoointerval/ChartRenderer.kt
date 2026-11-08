@@ -47,7 +47,8 @@ class ChartRenderer(private val context: Context) {
             textSize = 10f * d
         }
         val top = if (card) 2f * d else 9f * d
-        val bottom = if (card) height.toFloat() else height - label.textSize - 6f * d
+        // No time label under the screen's chart any more: the bars use the whole height
+        val bottom = if (card) height.toFloat() else height - 2f * d
         val sidePad = 0f
         val plotW = width - 2 * sidePad
 
@@ -95,8 +96,8 @@ class ChartRenderer(private val context: Context) {
         fun y(level: Float) = bottom - ((level - floor) / (maxWatts - floor)).coerceAtLeast(0f) * (bottom - top)
         fun y(watts: Int) = y(watts.toFloat())
 
-        // Watt guide lines (screen only)
-        if (!card) {
+        // No watt scale (guide lines and their numbers): the workout's shape is enough
+        if (false) {
             val grid = Paint().apply { color = color(R.color.track); strokeWidth = 0.5f * d }
             var w = gridStep
             while (w < maxWatts) {
@@ -200,10 +201,6 @@ class ChartRenderer(private val context: Context) {
         marker.style = Paint.Style.FILL
         canvas.drawPath(tri, marker)
 
-        // Time axis: just the end time, at the far right.
-        val baseline = height - 2f * d
-        label.textAlign = Paint.Align.RIGHT
-        canvas.drawText(formatClock(winEnd), width.toFloat(), baseline, label)
         return bmp
     }
 

@@ -340,7 +340,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         } else {
             v.setViewVisibility(R.id.interval_label, View.VISIBLE)
             v.setViewVisibility(R.id.paused_box, View.GONE)
-            v.setViewVisibility(R.id.icon_timer, View.VISIBLE)
+            v.setViewVisibility(R.id.icon_timer, View.GONE)   // no timer icon before INTERVAL (design: heavier-values)
             v.setViewVisibility(R.id.paused_spacer, View.GONE)
             if (s.finished) {
                 v.setTextViewText(R.id.interval_label, context.getString(R.string.workout_complete))
@@ -798,7 +798,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
 
     /** Karoo-style cell values: IBM Plex Sans Medium (sans-serif on the Karoo), 90% wide, tighter. */
     private val numberPaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-        typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL)
+        typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.BOLD)   // the cells' values are bold (SemiBold on the Karoo)
         textScaleX = 0.9f
         letterSpacing = -0.05f
     }
@@ -906,8 +906,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         private const val ICON_ALPHA = 140
         private const val REF_W_DP = 255f
         private const val REF_H_DP = 385f
-        private const val CHART_DP = 56f
-        private const val CELL_VALUE_SP = 31f
+        private const val CHART_DP = 42f   // 56 before; the 14dp the time label used went to the tiles
+        private const val CELL_VALUE_SP = 40f
         /** The gauge needle's averaging time (seconds): smooth, but still quick to follow a real change. */
         private const val NEEDLE_SECONDS = 2.5
         /** Height of the gauge's space on a full page without a route (measured), and how much a route takes. */
