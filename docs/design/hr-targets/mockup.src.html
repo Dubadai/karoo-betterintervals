@@ -27,6 +27,7 @@
 <script>
 const FRAME = "__FRAME__";
 const B = /*__BASE__*/;
+const ONLY = /*__ONLY__*/null;   // build.py: one section on its own page
 const img = src => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
 // App colours (res/values, values-night)
 const C = {
@@ -285,7 +286,7 @@ function workouts(theme, pct) {
     ]],
   ];
   const root = document.getElementById('rows');
-  for (const [title, desc, rows] of sections) {
+  for (const [title, desc, rows] of sections.filter(([t]) => !ONLY || t === ONLY)) {
     const h = document.createElement('h2'); h.textContent = title; root.append(h);
     const p = document.createElement('p'); p.className = 'd'; p.textContent = desc; root.append(p);
     for (const [cap, make, themes] of rows) {

@@ -14,3 +14,4 @@ html = html.replace('__FONT_BOLD__', data_url(assets / 'fonts' / 'IBMPlexSans-Bo
 html = html.replace('__FONT_REG__', data_url(assets / 'fonts' / 'IBMPlexSans-Regular.ttf', 'font/ttf'))
 html = html.replace('/*__BASE__*/', json.dumps(base))
 (here / 'mockup.html').write_text(html); print('wrote mockup.html')
+(here / 'scale.html').write_text(html.replace('/*__ONLY__*/null', json.dumps('Scale the workout'))); print('wrote scale.html')
