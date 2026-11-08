@@ -11,7 +11,7 @@ you can jump forward **and back** between intervals.
 
 - **Before, during and after:** a workout waits for **START WORKOUT** (pick where to start with
   ⏮ / ⏭, then a 5-second countdown), runs interval by interval with beeps before each change,
-  and ends on a **Workout done** screen with its time, average power, NP and heart rate.
+  and ends on a **Workout complete** screen with its time, average power, NP and heart rate.
 - **Big power** (instant or 3 / 5 / 10 s): starts on the **power gauge**; tap the watts for a plain,
   coloured number, coloured background or both. Blue is below the range, green in it, red above it.
 - **Interval, time left and progress bar,** with lap average and target (tap Lap avg for Lap NP,

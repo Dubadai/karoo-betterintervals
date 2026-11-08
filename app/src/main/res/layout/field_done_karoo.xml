@@ -41,7 +41,7 @@
             android:layout_marginTop="8dp"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:text="@string/workout_done"
+            android:text="@string/workout_complete"
             android:textAllCaps="true"
             android:textColor="@color/text"
             android:textSize="24sp"
@@ -77,6 +77,17 @@
                 android:paddingTop="6dp"
                 android:paddingEnd="8dp"
                 android:paddingBottom="5dp">
+
+                <!-- The workout screen's icon for this number, top left, centred on the label's capitals -->
+                <ImageView
+                    android:id="@+id/done_icon_1"
+                    android:layout_width="13dp"
+                    android:layout_height="13dp"
+                    android:layout_gravity="top|start"
+                    android:layout_marginTop="2dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_timer"
+                    android:tint="@color/karoo_green" />
 
                 <TextView
                     android:fontFamily="ibm-plex-sans-condensed"
@@ -119,6 +130,17 @@
                 android:paddingTop="6dp"
                 android:paddingEnd="8dp"
                 android:paddingBottom="5dp">
+
+                <!-- The workout screen's icon for this number, top left, centred on the label's capitals -->
+                <ImageView
+                    android:id="@+id/done_icon_2"
+                    android:layout_width="13dp"
+                    android:layout_height="13dp"
+                    android:layout_gravity="top|start"
+                    android:layout_marginTop="2dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_bolt_filled"
+                    android:tint="@color/karoo_green" />
 
                 <TextView
                     android:fontFamily="ibm-plex-sans-condensed"
@@ -168,6 +190,17 @@
                 android:paddingEnd="8dp"
                 android:paddingBottom="5dp">
 
+                <!-- The workout screen's icon for this number, top left, centred on the label's capitals -->
+                <ImageView
+                    android:id="@+id/done_icon_3"
+                    android:layout_width="13dp"
+                    android:layout_height="13dp"
+                    android:layout_gravity="top|start"
+                    android:layout_marginTop="2dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_bolt_filled"
+                    android:tint="@color/karoo_green" />
+
                 <TextView
                     android:fontFamily="ibm-plex-sans-condensed"
                     android:id="@+id/done_label_3"
@@ -209,6 +242,16 @@
                 android:paddingTop="6dp"
                 android:paddingEnd="8dp"
                 android:paddingBottom="5dp">
+
+                <!-- The workout screen's icon for this number, top left, centred on the label's capitals -->
+                <ImageView
+                    android:id="@+id/done_icon_4"
+                    android:layout_width="13dp"
+                    android:layout_height="13dp"
+                    android:layout_gravity="top|start"
+                    android:layout_marginTop="2dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_heart" />
 
                 <TextView
                     android:fontFamily="ibm-plex-sans-condensed"
@@ -264,7 +307,7 @@
                 android:textStyle="normal" />
         </FrameLayout>
 
-        <!-- The ride keeps recording: a red dot and a short note -->
+        <!-- The ride is still recording: a red bike and a short note -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -275,11 +318,11 @@
 
             <ImageView
                 android:id="@+id/th_done_karoo_2"
-                android:layout_width="8dp"
-                android:layout_height="8dp"
-                android:layout_marginEnd="6dp"
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:layout_marginEnd="4dp"
                 android:importantForAccessibility="no"
-                android:src="@drawable/dot_recording" />
+                android:src="@drawable/ic_bike" />
 
             <TextView
                 android:id="@+id/th_done_karoo_3"
@@ -287,7 +330,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
-                android:text="@string/ride_keeps_recording"
+                android:text="@string/ride_still_recording"
                 android:textAllCaps="true"
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
