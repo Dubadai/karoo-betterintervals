@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Done screen icons</title>
 <style>
+  @font-face { font-family: PlexCond; src: url(__FONT_COND__); font-weight: 500; }
   :root { color-scheme: dark; }
   body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
   h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
@@ -17,16 +18,19 @@
 </head>
 <body>
 <h1>Workout done: icons on the tiles</h1>
-<p class="d">Each tile gets the icon the workout screen uses, at the same size and place (top left, centred on the label): TIME the timer, AVG POWER and NP the bolt (Karoo green), AVG HR the heart (red; cadence's icon in green when Settings shows cadence). With a route the screen already fits: the check gets smaller and everything moves up. Drawn on the app's own done screens (field gallery).</p>
+<p class="d">Under DONE, "The ride keeps recording" with a red dot becomes a red bike and "Ride is still recording", so it's clear the Karoo ride goes on. Each tile gets the icon the workout screen uses, at the same size and place (top left, centred on the label): TIME the timer, AVG POWER and NP the bolt (Karoo green), AVG HR the heart (red; cadence's icon in green when Settings shows cadence). With a route the screen already fits: the check gets smaller and everything moves up. Drawn on the app's own done screens (field gallery).</p>
 <div id="rows"></div>
 <script>/*__KAROO_DEVICE_JS__*/</script>
 <script>
 const FRAME = "__FRAME__";
 const B = /*__BASE__*/;
+const fontsReady = document.fonts.load('500 24px PlexCond');
 const img = src => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
 const P = {
   timer: new Path2D('M12,6a7.5,7.5 0,1 1,0 15a7.5,7.5 0,1 1,0 -15z M12,13.5V10 M9.5,2.5h5'),
   bolt: new Path2D('M13,2v8h6l-8,12v-8H5l8,-12z'),
+  // A bicycle: two wheels, frame, saddle and handlebar (24-unit box)
+  bike: new Path2D('M2,16.5a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0z M15,16.5a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0z M5.5,16.5L9,9.5H16L18.5,16.5 M9,9.5L12,16.5L16,9.5 M7.5,6.5H10.5 M9,6.5L9,9.5 M14.5,6H17L16,9.5'),
   heart: new Path2D('M19.5,12.572L12,20l-7.5,-7.428A5,5 0,1 1,12 6.006a5,5 0,1 1,7.5 6.572'),
 };
 const C = { light: { green: '#129A5E', heart: '#C62F3A', tile: [0xEB, 0xEB, 0xEB] }, dark: { green: '#1DB872', heart: '#FF5C66', tile: [0x1F, 0x1F, 0x1F] } };
@@ -49,9 +53,29 @@ function icon(ctx, path, x, y, size, color, fill, stroke = 2) {
   ctx.save(); ctx.translate(x, y); ctx.scale(size / 24, size / 24); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = stroke; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   if (fill) ctx.fill(path); ctx.stroke(path); ctx.restore();
 }
+// "The ride keeps recording" (red dot) becomes a red bike and "Ride is still recording"
+function recordingNote(ctx, shot, theme) {
+  const c = document.createElement('canvas'); c.width = 480; c.height = 800; const g = c.getContext('2d'); g.drawImage(shot, 0, 0);
+  const d = g.getImageData(0, 0, 480, 800).data;
+  let dotY = -1, red = null;
+  for (let y = 560; y < 800 && dotY < 0; y++) for (let x = 40; x < 200; x++) { const k = (y * 480 + x) * 4; if (d[k] > 180 && d[k + 1] < 90 && d[k + 2] < 90) { dotY = y + 7; red = `rgb(${d[k]},${d[k + 1]},${d[k + 2]})`; break; } }
+  if (dotY < 0) return;
+  // the note's grey: the darkest (light) or lightest (dark) pixel of its text
+  let ink = null, best = theme === 'light' ? 999 : -1;
+  for (let y = dotY - 12; y < dotY + 12; y++) for (let x = 200; x < 400; x++) { const k = (y * 480 + x) * 4, l = d[k] + d[k + 1] + d[k + 2];
+    if (theme === 'light' ? l < best : l > best) { best = l; ink = `rgb(${d[k]},${d[k + 1]},${d[k + 2]})`; } }
+  const bg = (() => { const k = ((dotY - 20) * 480 + 20) * 4; return `rgb(${d[k]},${d[k + 1]},${d[k + 2]})`; })();
+  ctx.fillStyle = bg; ctx.fillRect(10, dotY - 16, 460, 32);
+  const F = '500 24px PlexCond', text = 'RIDE IS STILL RECORDING';
+  ctx.font = F; const tw = ctx.measureText(text).width, iw = 28, gap = 8;
+  let x = 240 - (iw + gap + tw) / 2;
+  ctx.save(); ctx.translate(x, dotY - 14); ctx.scale(iw / 24, iw / 24); ctx.strokeStyle = red; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(P.bike); ctx.restore();
+  ctx.fillStyle = ink; ctx.textBaseline = 'alphabetic'; ctx.fillText(text, x + iw + gap, dotY + 8.5);
+}
 function withIcons(shot, theme) {
   return ctx => {
     ctx.drawImage(shot, 0, 0);
+    recordingNote(ctx, shot, theme);
     const c = document.createElement('canvas'); c.width = 480; c.height = 800; const g = c.getContext('2d'); g.drawImage(shot, 0, 0);
     const d = g.getImageData(0, 0, 480, 800).data, k = C[theme];
     const t = tiles(d, k.tile).sort((a, b) => a[1] - b[1] || a[0] - b[0]);   // TIME, AVG POWER, NP, AVG HR
@@ -65,6 +89,7 @@ function withIcons(shot, theme) {
   };
 }
 (async () => {
+  await fontsReady;
   const I = {}; for (const [k, v] of Object.entries(B)) I[k] = await img(v);
   const rows = [
     ['Now', (v, t) => ctx => ctx.drawImage(I[v + '-' + t], 0, 0)],
