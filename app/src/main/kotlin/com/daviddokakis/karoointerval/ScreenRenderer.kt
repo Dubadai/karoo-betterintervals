@@ -106,6 +106,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (w <= 0 || h <= 0) 1f else minOf(w / (REF_W_DP * density), h / (REF_H_DP * density)).coerceIn(0.5f, 1.6f)
     }
     private var blinkOn = true
+    /** The done screen's recording dot: lit on the first draw, then on / off on every redraw. */
+    private var recDotOn = false
     private val chartHeightPx = (CHART_DP * density * scale).toInt()
 
     private val nextIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_NEXT, 1) }
@@ -484,6 +486,10 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             v.setInt(R.id.done_icon_4, "setColorFilter", color(R.color.heart_icon))
         }
         applyTiles(v, listOf(R.id.done_tile_1, R.id.done_tile_2, R.id.done_tile_3, R.id.done_tile_4), s.tileOutline, R.drawable.bg_tile_tonal)
+        // "Ride is still recording": the red dot blinks, flipping on every redraw (about once a second)
+        recDotOn = !recDotOn
+        v.setInt(R.id.rec_dot, "setImageAlpha", if (recDotOn) 255 else 45)
+        v.setInt(R.id.rec_dot, "setColorFilter", color(R.color.recording))
         v.setOnClickPendingIntent(R.id.btn_done, doneIntent)
         v.setOnClickPendingIntent(R.id.btn_settings, settingsIntent)
         return v

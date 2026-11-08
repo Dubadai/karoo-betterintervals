@@ -7,3 +7,6 @@ Karoo's own ride icon from its status bar (shown top left while a ride runs), in
 now on main. Light and dark, with close-ups.
 
 `base/`: field gallery done screens the mockup is drawn on.
+
+Picked (2026-11-08): A, with the ring in the text colour (black in light mode, white in dark) and the red dot
+blinking once a second, like the paused icon.
