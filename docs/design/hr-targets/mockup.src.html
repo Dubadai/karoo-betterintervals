@@ -3,55 +3,102 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HR target workouts</title>
+<title>HR targets and more</title>
 <style>
   @font-face { font-family: PlexCond; src: url(__FONT_COND__); font-weight: 500; }
   @font-face { font-family: PlexSemi; src: url(__FONT_SEMI__); font-weight: 600; }
   @font-face { font-family: PlexMed; src: url(__FONT_MED__); font-weight: 500; }
   @font-face { font-family: PlexReg; src: url(__FONT_REG__); font-weight: 400; }
+  @font-face { font-family: PlexBold; src: url(__FONT_BOLD__); font-weight: 700; }
   :root { color-scheme: dark; }
   body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
   h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
-  p.d { color:#A9A6A0; margin:0 auto 22px; max-width:780px; text-align:center; }
-  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:24px; margin-bottom:34px; }
+  h2 { font-size:16px; font-weight:500; margin:26px 0 4px; text-align:center; }
+  p.d { color:#A9A6A0; margin:0 auto 18px; max-width:780px; text-align:center; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:24px; margin-bottom:30px; }
   .dev { display:grid; justify-items:center; gap:8px; }
   .cap { color:#A9A6A0; font-size:13px; max-width:380px; text-align:center; }
 </style>
 </head>
 <body>
-<h1>Workouts with heart-rate targets</h1>
-<p class="d">A step with an HR target runs on heart rate. The big number and the gauge show your heart rate against the step's bpm range. Power moves to where heart rate was, at the top. The tiles show lap avg HR and the bpm target, and Next up shows bpm. The chart draws HR steps by bpm in the Karoo's own heart-rate zone colours, from 80 bpm up so the steps don't all look the same height. Drawn on the app's own gauge screen (field gallery).</p>
+<h1>Heart-rate targets, two values at the top, scaling and the gear while paused</h1>
 <div id="rows"></div>
 <script>/*__KAROO_DEVICE_JS__*/</script>
 <script>
 const FRAME = "__FRAME__";
 const B = /*__BASE__*/;
 const img = src => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
-const INK = { light: '#000000', dark: '#FFFFFF' }, GREY = { light: '#6E6E6E', dark: '#A8A8A8' }, GRID = { light: '#E2E2E2', dark: '#3A3A3A' };
-// Karoo HR zone colours for 5 zones: c1 c2 c3 c4 c6
-const HRZ = ['#60EEB2', '#00B988', '#FFF500', '#FB8C65', '#D60404'];
-const ZONE_TOP = [130, 145, 158, 170, 220];   // bpm at the top of each zone (example athlete)
+// App colours (res/values, values-night)
+const C = {
+  light: { ink: '#0B0B0B', grey: '#444441', page: '#FFFFFF', tile: '#F1EFE8', track: '#D3D1C7', heart: '#C62F3A', green: '#129A5E',
+           segTrack: '#F4F4F4', segSel: '#3E5560', segSelInk: '#FFFFFF', segInk: '#243535', title: '#1C2E2E', help: '#6F6F6F', divider: '#DDDDDD', grid: '#E2E2E2', off: '#BDBDBA' },
+  dark:  { ink: '#FFFFFF', grey: '#D3D1C7', page: '#000000', tile: '#2C2C2A', track: '#444441', heart: '#FF5C66', green: '#1DB872',
+           segTrack: '#2A2A2A', segSel: '#C5D3DA', segSelInk: '#0B0B0B', segInk: '#F2F2F2', title: '#F2F2F2', help: '#B4B2A9', divider: '#3A3A38', grid: '#3A3A3A', off: '#5E5E5B' },
+};
+const SKIP_BG = '#85B7EB', SKIP_FG = '#042C53';
+const HRZ = ['#60EEB2', '#00B988', '#FFF500', '#FB8C65', '#D60404'];   // Karoo HR zone colours, 5 zones
+const ZONE_TOP = [130, 145, 158, 170, 220];
 const zoneOf = bpm => ZONE_TOP.findIndex(t => bpm <= t);
+const P = {
+  heart: new Path2D('M19.5,12.572L12,20l-7.5,-7.428A5,5 0,1 1,12 6.006a5,5 0,1 1,7.5 6.572'),
+  bolt: new Path2D('M13,2v8h6l-8,12v-8H5l8,-12z'),
+  cadence: new Path2D('M11,3a7,7 0,1 0,0.001 0z M3.5,17.5L18.5,2.5'),
+  gear: new Path2D('M10.325,4.317c0.426,-1.756 2.924,-1.756 3.35,0a1.724,1.724 0,0 0,2.573 1.066c1.543,-0.94 3.31,0.826 2.37,2.37a1.724,1.724 0,0 0,1.065 2.572c1.756,0.426 1.756,2.924 0,3.35a1.724,1.724 0,0 0,-1.066 2.573c0.94,1.543 -0.826,3.31 -2.37,2.37a1.724,1.724 0,0 0,-2.572 1.065c-0.426,1.756 -2.924,1.756 -3.35,0a1.724,1.724 0,0 0,-2.573 -1.066c-1.543,0.94 -3.31,-0.826 -2.37,-2.37a1.724,1.724 0,0 0,-1.065 -2.572c-1.756,-0.426 -1.756,-2.924 0,-3.35a1.724,1.724 0,0 0,1.066 -2.573c-0.94,-1.543 0.826,-3.31 2.37,-2.37c1,0.608 2.296,0.07 2.572,-1.065z M9,12a3,3 0,1 0,6 0a3,3 0,0 0,-6 0'),
+  back: new Path2D('M5,12l14,0 M5,12l6,6 M5,12l6,-6'),
+};
 function txt(ctx, s, x, y, font, color, align = 'left', sx = 1, bold = 0) {
   ctx.save(); ctx.translate(x, y); ctx.scale(sx, 1); ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align;
   if (bold) { ctx.strokeStyle = color; ctx.lineWidth = bold; ctx.lineJoin = 'round'; ctx.strokeText(s, 0, 0); }
   ctx.fillText(s, 0, 0); ctx.restore();
 }
-const sample = (ctx, x, y) => { const k = ctx.canvas.width / 480, d = ctx.getImageData(x * k, y * k, 1, 1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; };
-// Example: 10 m warm-up 110→135, 4 × (6 m @ 160–168, 4 m @ 138), 8 m cool-down 135→105
+const width = (ctx, s, font) => { ctx.save(); ctx.font = font; const w = ctx.measureText(s).width; ctx.restore(); return w; };
+function icon(ctx, path, x, y, size, color, { fill = false, stroke = 2, vb = 24 } = {}) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(size / vb, size / vb); ctx.strokeStyle = color; ctx.fillStyle = color;
+  ctx.lineWidth = stroke; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; if (fill) ctx.fill(path); ctx.stroke(path); ctx.restore();
+}
+const heart = (ctx, x, y, size, col) => icon(ctx, P.heart, x, y - size * 0.18, size, col, { fill: true, stroke: 1.5, vb: 22 });
+const rr = (ctx, x, y, w, h, r, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.fill(); };
+// Pixel helpers on the 480 × 800 screenshot
+function pixels(shot) { const c = document.createElement('canvas'); c.width = 480; c.height = 800; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(shot, 0, 0); return g; }
+const at = (g, x, y) => { const d = g.getImageData(x, y, 1, 1).data; return [d[0], d[1], d[2]]; };
+const css = ([r, g, b]) => `rgb(${r},${g},${b})`;
+function inkBox(shot, [x, y, w, h], theme) {
+  const d = pixels(shot).getImageData(x, y, w, h).data; let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1;
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    const k = (j * w + i) * 4, l = (d[k] + d[k + 1] + d[k + 2]) / 3, sat = Math.max(d[k], d[k + 1], d[k + 2]) - Math.min(d[k], d[k + 1], d[k + 2]);
+    if (sat < 20 && (theme === 'light' ? l < 90 : l > 200)) { x0 = Math.min(x0, i); y0 = Math.min(y0, j); x1 = Math.max(x1, i); y1 = Math.max(y1, j); }
+  }
+  return [x + x0, y + y0, x1 - x0 + 1, y1 - y0 + 1];
+}
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+// Recolour the gauge's green band to [to]: each pixel's share of the band colour (vs the page) moves to the new colour
+function recolourBand(ctx, shot, to) {
+  const g = pixels(shot), [x, y, w, h] = [120, 120, 240, 90], im = g.getImageData(x, y, w, h), d = im.data;
+  const bg = at(g, 100, 130), band = at(g, 190, 172), T = hex(to);
+  const v = band.map((c, i) => c - bg[i]), vv = v.reduce((s, c) => s + c * c, 0);
+  for (let k = 0; k < d.length; k += 4) {
+    const p = [d[k] - bg[0], d[k + 1] - bg[1], d[k + 2] - bg[2]];
+    const t = (p[0] * v[0] + p[1] * v[1] + p[2] * v[2]) / vv;
+    const off = Math.hypot(p[0] - t * v[0], p[1] - t * v[1], p[2] - t * v[2]);
+    const sat = Math.max(d[k], d[k + 1], d[k + 2]) - Math.min(d[k], d[k + 1], d[k + 2]);
+    if (t > 0.08 && off < 40 && sat > 30) for (let i = 0; i < 3; i++) d[k + i] = Math.round(bg[i] + Math.min(1, t) * (T[i] - bg[i]));
+  }
+  const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').putImageData(im, 0, 0);
+  ctx.drawImage(c, x, y);
+}
+// ---------- Ride screen pieces ----------
 const STEPS = [{ d: 600, a: 110, b: 135 }];
 for (let i = 0; i < 4; i++) STEPS.push({ d: 360, a: 164, b: 164 }, { d: 240, a: 138, b: 138 });
 STEPS.push({ d: 480, a: 135, b: 105 });
 const CUR = 3, IN_STEP = 360 - 93;
-function chart(ctx, theme, bg) {
+function hrChart(ctx, k, bg) {
   ctx.fillStyle = bg; ctx.fillRect(8, 668, 464, 116);
   const L = 16, W = 448, top = 690, bottom = 750, lo = 80, hi = 180;
   const total = STEPS.reduce((s, x) => s + x.d, 0);
   const X = s => L + s / total * W, Y = v => bottom - (v - lo) / (hi - lo) * (bottom - top);
-  ctx.lineWidth = 1;
   for (const v of [100, 150]) {
-    ctx.strokeStyle = GRID[theme]; ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(L + W, Y(v)); ctx.stroke();
-    txt(ctx, String(v), L + 4, Y(v) - 4, '500 19px PlexMed', GREY[theme]);
+    ctx.strokeStyle = k.grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(L + W, Y(v)); ctx.stroke();
+    txt(ctx, String(v), L + 4, Y(v) - 4, '500 19px PlexMed', k.grey);
   }
   let t = 0; const gap = 1.4;
   STEPS.forEach((s, i) => {
@@ -59,74 +106,185 @@ function chart(ctx, theme, bg) {
     const p = new Path2D(); p.moveTo(x0, bottom); p.lineTo(x0, ya); p.lineTo(x1, yb); p.lineTo(x1, bottom); p.closePath();
     ctx.fillStyle = HRZ[zoneOf((s.a + s.b) / 2)];
     if (i === CUR) {
-      const k = 3.75, q = new Path2D(); q.moveTo(x0 + k, bottom); q.lineTo(x0 + k, ya + k); q.lineTo(x1 - k, yb + k); q.lineTo(x1 - k, bottom); q.closePath();
-      ctx.fill(q); ctx.strokeStyle = INK[theme]; ctx.lineWidth = 3.75; ctx.stroke(p);
+      const q = new Path2D(), e = 3.75; q.moveTo(x0 + e, bottom); q.lineTo(x0 + e, ya + e); q.lineTo(x1 - e, yb + e); q.lineTo(x1 - e, bottom); q.closePath();
+      ctx.fill(q); ctx.strokeStyle = k.ink; ctx.lineWidth = 3.75; ctx.stroke(p);
     } else ctx.fill(p);
     t += s.d;
   });
-  const now = STEPS.slice(0, CUR).reduce((s, x) => s + x.d, 0) + IN_STEP, nx = X(now);
-  ctx.strokeStyle = INK[theme]; ctx.lineWidth = 3.75; ctx.beginPath(); ctx.moveTo(nx, top - 11); ctx.lineTo(nx, bottom); ctx.stroke();
-  ctx.fillStyle = INK[theme]; ctx.beginPath(); ctx.moveTo(nx - 9.4, top - 15); ctx.lineTo(nx + 9.4, top - 15); ctx.lineTo(nx, top - 3.75); ctx.fill();
-  txt(ctx, '58:00', L + W, 776, '500 19px PlexMed', GREY[theme], 'right');
+  const nx = X(STEPS.slice(0, CUR).reduce((s, x) => s + x.d, 0) + IN_STEP);
+  ctx.strokeStyle = k.ink; ctx.lineWidth = 3.75; ctx.beginPath(); ctx.moveTo(nx, top - 11); ctx.lineTo(nx, bottom); ctx.stroke();
+  ctx.fillStyle = k.ink; ctx.beginPath(); ctx.moveTo(nx - 9.4, top - 15); ctx.lineTo(nx + 9.4, top - 15); ctx.lineTo(nx, top - 3.75); ctx.fill();
+  txt(ctx, '58:00', L + W, 776, '500 19px PlexMed', k.grey, 'right');
 }
-// Bounding box of text ink (black in light, white in dark) inside [x, y, w, h] of the 480 × 800 screenshot
-function inkBox(shot, [x, y, w, h], theme) {
-  const c = document.createElement('canvas'); c.width = 480; c.height = 800; const g = c.getContext('2d'); g.drawImage(shot, 0, 0);
-  const d = g.getImageData(x, y, w, h).data; let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1;
-  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
-    const k = (j * w + i) * 4, l = (d[k] + d[k + 1] + d[k + 2]) / 3, sat = Math.max(d[k], d[k + 1], d[k + 2]) - Math.min(d[k], d[k + 1], d[k + 2]);
-    if (sat < 20 && (theme === 'light' ? l < 90 : l > 200)) { x0 = Math.min(x0, i); y0 = Math.min(y0, j); x1 = Math.max(x1, i); y1 = Math.max(y1, j); }
-  }
-  return [x + x0, y + y0, x1 - x0 + 1, y1 - y0 + 1];
+// The top row between the gear and pause: one or two [icon, value] items, centred
+function topRow(ctx, k, bg, items) {
+  ctx.fillStyle = bg; ctx.fillRect(70, 74, 340, 46);
+  const F = '500 38px PlexMed', ICON = 28, IG = 8, GAP = 34;
+  const ws = items.map(([, v]) => ICON + IG + width(ctx, v, F));
+  let x = 240 - (ws.reduce((a, b) => a + b, 0) + GAP * (items.length - 1)) / 2;
+  items.forEach(([kind, v], i) => {
+    if (kind === 'heart') heart(ctx, x, 84, ICON, k.heart);
+    if (kind === 'bolt') icon(ctx, P.bolt, x - 2, 81, 32, k.green, { fill: true, stroke: 1 });
+    if (kind === 'cadence') icon(ctx, P.cadence, x, 83, ICON, k.ink, { stroke: 2.2 });
+    txt(ctx, v, x + ICON + IG, 111, F, k.ink);
+    x += ws[i] + GAP;
+  });
 }
-function hrScreen(shot, theme) {
+function hrScreen(shot, theme, pct) {
+  const k = C[theme];
   return ctx => {
     ctx.drawImage(shot, 0, 0);
-    const bg = sample(ctx, 100, 130), tile1 = sample(ctx, 90, 540), tile2 = sample(ctx, 300, 545);
-    const red = sample(ctx, 205, 97), green = sample(ctx, 57, 491);
-    const HEART = new Path2D('M19.5,12.572L12,20l-7.5,-7.428A5,5 0,1 1,12 6.006a5,5 0,1 1,7.5 6.572');
-    const BOLT = new Path2D('M13,2v8h6l-8,12v-8H5l8,-12z');
-    const icon = (path, col, x, y, size, vb) => { ctx.save(); ctx.translate(x, y); ctx.scale(size / vb, size / vb);
-      ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.lineJoin = 'round'; ctx.fill(path); ctx.stroke(path); ctx.restore(); };
-    const heart = (x, y, size) => icon(HEART, red, x, y - size * 0.18, size, 22);
-    // Top row: power instead of heart rate
-    ctx.fillStyle = bg; ctx.fillRect(180, 74, 125, 46);
-    icon(BOLT, green, 192, 80, 32, 24);
-    txt(ctx, '215', 228, 111, '500 38px PlexMed', INK[theme]);
-    // The big number: heart rate
-    const box = inkBox(shot, [110, 196, 260, 160], theme); ctx.fillStyle = bg; ctx.fillRect(box[0] - 3, box[1] - 3, box[2] + 6, box[3] + 6);
-    txt(ctx, '164', 240, 345, '500 196px PlexMed', INK[theme], 'center', 0.92);
-    // Tile 1: LAP AVG heart rate (lap arrow + heart)
+    const g = pixels(shot), bg = css(at(g, 100, 130)), tile1 = css(at(g, 90, 540)), tile2 = css(at(g, 300, 545));
+    recolourBand(ctx, shot, k.heart);
+    topRow(ctx, k, bg, [['bolt', '215']]);
+    // Heart rate, sized to the space the watts use (never into the gauge)
+    const box = inkBox(shot, [110, 196, 260, 160], theme);
+    ctx.fillStyle = bg; ctx.fillRect(box[0] - 3, box[1] - 3, box[2] + 6, box[3] + 6);
+    let size = box[3] / 0.698; while (width(ctx, '164', `500 ${size}px PlexMed`) > box[2] && size > 40) size -= 2;
+    txt(ctx, '164', 240, box[1] + box[3], `500 ${size}px PlexMed`, k.ink, 'center');
+    // Tile 1: lap avg heart rate
     ctx.fillStyle = tile1; ctx.fillRect(46, 474, 30, 32); ctx.fillRect(120, 506, 115, 52);
-    heart(48, 481, 24);
-    txt(ctx, '162', 230, 551, '500 58px PlexMed', INK[theme], 'right', 0.92);
-    // Tile 2: TARGET in bpm (target + heart)
+    heart(ctx, 48, 481, 24, k.heart);
+    txt(ctx, '162', 230, 551, '500 58px PlexMed', k.ink, 'right', 0.92);
+    // Tile 2: target in bpm or % of LTHR
     ctx.fillStyle = tile2; ctx.fillRect(250, 506, 222, 52);
-    heart(280, 481, 24);
-    txt(ctx, '160–168', 466, 551, '500 58px PlexMed', INK[theme], 'right', 0.92);
-    // Next up in bpm
+    heart(ctx, 280, 481, 24, k.heart);
+    if (pct) { ctx.fillRect(330, 474, 140, 34); txt(ctx, '% LTHR', 466, 500, '500 28px PlexCond', k.ink, 'right'); }
+    txt(ctx, pct ? '97–102' : '160–168', 466, 551, '500 58px PlexMed', k.ink, 'right', 0.92);
     ctx.fillStyle = bg; ctx.fillRect(110, 612, 260, 44);
-    txt(ctx, '4m @ 138 bpm', 240, 646, '500 34px PlexCond', INK[theme], 'center', 1, 1.2);
-    chart(ctx, theme, bg);
+    txt(ctx, pct ? '4m @ 84% LTHR' : '4m @ 138 bpm', 240, 646, '500 34px PlexCond', k.ink, 'center', 1, 1.2);
+    hrChart(ctx, k, bg);
+  };
+}
+function twoTop(shot, theme) {
+  return ctx => { ctx.drawImage(shot, 0, 0); const g = pixels(shot); topRow(ctx, C[theme], css(at(g, 100, 130)), [['heart', '132'], ['cadence', '88']]); };
+}
+// Ride paused: the gear moves from the top corner to the start of the interval row
+function pausedGear(shot, theme) {
+  const k = C[theme];
+  return ctx => {
+    ctx.drawImage(shot, 0, 0);
+    const g = pixels(shot), bg = css(at(g, 100, 130));
+    ctx.fillStyle = bg; ctx.fillRect(8, 74, 50, 48);
+    const pillBg = css(at(g, 264, 400)), pillInk = css(at(g, 0, 0)), bars = css(at(g, 41, 400));
+    const g2 = pixels(shot); let ink = [255, 255, 255, 0];   // darkest pixel in the pill's text = its ink
+    const d = g2.getImageData(60, 385, 200, 30).data; for (let i = 0; i < d.length; i += 4) { const l = d[i] + d[i + 1] + d[i + 2]; if (l < ink[0] + ink[1] + ink[2]) ink = [d[i], d[i + 1], d[i + 2]]; }
+    ctx.fillStyle = bg; ctx.fillRect(10, 370, 300, 60);
+    rr(ctx, 16, 374, 52, 52, 12, k.track);
+    icon(ctx, P.gear, 26, 384, 32, k.ink, { stroke: 2 });
+    const PF = '500 25px PlexCond', tw = width(ctx, 'WORKOUT PAUSED', PF);
+    rr(ctx, 76, 375, 46 + tw + 14, 50, 12, pillBg);
+    ctx.globalAlpha = 0.35; ctx.fillStyle = css(ink); ctx.fillRect(90, 391, 5, 18); ctx.fillRect(100, 391, 5, 18); ctx.globalAlpha = 1;
+    txt(ctx, 'WORKOUT PAUSED', 122, 409, PF, css(ink));
+  };
+}
+// ---------- App pages (drawn) ----------
+function statusBar(ctx, k) {
+  ctx.fillStyle = k.page; ctx.fillRect(0, 0, 480, 800);
+  txt(ctx, '100%', 300, 50, '500 34px PlexMed', k.ink, 'right', 0.86);
+  ctx.fillStyle = k.ink; ctx.beginPath(); ctx.roundRect(306, 26, 16, 26, 2); ctx.fill();
+  txt(ctx, '10:24', 468, 52, '500 46px PlexMed', k.ink, 'right', 0.9);
+}
+function segmented(ctx, k, y, labels, sel, disabled = -1) {
+  rr(ctx, 22, y, 436, 76, 38, k.segTrack);
+  const w = 436 / labels.length;
+  labels.forEach((l, i) => {
+    const cx = 22 + w * i + w / 2;
+    if (i === sel) rr(ctx, 22 + w * i + 4, y + 4, w - 8, 68, 34, k.segSel);
+    const col = i === sel ? k.segSelInk : (i === disabled ? k.off : k.segInk);
+    txt(ctx, l, cx, y + 47, '400 22px PlexReg', col, 'center');
+  });
+}
+function settings(theme) {
+  const k = C[theme];
+  return ctx => {
+    statusBar(ctx, k);
+    icon(ctx, P.back, 36, 88, 34, k.ink, { stroke: 2 });
+    txt(ctx, 'Settings', 240, 116, '500 33px PlexMed', k.title, 'center');
+    ctx.fillStyle = k.divider; ctx.fillRect(22, 170, 436, 2);
+    ctx.strokeStyle = k.title; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(26, 208, 28, 28, 4); ctx.stroke();
+    ctx.fillStyle = k.title; ctx.fillRect(26, 208, 28, 8);
+    txt(ctx, 'Top row', 74, 236, '400 34px PlexReg', k.title);
+    segmented(ctx, k, 262, ['One', 'Two'], 1);
+    txt(ctx, 'Left', 24, 380, '500 21px PlexMed', k.help);
+    segmented(ctx, k, 392, ['Heart rate', 'Cadence', 'Target'], 0);
+    txt(ctx, 'Right', 24, 506, '500 21px PlexMed', k.help);
+    segmented(ctx, k, 518, ['Heart rate', 'Cadence', 'Target'], 1, 0);
+    ['What the top of the workout screen shows:', 'one value or two side by side. Lap avg and', 'Target are always on screen; whatever isn’t', 'at the top shows in the tile.']
+      .forEach((l, i) => txt(ctx, l, 22, 640 + i * 32, '400 22px PlexReg', k.help));
+    ctx.fillStyle = k.divider; ctx.fillRect(22, 780, 436, 2);
+  };
+}
+function bars(ctx, x, y, w, h, scale) {
+  // A power workout profile in the app's zone colours; heights follow the scale
+  const S = [[8, 55, 70, '#1E9E78'], [4, 92, 92, '#B8761F'], [3, 60, 60, '#1E9E78'], [4, 100, 100, '#D9572C'], [3, 60, 60, '#1E9E78'], [4, 92, 92, '#B8761F'], [3, 60, 60, '#1E9E78'], [4, 100, 100, '#D9572C'], [6, 70, 50, '#1E9E78']];
+  const tot = S.reduce((s, z) => s + z[0], 0); let t = 0;
+  S.forEach(([d, a, b, col]) => {
+    const x0 = x + t / tot * w + 1, x1 = x + (t + d) / tot * w - 1, ya = y + h - a / 110 * h * scale, yb = y + h - b / 110 * h * scale;
+    ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x0, y + h); ctx.lineTo(x0, ya); ctx.lineTo(x1, yb); ctx.lineTo(x1, y + h); ctx.fill(); t += d;
+  });
+}
+function workouts(theme, pct) {
+  const k = C[theme];
+  return ctx => {
+    statusBar(ctx, k);
+    txt(ctx, 'Workouts', 22, 132, '700 41px PlexBold', k.ink);
+    icon(ctx, P.gear, 396, 94, 38, k.ink, { stroke: 2 });
+    rr(ctx, 22, 172, 307, 81, 16, SKIP_BG); txt(ctx, 'Back to ride', 175, 223, '700 28px PlexBold', SKIP_FG, 'center');
+    rr(ctx, 344, 172, 114, 81, 16, k.track); txt(ctx, 'Sync', 401, 223, '700 28px PlexBold', k.ink, 'center');
+    txt(ctx, 'Last synced 20:20', 22, 287, '400 22px PlexReg', k.grey);
+    // Scale (only while a workout is loaded): the Karoo's own control, with clear buttons
+    txt(ctx, 'SCALE', 22, 358, '700 24px PlexBold', k.grey);
+    rr(ctx, 22, 376, 436, 124, 18, k.tile);
+    for (const [x, plus] of [[38, false], [350, true]]) {
+      rr(ctx, x, 392, 92, 92, 16, k.track);
+      ctx.fillStyle = k.ink; ctx.fillRect(x + 28, 435, 36, 6); if (plus) ctx.fillRect(x + 43, 420, 6, 36);
+    }
+    txt(ctx, pct + '%', 240, 446, '500 48px PlexMed', k.ink, 'center');
+    txt(ctx, 'of every power target', 240, 476, '400 19px PlexReg', k.grey, 'center');
+    txt(ctx, 'CURRENT WORKOUT', 22, 552, '700 24px PlexBold', k.grey);
+    rr(ctx, 22, 570, 436, 300, 18, k.tile);
+    txt(ctx, 'Threshold 4×8m', 40, 614, '700 30px PlexBold', k.ink);
+    txt(ctx, `1:15:00 · Today${pct !== 100 ? ' · ' + pct + '%' : ''}`, 40, 650, '400 22px PlexReg', k.grey);
+    bars(ctx, 40, 672, 400, 90, pct / 100);
+    rr(ctx, 40, 778, 272, 80, 16, k.track); txt(ctx, 'Remove workout', 176, 828, '700 28px PlexBold', k.ink, 'center');
   };
 }
 (async () => {
-  await Promise.all(['500 38px PlexMed', '500 34px PlexCond'].map(f => document.fonts.load(f)));
-  const I = {}; for (const [k, v] of Object.entries(B)) I[k] = await img(v);
-  const rows = [
-    ['Gauge · power workout (now)', t => ctx => ctx.drawImage(I['gauge-' + t], 0, 0)],
-    ['Gauge · heart-rate workout: HR is the big number, power goes to the top', t => hrScreen(I['gauge-' + t], t)],
+  await Promise.all(['500 38px PlexMed', '500 34px PlexCond', '400 22px PlexReg', '700 28px PlexBold'].map(f => document.fonts.load(f)));
+  const I = {}; for (const [kk, v] of Object.entries(B)) I[kk] = await img(v);
+  const sections = [
+    ['Heart-rate workout', 'The gauge band is red for heart rate (green stays power). Heart rate takes the watts’ space and never runs into the gauge. Power moves to the top.', [
+      ['Target in bpm', t => hrScreen(I['gauge-' + t], t, false)],
+      ['Tap the Target tile: % of LTHR (Next up follows)', t => hrScreen(I['gauge-' + t], t, true)],
+    ]],
+    ['Two values at the top', 'Settings › Top row: One or Two, then pick each. With Two, the right one can’t repeat the left.', [
+      ['Top row: Heart rate + Cadence', t => twoTop(I['gauge-' + t], t)],
+      ['Settings › Top row', t => settings(t)],
+    ]],
+    ['Scale the workout', 'The gear on the ride screen opens Workouts. While a workout is loaded, Scale sits above it: − and + in 1% steps (like the Karoo’s own), shown on the card. Heart-rate targets don’t scale.', [
+      ['Workouts · 100%', t => workouts(t, 100)],
+      ['Workouts · 105%: the profile grows with it', t => workouts(t, 105)],
+    ]],
+    ['Ride paused', 'While the Karoo has the ride paused, the gear moves down to the start of the interval row, clear of the Karoo’s buttons, so you can change the workout at the roadside.', [
+      ['Paused: gear by Workout paused', t => pausedGear(I['paused-' + t], t)],
+    ]],
   ];
-  for (const [cap, make] of rows) {
-    const row = document.createElement('div'); row.className = 'devices';
-    for (const t of ['light', 'dark']) {
-      const dev = await KarooDevice.load({ frame: FRAME, screen: B['gauge-' + t] });
-      const scr = dev.screen({ draw: make(t), scale: 2 });
-      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 380));
-      const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${t})`; el.append(c);
-      row.append(el);
+  const root = document.getElementById('rows');
+  for (const [title, desc, rows] of sections) {
+    const h = document.createElement('h2'); h.textContent = title; root.append(h);
+    const p = document.createElement('p'); p.className = 'd'; p.textContent = desc; root.append(p);
+    for (const [cap, make] of rows) {
+      const row = document.createElement('div'); row.className = 'devices';
+      for (const t of ['light', 'dark']) {
+        const dev = await KarooDevice.load({ frame: FRAME, screen: B['gauge-' + t] });
+        const scr = dev.screen({ draw: make(t), scale: 2 });
+        const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 380));
+        const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${t})`; el.append(c);
+        row.append(el);
+      }
+      root.append(row);
     }
-    document.getElementById('rows').append(row);
   }
 })();
 </script>
