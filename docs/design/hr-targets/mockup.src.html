@@ -130,13 +130,13 @@ function topRow(ctx, k, bg, items) {
     x += ws[i] + GAP;
   });
 }
-function hrScreen(shot, theme, pct) {
+function hrScreen(shot, theme, pct, top = [['bolt', '215']]) {
   const k = C[theme];
   return ctx => {
     ctx.drawImage(shot, 0, 0);
     const g = pixels(shot), bg = css(at(g, 100, 130)), tile1 = css(at(g, 90, 540)), tile2 = css(at(g, 300, 545));
     recolourBand(ctx, shot, k.heart);
-    topRow(ctx, k, bg, [['bolt', '215']]);
+    topRow(ctx, k, bg, top);
     // Heart rate, sized to the space the watts use (never into the gauge)
     const box = inkBox(shot, [110, 196, 260, 160], theme);
     ctx.fillStyle = bg; ctx.fillRect(box[0] - 3, box[1] - 3, box[2] + 6, box[3] + 6);
@@ -265,7 +265,8 @@ function workouts(theme, pct) {
       ['Tap the Target tile: % of LTHR (Next up follows)', t => hrScreen(I['gauge-' + t], t, true)],
     ]],
     ['Two values at the top', 'Settings › Top row: One or Two, then pick each. With Two, the right one can’t repeat the left.', [
-      ['Top row: Heart rate + Cadence', t => twoTop(I['gauge-' + t], t)],
+      ['Power workout · Top row: Heart rate + Cadence', t => twoTop(I['gauge-' + t], t)],
+      ['Heart-rate workout · same setting: power takes heart rate\u2019s place', t => hrScreen(I['gauge-' + t], t, false, [['bolt', '215'], ['cadence', '88']])],
       ['Settings › Top row', t => settings(t)],
     ]],
     ['Scale the workout', 'The gear on the ride screen opens Workouts. While a workout is loaded, Scale sits above it: − and + in 1% steps (like the Karoo’s own), shown on the card. Heart-rate targets don’t scale.', [
