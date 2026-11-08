@@ -119,14 +119,18 @@ function hrChart(ctx, k, bg) {
 // The top row between the gear and pause: one or two [icon, value] items, centred
 function topRow(ctx, k, bg, items) {
   ctx.fillStyle = bg; ctx.fillRect(70, 74, 340, 46);
-  const F = '500 38px PlexMed', ICON = 28, IG = 8, GAP = 34;
-  const ws = items.map(([, v]) => ICON + IG + width(ctx, v, F));
+  // Digits: 38 px, baseline 111, so they run from 111 - 0.698·38 to 111. Each icon's drawn shape is centred on them.
+  const F = '500 38px PlexMed', BASE = 111, MID = BASE - 0.698 * 38 / 2, IG = 8, GAP = 34;
+  // [path, viewbox, top and bottom of the shape in viewbox units, size in px, width in px]
+  const SPEC = { heart: [P.heart, 22, 4.6, 20, 30, 30], cadence: [P.cadence, 24, 2.5, 17.5, 34, 30], bolt: [P.bolt, 24, 2, 22, 30, 24] };
+  const ws = items.map(([kind, v]) => SPEC[kind][5] + IG + width(ctx, v, F));
   let x = 240 - (ws.reduce((a, b) => a + b, 0) + GAP * (items.length - 1)) / 2;
   items.forEach(([kind, v], i) => {
-    if (kind === 'heart') heart(ctx, x, 84, ICON, k.heart);
-    if (kind === 'bolt') icon(ctx, P.bolt, x - 2, 81, 32, k.green, { fill: true, stroke: 1 });
-    if (kind === 'cadence') icon(ctx, P.cadence, x, 83, ICON, k.ink, { stroke: 2.2 });
-    txt(ctx, v, x + ICON + IG, 111, F, k.ink);
+    const [path, vb, t, b, size] = SPEC[kind], y = MID - (t + b) / 2 * size / vb;
+    if (kind === 'heart') icon(ctx, path, x, y, size, k.heart, { fill: true, stroke: 1.5, vb });
+    if (kind === 'bolt') icon(ctx, path, x - 3, y, size, k.green, { fill: true, stroke: 1, vb });
+    if (kind === 'cadence') icon(ctx, path, x, y, size, k.ink, { stroke: 2.4, vb });
+    txt(ctx, v, x + SPEC[kind][5] + IG, BASE, F, k.ink);
     x += ws[i] + GAP;
   });
 }
