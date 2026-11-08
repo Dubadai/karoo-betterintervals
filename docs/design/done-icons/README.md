@@ -7,6 +7,7 @@ recording note: a bike icon and "Ride is still recording".
 left, centred on the label): TIME the timer, AVG POWER and NP the bolt (Karoo green), AVG HR the
 heart (red; cadence's icon when Settings shows cadence). With a route (79 px shorter) the screen
 already fits: the check gets smaller and everything moves up.
+Title: WORKOUT COMPLETE instead of WORKOUT DONE!, so DONE is only the button.
 Under DONE: a red bike (the recording dot's red) and RIDE IS STILL RECORDING, in place of the red dot
 and THE RIDE KEEPS RECORDING.
 

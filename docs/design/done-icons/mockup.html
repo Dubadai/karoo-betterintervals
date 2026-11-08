@@ -18,7 +18,7 @@
 </head>
 <body>
 <h1>Workout done: icons on the tiles</h1>
-<p class="d">Under DONE, "The ride keeps recording" with a red dot becomes a red bike and "Ride is still recording", so it's clear the Karoo ride goes on. Each tile gets the icon the workout screen uses, at the same size and place (top left, centred on the label): TIME the timer, AVG POWER and NP the bolt (Karoo green), AVG HR the heart (red; cadence's icon in green when Settings shows cadence). With a route the screen already fits: the check gets smaller and everything moves up. Drawn on the app's own done screens (field gallery).</p>
+<p class="d">The title says WORKOUT COMPLETE, so DONE is only the button. Under DONE, "The ride keeps recording" with a red dot becomes a red bike and "Ride is still recording", so it's clear the Karoo ride goes on. Each tile gets the icon the workout screen uses, at the same size and place (top left, centred on the label): TIME the timer, AVG POWER and NP the bolt (Karoo green), AVG HR the heart (red; cadence's icon in green when Settings shows cadence). With a route the screen already fits: the check gets smaller and everything moves up. Drawn on the app's own done screens (field gallery).</p>
 <div id="rows"></div>
 <script>/*
  * Karoo 3 device mockups for design reviews (any Karoo app).
@@ -153,10 +153,35 @@ function recordingNote(ctx, shot, theme) {
   ctx.save(); ctx.translate(x, dotY - 14); ctx.scale(iw / 24, iw / 24); ctx.strokeStyle = red; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(P.bike); ctx.restore();
   ctx.fillStyle = ink; ctx.textBaseline = 'alphabetic'; ctx.fillText(text, x + iw + gap, dotY + 8.5);
 }
+// The title "WORKOUT DONE!" becomes "WORKOUT COMPLETE" (one DONE on the screen: the button)
+function title(ctx, shot, theme) {
+  const c = document.createElement('canvas'); c.width = 480; c.height = 800; const g = c.getContext('2d'); g.drawImage(shot, 0, 0);
+  const d = g.getImageData(0, 0, 480, 800).data;
+  const isInk = k => theme === 'light' ? (d[k] + d[k + 1] + d[k + 2] < 200) : (d[k] > 200 && d[k + 1] > 200 && d[k + 2] > 200);
+  const isGreen = k => d[k + 1] > d[k] + 50 && d[k + 1] > d[k + 2] + 30;
+  // below the green check: the first rows with ink are the title
+  let y = 80, lastGreen = 0;
+  for (; y < 400; y++) { let g2 = false; for (let x = 150; x < 330; x++) if (isGreen((y * 480 + x) * 4)) { g2 = true; break; } if (g2) lastGreen = y; }
+  let top = -1, bottom = -1, left = 999, right = -1;
+  for (y = lastGreen + 4; y < lastGreen + 120; y++) {
+    let any = false;
+    for (let x = 40; x < 440; x++) if (isInk((y * 480 + x) * 4)) { any = true; left = Math.min(left, x); right = Math.max(right, x); }
+    if (any && top < 0) top = y;
+    if (!any && top >= 0) { bottom = y - 1; break; }
+  }
+  if (top < 0) return;
+  const k0 = ((top - 6) * 480 + 30) * 4, bg = `rgb(${d[k0]},${d[k0 + 1]},${d[k0 + 2]})`;
+  ctx.fillStyle = bg; ctx.fillRect(left - 6, top - 4, right - left + 12, bottom - top + 9);
+  const size = (bottom - top + 1) / 0.698;
+  ctx.font = `500 ${size}px PlexCond`; ctx.fillStyle = theme === 'light' ? '#0B0B0B' : '#FFFFFF'; ctx.textAlign = 'center';
+  ctx.fillText('WORKOUT COMPLETE', 240, bottom + 1);
+  ctx.textAlign = 'left';
+}
 function withIcons(shot, theme) {
   return ctx => {
     ctx.drawImage(shot, 0, 0);
     recordingNote(ctx, shot, theme);
+    title(ctx, shot, theme);
     const c = document.createElement('canvas'); c.width = 480; c.height = 800; const g = c.getContext('2d'); g.drawImage(shot, 0, 0);
     const d = g.getImageData(0, 0, 480, 800).data, k = C[theme];
     const t = tiles(d, k.tile).sort((a, b) => a[1] - b[1] || a[0] - b[0]);   // TIME, AVG POWER, NP, AVG HR
