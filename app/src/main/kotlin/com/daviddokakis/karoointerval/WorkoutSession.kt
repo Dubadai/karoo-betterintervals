@@ -134,7 +134,7 @@ class WorkoutSession(
         scope.launch {
             // …and the big number shows instant power or Karoo's 3 / 5 / 10 s average (Settings › Power).
             store.powerSmoothing.flatMapLatest { karoo.streamDataFlow(it.power) }.collect { s ->
-                _state.update { it.copy(powerShown = s.single()?.roundToInt()) }
+                _state.update { it.copy(powerShown = s.single()?.roundToInt(), sampleSeq = it.sampleSeq + 1) }
             }
         }
         scope.launch {
@@ -149,7 +149,7 @@ class WorkoutSession(
             karoo.streamDataFlow(DataType.Type.HEART_RATE).collect { s ->
                 val hr = s.single()?.roundToInt()
                 if (hr != null && hr > 0 && workoutRunning()) { workoutHrSum += hr; workoutHrSamples++ }
-                _state.update { it.copy(heartRate = hr) }
+                _state.update { it.copy(heartRate = hr, sampleSeq = if (it.hrStep) it.sampleSeq + 1 else it.sampleSeq) }
             }
         }
         scope.launch {

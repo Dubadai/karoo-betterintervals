@@ -55,7 +55,13 @@ class IntervalDataType(
             // New watts are drawn as soon as they arrive (once the gap allows), not on the next
             // one-second tick: on a fixed tick they waited up to a second, so the big number lagged
             // behind the Karoo's own power fields.
-            var shownPower: Int? = null
+            // Redraw as each sample arrives. A fixed one-second redraw could land just before a
+            // sample and block it for the Karoo's ~0.9 s gap, so the numbers lagged the Karoo's own
+            // fields by up to a second. While samples come in, they set the pace; the timer only
+            // redraws when they stop (no sensor), so the interval clock still ticks.
+            var shownSeq = -1
+            var seenSeq = -1
+            var lastSampleAt = 0L
             while (isActive) {
                 val s = session.state.value
                 val key = Key(
@@ -63,19 +69,22 @@ class IntervalDataType(
                     s.selectProgress, s.moveCancelled, s.targetShowsRange, s.wattsMode, s.powerSmoothing, s.tileOutline, s.secondField, s.notStarted, s.appearance, s.navigating, s.freeSecond, s.freePower, s.topRow, s.lapShowsNp,
                     s.autoConfirmLeft, s.topRowRight, s.plan?.scalePct, s.hrTargetLthr, s.paused,
                 )
-                val since = SystemClock.elapsedRealtime() - lastRender
+                val now = SystemClock.elapsedRealtime()
+                val since = now - lastRender
+                if (s.sampleSeq != seenSeq) { seenSeq = s.sampleSeq; lastSampleAt = now }
+                val streaming = now - lastSampleAt < STREAMING_MS
                 val changed = key != shown
                 val counting = s.countdown != null || shown?.countdown != null
-                // (the big number: heart rate on a heart-rate step)
-                val newPower = s.mainValue != shownPower
-                val due = if (counting) changed && since >= MIN_GAP_MS else since >= 1000 || ((changed || newPower) && since >= MIN_GAP_MS)
+                val newSample = s.sampleSeq != shownSeq
+                val fallback = if (streaming) FALLBACK_STREAMING_MS else 1000L
+                val due = if (counting) changed && since >= MIN_GAP_MS else since >= fallback || ((changed || newSample) && since >= MIN_GAP_MS)
                 if (due) {
                     try {
                         emitter.updateView(renderer.render(s))
                         lastRender = SystemClock.elapsedRealtime()
                         if (s.countdown != null && s.countdown != shown?.countdown) session.onCountdownShown()
                         shown = key
-                        shownPower = s.mainValue
+                        shownSeq = s.sampleSeq
                     } catch (e: Exception) {
                         Timber.e(e, "Interval screen render failed")
                         lastRender = SystemClock.elapsedRealtime()
@@ -122,6 +131,10 @@ class IntervalDataType(
     companion object {
         const val TYPE_ID = "interval-screen"
         private const val MIN_GAP_MS = 920L
+        /** Samples count as coming in if the last one is this recent… */
+        private const val STREAMING_MS = 2500L
+        /** …and then the timer only redraws if none has come for this long. */
+        private const val FALLBACK_STREAMING_MS = 1600L
         private const val POLL_MS = 40L
     }
 }

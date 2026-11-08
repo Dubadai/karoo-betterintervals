@@ -106,6 +106,29 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (w <= 0 || h <= 0) 1f else minOf(w / (REF_W_DP * density), h / (REF_H_DP * density)).coerceIn(0.5f, 1.6f)
     }
     private var blinkOn = true
+
+    // The gauge's needle follows a slower average than the number (an exponential average over
+    // NEEDLE_SECONDS), so it glides instead of jumping with every 3 s power sample. The number
+    // stays exact. Reset when the value goes away or switches between power and heart rate.
+    private var needleAvg: Double? = null
+    private var needleAt = 0L
+    private var needleHr = false
+
+    private fun needleFor(value: Int?, hr: Boolean): Int? {
+        val now = android.os.SystemClock.elapsedRealtime()
+        val prev = needleAvg
+        needleAvg = when {
+            value == null -> null
+            prev == null || hr != needleHr -> value.toDouble()
+            else -> {
+                val dt = ((now - needleAt) / 1000.0).coerceIn(0.0, 10.0)
+                prev + (value - prev) * (1 - kotlin.math.exp(-dt / NEEDLE_SECONDS))
+            }
+        }
+        needleAt = now
+        needleHr = hr
+        return needleAvg?.roundToInt()
+    }
     /** The done screen's recording dot: lit on the first draw, then on / off on every redraw. */
     private var recDotOn = false
     private val chartHeightPx = (CHART_DP * density * scale).toInt()
@@ -195,7 +218,10 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             if (gaugeW > 0) {
                 // Green is power's colour: a heart-rate step's band is the heart red.
                 val band = color(if (hrStep) R.color.heart_icon else R.color.karoo_green)
-                v.setImageViewBitmap(R.id.gauge, gauge.render(gaugeW, gaugeHeightPx(s.navigating), s.mainValue, s.target, s.targetRange, color(wattsColor), band))
+                v.setImageViewBitmap(
+                    R.id.gauge,
+                    gauge.render(gaugeW, gaugeHeightPx(s.navigating), s.mainValue, s.target, s.targetRange, color(wattsColor), band, needle = needleFor(s.mainValue, hrStep)),
+                )
             }
         } else {
             v.setTextViewText(R.id.watts, s.mainValue?.toString() ?: "--")
@@ -882,6 +908,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         private const val REF_H_DP = 385f
         private const val CHART_DP = 56f
         private const val CELL_VALUE_SP = 31f
+        /** The gauge needle's averaging time (seconds): smooth, but still quick to follow a real change. */
+        private const val NEEDLE_SECONDS = 2.5
         /** Height of the gauge's space on a full page without a route (measured), and how much a route takes. */
         private const val GAUGE_KAROO_DP = 128.7f   // 241 px on a Karoo 3 (162 px with a route)
         private const val ROUTE_DP = 42.1f          // a route makes the field 79 px shorter

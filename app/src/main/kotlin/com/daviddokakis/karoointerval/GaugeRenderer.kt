@@ -85,8 +85,9 @@ class GaugeRenderer(private val context: Context) {
      * @param numberColor colour of the watts digits (plain text colour, or a range colour).
      * @param bandColor the target range's colour: Karoo green for power, the heart red for a
      *   heart-rate step (then [watts] is the heart rate and the target and range are in bpm).
+     * @param needle where the needle points: a smoothed [watts] (the number stays exact).
      */
-    fun render(width: Int, height: Int, watts: Int?, target: Int?, range: IntRange?, numberColor: Int, bandColor: Int = color(R.color.karoo_green)): Bitmap {
+    fun render(width: Int, height: Int, watts: Int?, target: Int?, range: IntRange?, numberColor: Int, bandColor: Int = color(R.color.karoo_green), needle: Int? = watts): Bitmap {
         val w = width.coerceAtLeast(1)
         val h = height.coerceAtLeast(1)
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
@@ -120,10 +121,10 @@ class GaugeRenderer(private val context: Context) {
                 c.drawArc(oval, start + a * g.sweep, (b - a) * g.sweep, false, arc)
             }
 
-            if (watts != null) {
+            if (needle != null) {
                 // Needle across the arc: a transparent gap first (so whatever is behind the field
                 // shows through), then the solid bar.
-                val rad = Math.toRadians((start + fraction(watts.toFloat()) * g.sweep).toDouble())
+                val rad = Math.toRadians((start + fraction(needle.toFloat()) * g.sweep).toDouble())
                 val r0 = g.r - g.sw / 2f - w * 0.0125f
                 val r1 = g.r + g.sw / 2f + w * 0.0125f
                 val x0 = cx + r0 * cos(rad).toFloat()

@@ -9,6 +9,8 @@ data class ScreenState(
     val power: Int? = null,
     /** Power shown as the big number: instant or a 3 / 5 / 10 s average (Settings › Power). */
     val powerShown: Int? = null,
+    /** Counts every sample of the shown power or heart rate, so the screen can redraw as each arrives. */
+    val sampleSeq: Int = 0,
     val heartRate: Int? = null,
     /** Cadence (rpm), smoothed per Settings › Cadence. */
     val cadence: Int? = null,
