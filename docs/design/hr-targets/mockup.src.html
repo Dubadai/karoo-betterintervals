@@ -160,7 +160,7 @@ function twoTop(shot, theme) {
   return ctx => { ctx.drawImage(shot, 0, 0); const g = pixels(shot); topRow(ctx, C[theme], css(at(g, 100, 130)), [['heart', '132'], ['cadence', '88']]); };
 }
 // Ride paused: the gear moves from the top corner to the start of the interval row
-function pausedGear(shot, theme) {
+function pausedGear(shot, theme, label, overlay) {
   const k = C[theme];
   return ctx => {
     ctx.drawImage(shot, 0, 0);
@@ -172,10 +172,16 @@ function pausedGear(shot, theme) {
     ctx.fillStyle = bg; ctx.fillRect(10, 370, 300, 60);
     rr(ctx, 16, 374, 52, 52, 12, k.track);
     icon(ctx, P.gear, 26, 384, 32, k.ink, { stroke: 2 });
-    const PF = '500 25px PlexCond', tw = width(ctx, 'WORKOUT PAUSED', PF);
+    const PF = '500 25px PlexCond', tw = width(ctx, label, PF);
     rr(ctx, 76, 375, 46 + tw + 14, 50, 12, pillBg);
     ctx.globalAlpha = 0.35; ctx.fillStyle = css(ink); ctx.fillRect(90, 391, 5, 18); ctx.fillRect(100, 391, 5, 18); ctx.globalAlpha = 1;
-    txt(ctx, 'WORKOUT PAUSED', 122, 409, PF, css(ink));
+    txt(ctx, label, 122, 409, PF, css(ink));
+    // The workout resumes with the ride, so no resume button of ours; the Karoo's own bar and buttons on top
+    ctx.fillStyle = bg; ctx.fillRect(340, 66, 140, 96);
+    ctx.drawImage(overlay, 0, 0, 480, 106, 0, 0, 480, 106);
+    for (const r of [[-50, 683, 150, 100], [380, 683, 150, 100]]) {
+      ctx.save(); ctx.beginPath(); ctx.roundRect(...r, 50); ctx.clip(); ctx.drawImage(overlay, 0, 0); ctx.restore();
+    }
   };
 }
 // ---------- App pages (drawn) ----------
@@ -266,17 +272,20 @@ function workouts(theme, pct) {
       ['Workouts · 100%', t => workouts(t, 100)],
       ['Workouts · 105%: the profile grows with it', t => workouts(t, 105)],
     ]],
-    ['Ride paused', 'While the Karoo has the ride paused, the gear moves down to the start of the interval row, clear of the Karoo’s buttons, so you can change the workout at the roadside.', [
-      ['Paused: gear by Workout paused', t => pausedGear(I['paused-' + t], t)],
+    ['Ride paused', 'Only when the Karoo itself has the ride paused (or auto-paused): its yellow bar covers the gear and the top row, so the gear moves to the start of the interval row and the pill shortens so the clock fits. Pausing just the workout while riding changes nothing.', [
+      ['Karoo ride paused, as it is now (your Karoo; the clock is cut off)', t => ctx => ctx.drawImage(I['karoo-ride-paused-real'], 0, 0), ['dark']],
+      ['Karoo ride auto-paused: gear by AUTO-PAUSED', t => pausedGear(I['paused-' + t], t, 'AUTO-PAUSED', I['karoo-ride-paused-real'])],
+      ['Karoo ride paused: gear by PAUSED', t => pausedGear(I['paused-' + t], t, 'PAUSED', I['karoo-ride-paused-real'])],
+      ['Workout paused by you, still riding: gear stays at the top (as now)', t => ctx => ctx.drawImage(I['paused-' + t], 0, 0)],
     ]],
   ];
   const root = document.getElementById('rows');
   for (const [title, desc, rows] of sections) {
     const h = document.createElement('h2'); h.textContent = title; root.append(h);
     const p = document.createElement('p'); p.className = 'd'; p.textContent = desc; root.append(p);
-    for (const [cap, make] of rows) {
+    for (const [cap, make, themes] of rows) {
       const row = document.createElement('div'); row.className = 'devices';
-      for (const t of ['light', 'dark']) {
+      for (const t of themes || ['light', 'dark']) {
         const dev = await KarooDevice.load({ frame: FRAME, screen: B['gauge-' + t] });
         const scr = dev.screen({ draw: make(t), scale: 2 });
         const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 380));

@@ -17,4 +17,5 @@ Proposal (`mockup.html`, light and dark, drawn on field gallery screens and the 
 - Settings › Top row: One | Two, then Left and Right (Right can't repeat Left).
 - Workouts: SCALE block above Current workout while one is loaded: − / + (1% steps), "of every
   power target"; the card shows the scale and its profile grows with it. HR targets don't scale.
-- Ride paused: the gear moves to the start of the interval row, next to Workout paused.
+- Only when the Karoo itself has the ride paused or auto-paused (its yellow bar covers the gear and top row): the gear moves to the start of the interval row and the pill shortens to PAUSED / AUTO-PAUSED so the clock fits (today "WORKOUT AUTO-PAUSED" pushes the clock off screen). Pausing only the workout while riding changes nothing.
+- `base/karoo-ride-paused-real.png`: David's Karoo with the ride auto-paused (2026-11-08).
