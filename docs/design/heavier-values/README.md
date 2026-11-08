@@ -11,3 +11,9 @@ gallery with the change applied:
   use the freed height.
 
 `base/`: field gallery screens before the change.
+
+Round 2 (2026-11-08): no timer icon before INTERVAL; the chart's bars keep their size, moved down
+into the space the time label used (chart 56dp to 42dp); the freed 14dp makes the Lap avg and Target
+tiles taller (54dp to 68dp) with bigger values (31sp to 40sp, shrinking if a value doesn't fit).
+`now-vs-bigger-tiles.png` (light: now, proposal; dark: now, proposal), `number-and-ready.png` (the
+number style and the START WORKOUT screen with the shorter chart).
