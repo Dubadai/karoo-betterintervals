@@ -14,9 +14,19 @@ app list. ⚙ on the Workouts page opens [Settings](settings.md).
 - Tap a card to pick it. You go straight back to the ride screen.
 - **Remove workout** takes the current workout off, so the ride screen shows the
   [free-ride screen](free-ride.md).
-- **Back to ride** returns to the ride without changes.
+- **Back to ride** (yellow) returns to the ride.
 
 The app never picks a workout by itself.
+
+### Scale workout
+
+<img src="images/workouts-scale.png" width="240" alt="Workouts page: Scale workout at 105%">
+
+While a workout is loaded, **Scale workout** sits above it: − and + make every power target 1%
+easier or harder (100% is the workout as planned). The card shows the scale and its shape grows
+or shrinks with it, and the ride screen uses the scaled watts at once: where you are in the
+workout doesn't change. Heart-rate targets aren't scaled. Picking another workout starts it at
+100%.
 
 ## Offline
 

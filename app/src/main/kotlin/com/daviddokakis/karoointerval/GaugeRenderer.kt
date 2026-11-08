@@ -83,8 +83,10 @@ class GaugeRenderer(private val context: Context) {
      * @param width bitmap width in px.
      * @param height bitmap height in px: the gauge's space on screen.
      * @param numberColor colour of the watts digits (plain text colour, or a range colour).
+     * @param bandColor the target range's colour: Karoo green for power, the heart red for a
+     *   heart-rate step (then [watts] is the heart rate and the target and range are in bpm).
      */
-    fun render(width: Int, height: Int, watts: Int?, target: Int?, range: IntRange?, numberColor: Int): Bitmap {
+    fun render(width: Int, height: Int, watts: Int?, target: Int?, range: IntRange?, numberColor: Int, bandColor: Int = color(R.color.karoo_green)): Bitmap {
         val w = width.coerceAtLeast(1)
         val h = height.coerceAtLeast(1)
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
@@ -112,7 +114,7 @@ class GaugeRenderer(private val context: Context) {
             fun fraction(v: Float) = ((v - lo) / (hi - lo)).coerceIn(0f, 1f)
 
             if (range != null) {
-                arc.color = color(R.color.karoo_green)
+                arc.color = bandColor
                 val a = fraction(range.first.toFloat())
                 val b = fraction(range.last.toFloat())
                 c.drawArc(oval, start + a * g.sweep, (b - a) * g.sweep, false, arc)

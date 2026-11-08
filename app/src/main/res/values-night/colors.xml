@@ -92,4 +92,12 @@
     <color name="tile_boundary">#1FFFFFFF</color>
     <!-- Workout done: the "ride keeps recording" dot -->
     <color name="recording">#FFFF5C5C</color>
+    <!-- Chart bars for heart-rate steps in dark mode: the Karoo's own HR zone colours (they stand out on black). -->
+    <color name="chart_hr_c1">#FF60EEB2</color>
+    <color name="chart_hr_c2">#FF00B988</color>
+    <color name="chart_hr_c3">#FFFFF500</color>
+    <color name="chart_hr_c4">#FFFB8C65</color>
+    <color name="chart_hr_c5">#FFFE581F</color>
+    <color name="chart_hr_c6">#FFD60404</color>
+    <color name="chart_hr_c7">#FFB700A2</color>
 </resources>

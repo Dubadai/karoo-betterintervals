@@ -29,7 +29,7 @@ object DemoData {
         // With a workout loaded: make the current interval 5 min at 300 W (range 293–308 W, like
         // intervals.icu's ±2.5%), halfway done, then let it run on.
         val plan = s.plan?.let { p ->
-            p.copy(steps = p.steps.mapIndexed { i, st -> if (i == s.stepIndex) DEMO_STEP else st })
+            p.copy(steps = p.steps.mapIndexed { i, st -> if (i == s.stepIndex) (if (st.hr) DEMO_HR_STEP else DEMO_STEP) else st })
         }
         val step = plan?.steps?.getOrNull(s.stepIndex)
         val elapsedInStep = if (step != null && step.durationSec > 1) {
@@ -70,6 +70,7 @@ object DemoData {
 
     private val WATTS_CYCLE = listOf(280, 288, 295, 300, 306, 312, 320, 325, 310, 298, 290)
     private val DEMO_STEP = PlanStep(300, 300, 300, rangeLow = 293, rangeHigh = 308)
+    private val DEMO_HR_STEP = PlanStep(300, 164, 164, rangeLow = 160, rangeHigh = 168, hr = true)
 
     /** Used when the Karoo profile has no heart rate zones. */
     private val DEFAULT_HR_ZONES = listOf(0..122, 123..142, 143..160, 161..175, 176..220)

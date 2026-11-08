@@ -38,6 +38,24 @@ From top to bottom:
 | Next up | The next interval's length and watts, with ⏮ / ⏭ to [jump](jumping.md) |
 | Chart | The whole workout |
 
+## Heart-rate targets
+
+A workout can have heart-rate targets instead of power (in intervals.icu, e.g. `4m 85% HR` or
+`95% LTHR`). On such an interval:
+
+- the big number is your heart rate, and the gauge's target band is red (green is for power);
+- power moves to the top, where heart rate was;
+- Lap avg is the interval's average heart rate;
+- Target is the bpm range. **Tap it** for the percentage, as the workout is written: `% HR`
+  (of max HR) or `% LTHR`. Next up follows (`2m @ 69% HR`). A workout written in bpm or zones
+  shows % of your LTHR.
+
+The chart draws heart-rate intervals in the Karoo's heart rate zone colours. A workout with only
+heart-rate targets is drawn in bpm, starting at 80. A workout can mix both: each interval runs on
+its own target.
+
+<img src="images/hr-workout.png" width="240" alt="Heart-rate interval: 164 bpm in the red target band, power at the top"> <img src="images/hr-pct.png" width="240" alt="Target as % of max HR, as the workout is written">
+
 ## The chart
 
 Each bar is one interval, in its power zone colour: the Karoo's seven power zones (Z1 grey,

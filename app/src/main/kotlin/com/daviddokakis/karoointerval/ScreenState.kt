@@ -1,5 +1,7 @@
 package com.daviddokakis.karoointerval
 
+import kotlin.math.roundToInt
+
 /** Everything the interval screen needs to draw one frame. */
 data class ScreenState(
     val plan: WorkoutPlan? = null,
@@ -34,11 +36,17 @@ data class ScreenState(
     val rideAvgCadence: Int? = null,
     /** Settings › Top row; null: as each layout has it (number styles: heart rate, gauge: target). */
     val topRow: TopRow? = null,
+    /** Settings › Top row › Two: the second value at the top, or null for one value. */
+    val topRowRight: TopRow? = null,
+    /** A heart-rate step's target as % of LTHR instead of bpm (tap the Target tile). */
+    val hrTargetLthr: Boolean = false,
     /** Karoo's average heart rate this lap, and in the last lap (free ride). */
     val lapHrAvg: Int? = null,
     val lastLapHrAvg: Int? = null,
     /** The ride is paused (Karoo's own pause). */
     val paused: Boolean = false,
+    /** …by the Karoo's auto-pause (not by the rider). */
+    val autoPaused: Boolean = false,
     /** The workout is paused from this screen: interval clock and lap average stop, ride keeps recording. */
     val workoutPaused: Boolean = false,
     /** A workout is loaded but waits for START WORKOUT (the ready screen); [stepIndex] is where it will start. */
@@ -134,6 +142,39 @@ data class ScreenState(
             hr > hrZones.last().last -> hrZones.size
             else -> null
         }
+    }
+
+    /** The current step runs on heart rate: heart rate is the big number, power goes where heart rate was. */
+    val hrStep: Boolean get() = currentStep?.hr == true
+
+    /** The big number: heart rate on a heart-rate step, else the (smoothed) power. */
+    val mainValue: Int? get() = if (hrStep) heartRate else powerShown
+
+    /**
+     * How a heart-rate step's target shows as a percentage: as the workout writes it ("%hr", of
+     * max HR, or "%lthr"), else % of LTHR worked out from bpm when the workout says the LTHR;
+     * null: bpm only.
+     */
+    fun pctUnitOf(step: PlanStep): String? = step.pctUnit ?: if ((plan?.lthr ?: 0) > 0) "%lthr" else null
+
+    /** The Target tile was tapped to % and the current step can show it. */
+    val showsPct: Boolean get() = hrTargetLthr && currentStep?.let(::pctUnitOf) != null
+
+    /**
+     * [step]'s target in %, low to high (the same twice for a single target): the written numbers,
+     * else bpm / LTHR. For a ramp, [elapsedSec] picks the point on it.
+     */
+    fun pctOf(step: PlanStep, elapsedSec: Int = 0): Pair<Int, Int>? {
+        if (step.pctUnit != null && step.pctLow != null && step.pctHigh != null) {
+            if (!step.isRamp) return step.pctLow to step.pctHigh
+            val f = if (step.durationSec > 0) elapsedSec.coerceIn(0, step.durationSec).toDouble() / step.durationSec else 0.0
+            val p = (step.pctLow + (step.pctHigh - step.pctLow) * f).roundToInt()
+            return p to p
+        }
+        val lthr = plan?.lthr?.takeIf { it > 0 } ?: return null
+        fun pct(bpm: Int) = (bpm * 100.0 / lthr).roundToInt()
+        val band = if (step.isRamp) step.targetAt(elapsedSec).let { it..it } else step.rangeAt(elapsedSec)
+        return pct(band.first) to pct(band.last)
     }
 
     val target: Int? get() = currentStep?.targetAt(elapsedInStepSec)

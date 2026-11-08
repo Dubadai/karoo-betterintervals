@@ -95,4 +95,12 @@
     <color name="tile_boundary">#22000000</color>
     <!-- Workout done: the "ride keeps recording" dot -->
     <color name="recording">#FFD93025</color>
+    <!-- Chart bars for heart-rate steps in light mode: the Karoo's HR zone colours, deeper so they stand out on white and the light card (on white: mint 3.0:1 instead of 1.5, yellow 2.5 instead of 1.1, the rest 3.3–7.1). Same hues; the HR tile keeps the originals (black text on them). -->
+    <color name="chart_hr_c1">#FF20AA78</color>
+    <color name="chart_hr_c2">#FF007A5A</color>
+    <color name="chart_hr_c3">#FFB9A300</color>
+    <color name="chart_hr_c4">#FFE2683A</color>
+    <color name="chart_hr_c5">#FFD9480F</color>
+    <color name="chart_hr_c6">#FFC40404</color>
+    <color name="chart_hr_c7">#FFA3008F</color>
 </resources>

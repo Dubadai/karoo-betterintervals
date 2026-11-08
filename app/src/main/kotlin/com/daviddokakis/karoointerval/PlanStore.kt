@@ -64,6 +64,46 @@ class PlanStore private constructor(context: Context) {
         _topRow.value = value
     }
 
+    private val _topRowRight = MutableStateFlow(prefs.getString(KEY_TOP_ROW_2, null)?.let { n -> TopRow.entries.firstOrNull { it.name == n } })
+
+    /** Settings › Top row › Two: the second value at the top (null: one value). */
+    val topRowRight: StateFlow<TopRow?> = _topRowRight
+
+    fun setTopRowRight(value: TopRow?) {
+        prefs.edit().apply { if (value == null) remove(KEY_TOP_ROW_2) else putString(KEY_TOP_ROW_2, value.name) }.apply()
+        _topRowRight.value = value
+    }
+
+    /** A heart-rate step's target shows as % of LTHR instead of bpm (tap the Target tile; remembered). */
+    var hrTargetLthr: Boolean
+        get() = prefs.getBoolean(KEY_HR_LTHR, false)
+        set(value) = prefs.edit().putBoolean(KEY_HR_LTHR, value).apply()
+
+    private val _scalePct = MutableStateFlow(loadScale())
+
+    /** Workouts › Scale workout: the loaded workout's power targets in % of the plan (100 = as planned). */
+    val scalePct: StateFlow<Int> = _scalePct
+
+    fun setScalePct(pct: Int) {
+        val v = pct.coerceIn(SCALE_MIN, SCALE_MAX)
+        prefs.edit().putInt(KEY_SCALE, v).apply()
+        _scalePct.value = v
+    }
+
+    /** The scale belongs to the selected workout: a newly picked (or no) workout starts at 100 %. */
+    private fun loadScale(): Int =
+        if (prefs.getString(KEY_SELECTED_DATE, null) != LocalDate.now().toString()) 100 else prefs.getInt(KEY_SCALE, 100)
+
+    /**
+     * The Karoo rider profile's heart rate zones (min..max bpm, Z1 first), saved by the workout
+     * session, so the Workouts page colours heart-rate workouts the same as the ride screen.
+     */
+    var hrZones: List<IntRange>
+        get() = prefs.getString(KEY_HR_ZONES, null)?.split(",")?.mapNotNull { z ->
+            z.split("-").takeIf { it.size == 2 }?.let { (a, b) -> a.toIntOrNull()?.let { lo -> b.toIntOrNull()?.let { hi -> lo..hi } } }
+        } ?: emptyList()
+        set(value) = prefs.edit().putString(KEY_HR_ZONES, value.joinToString(",") { "${it.first}-${it.last}" }).apply()
+
     /** Lap tile shows NP instead of the lap average (remembered between rides). */
     var lapShowsNp: Boolean
         get() = prefs.getBoolean(KEY_LAP_NP, false)
@@ -141,11 +181,14 @@ class PlanStore private constructor(context: Context) {
             .putString(KEY_SELECTED_JSON, workout.json)
             .putString(KEY_SELECTED_DATE, LocalDate.now().toString())
             .apply()
+        // Another workout starts at 100 %; the same one (updated from intervals.icu) keeps its scale.
+        if (workout.plan.id != _plan.value?.id) setScalePct(100)
         _plan.value = workout.plan
     }
 
     fun clearSelection() {
         prefs.edit().remove(KEY_SELECTED_JSON).remove(KEY_SELECTED_DATE).apply()
+        setScalePct(100)
         _plan.value = null
     }
 
@@ -251,6 +294,12 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_FREE_SECOND = "free_second"
         private const val KEY_FREE_POWER = "free_power"
         private const val KEY_TOP_ROW = "top_row"
+        private const val KEY_TOP_ROW_2 = "top_row_2"
+        private const val KEY_HR_LTHR = "hr_target_lthr"
+        private const val KEY_SCALE = "scale_pct"
+        private const val KEY_HR_ZONES = "hr_zones"
+        const val SCALE_MIN = 50
+        const val SCALE_MAX = 150
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_TILE_OUTLINE = "tile_outline"
         private const val KEY_POWER_SMOOTHING = "power_smoothing"

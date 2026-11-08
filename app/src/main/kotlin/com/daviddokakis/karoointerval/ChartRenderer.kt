@@ -12,6 +12,11 @@ import kotlin.math.ceil
  * Draws the workout profile in zone colours: one bar per step
  * (width = duration, height = watts).
  *
+ * Heart-rate steps (docs/design/hr-targets/) are in the Karoo's heart rate zone colours. A workout
+ * with only heart-rate targets is drawn in bpm, from 80 bpm up (from 0 every step would look about
+ * the same height); in a mixed workout a heart-rate step stands at the watts it's worth
+ * (bpm / LTHR × FTP).
+ *
  * - [Style.SCREEN] (interval screen): watt guide lines, the current step outlined, a "now"
  *   marker, the step a jump lands on in solid black (white in dark mode) with a ▼, time labels.
  *   Finished steps keep their zone colour, since you may jump back to them.
@@ -60,29 +65,46 @@ class ChartRenderer(private val context: Context) {
             0 to plan.totalSec
         }
         val span = (winEnd - winStart).coerceAtLeast(1).toFloat()
-        val visibleMax = if (zoomed) {
+        val ftp = state.ftp
+        val hrChart = plan.hrOnly
+        val lthr = plan.lthr?.takeIf { it > 0 }
+        // A step's height: watts, or bpm (heart-rate workout), or a heart-rate step's watts equivalent.
+        fun level(step: PlanStep, v: Int): Float = when {
+            !step.hr || hrChart -> v.toFloat()
+            lthr != null && ftp != null -> v.toFloat() * ftp / lthr
+            else -> (ftp ?: plan.maxWatts.coerceAtLeast(200)) * 0.7f
+        }
+        val steps = if (zoomed) {
             var t0 = 0
             plan.steps.filter { s ->
                 val visible = t0 < winEnd && t0 + s.durationSec > winStart
                 t0 += s.durationSec
                 visible
-            }.maxOfOrNull { maxOf(it.startWatts, it.endWatts) } ?: plan.maxWatts
+            }.ifEmpty { plan.steps }
         } else {
-            plan.maxWatts
+            plan.steps
         }
-        val ftp = state.ftp
-        val maxWatts = (ceil(visibleMax * 1.1 / 100.0) * 100).toFloat().coerceAtLeast(100f)
+        val visibleMax = steps.maxOf { maxOf(level(it, it.startWatts), level(it, it.endWatts)) }
+        val (floor, maxWatts, gridStep) = if (hrChart) {
+            val low = steps.minOf { minOf(it.startWatts, it.endWatts) }
+            Triple(minOf(80f, (low - 20) / 10 * 10f).coerceAtLeast(0f), (ceil(visibleMax * 1.05 / 10.0) * 10).toFloat().coerceAtLeast(100f), 50)
+        } else {
+            Triple(0f, (ceil(visibleMax * 1.1 / 100.0) * 100).toFloat().coerceAtLeast(100f), 100)
+        }
         fun x(sec: Float) = sidePad + (sec - winStart) / span * plotW
-        fun y(watts: Int) = bottom - watts / maxWatts * (bottom - top)
+        fun y(level: Float) = bottom - ((level - floor) / (maxWatts - floor)).coerceAtLeast(0f) * (bottom - top)
+        fun y(watts: Int) = y(watts.toFloat())
 
         // Watt guide lines (screen only)
         if (!card) {
             val grid = Paint().apply { color = color(R.color.track); strokeWidth = 0.5f * d }
-            var w = 100
+            var w = gridStep
             while (w < maxWatts) {
-                canvas.drawLine(0f, y(w), width.toFloat(), y(w), grid)
-                canvas.drawText(w.toString(), 2f * d, y(w) - 2f * d, label)
-                w += 100
+                if (w > floor) {
+                    canvas.drawLine(0f, y(w), width.toFloat(), y(w), grid)
+                    canvas.drawText(w.toString(), 2f * d, y(w) - 2f * d, label)
+                }
+                w += gridStep
             }
         }
 
@@ -102,7 +124,7 @@ class ChartRenderer(private val context: Context) {
             val x0 = x(t) + gap
             val x1 = (x(t + step.durationSec) - gap).coerceAtLeast(x0 + 0.5f)
             // Ramps slope; ranges and single targets are drawn flat at their middle.
-            val ys = if (step.isRamp) y(step.startWatts) to y(step.endWatts) else y(step.avgWatts).let { it to it }
+            val ys = if (step.isRamp) y(level(step, step.startWatts)) to y(level(step, step.endWatts)) else y(level(step, step.avgWatts)).let { it to it }
             val path = Path().apply {
                 moveTo(x0, bottom)
                 lineTo(x0, ys.first)
@@ -110,7 +132,7 @@ class ChartRenderer(private val context: Context) {
                 lineTo(x1, bottom)
                 close()
             }
-            val bar = Zones.barStyle(step.avgWatts, ftp)
+            val bar = if (step.hr) Zones.BarStyle(Zones.hrBarColor(step.avgWatts, state.hrZones, lthr), null) else Zones.barStyle(step.avgWatts, ftp)
             // Every step in its zone colour (finished ones too); the jump target solid black/white.
             val isTarget = !card && i == state.landTarget
             val alpha = 255
@@ -121,11 +143,12 @@ class ChartRenderer(private val context: Context) {
             val inset = 2f * d   // half the outline (1dp) + the gap (1dp)
             val current = !card && i == state.stepIndex
             val fillPath = if (current && x1 - x0 > 2 * inset + 1f * d) {
+                // The gap goes all around, the bottom too (the outline closes along the bottom).
                 Path().apply {
-                    moveTo(x0 + inset, bottom)
-                    lineTo(x0 + inset, minOf(ys.first + inset, bottom))
-                    lineTo(x1 - inset, minOf(ys.second + inset, bottom))
-                    lineTo(x1 - inset, bottom)
+                    moveTo(x0 + inset, bottom - inset)
+                    lineTo(x0 + inset, minOf(ys.first + inset, bottom - inset))
+                    lineTo(x1 - inset, minOf(ys.second + inset, bottom - inset))
+                    lineTo(x1 - inset, bottom - inset)
                     close()
                 }
             } else {

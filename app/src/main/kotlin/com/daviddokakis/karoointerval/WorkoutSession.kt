@@ -91,6 +91,8 @@ class WorkoutSession(
     private var autoConfirmJob: Job? = null
     private var moveCancelledJob: Job? = null
     private var started = false
+    /** The workout as loaded (100 %); the state's plan is it at Workouts › Scale workout. */
+    private var basePlan: WorkoutPlan? = null
 
     /** Interval screens currently showing. While one is, it plays the countdown beeps (see [onCountdownShown]). */
     private val viewsActive = java.util.concurrent.atomic.AtomicInteger(0)
@@ -154,7 +156,7 @@ class WorkoutSession(
             karoo.consumerFlow<RideState>().collect { ride ->
                 recording = ride is RideState.Recording
                 rideIdle = ride is RideState.Idle
-                _state.update { it.copy(paused = ride is RideState.Paused) }
+                _state.update { it.copy(paused = ride is RideState.Paused, autoPaused = (ride as? RideState.Paused)?.auto == true) }
                 // No ride (not started, finished or discarded): start the workout from the top
                 // next time. Progress is only kept while a ride is recording or paused.
                 if (ride is RideState.Idle) resetToStart()
@@ -169,6 +171,7 @@ class WorkoutSession(
         }
         scope.launch {
             karoo.consumerFlow<UserProfile>().collect { profile ->
+                store.hrZones = profile.heartRateZones.map { z -> z.min..z.max }
                 _state.update {
                     it.copy(
                         profileFtp = profile.ftp.takeIf { ftp -> ftp > 0 },
@@ -195,7 +198,20 @@ class WorkoutSession(
         collectInt(DataType.Type.AVERAGE_HR) { v -> _state.update { it.copy(rideAvgHr = v) } }
         collectInt(DataType.Type.AVERAGE_CADENCE) { v -> _state.update { it.copy(rideAvgCadence = v) } }
         scope.launch {
-            store.plan.collect { plan -> loadPlan(plan) }
+            store.plan.collect { plan ->
+                basePlan = plan
+                loadPlan(plan?.scaled(store.scalePct.value))
+            }
+        }
+        // Workouts › Scale workout: the same workout with its power targets scaled, without
+        // restarting it (where you are in it, the lap and the countdown all carry on).
+        scope.launch {
+            store.scalePct.collect { pct ->
+                _state.update { st ->
+                    val base = basePlan
+                    if (base != null && st.plan?.id == base.id) st.copy(plan = base.scaled(pct)) else st
+                }
+            }
         }
         scope.launch { tickLoop() }
         scope.launch { store.appearance.collect { a -> _state.update { it.copy(appearance = a) } } }
@@ -203,7 +219,8 @@ class WorkoutSession(
         scope.launch { store.tileOutline.collect { on -> _state.update { it.copy(tileOutline = on) } } }
         scope.launch { store.secondField.collect { f -> _state.update { it.copy(secondField = f) } } }
         scope.launch { store.topRow.collect { r -> _state.update { it.copy(topRow = r) } } }
-        _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapShowsNp = store.lapShowsNp, freePower = store.freePower, freeSecond = store.freeSecond) }
+        scope.launch { store.topRowRight.collect { r -> _state.update { it.copy(topRowRight = r) } } }
+        _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapShowsNp = store.lapShowsNp, freePower = store.freePower, freeSecond = store.freeSecond, hrTargetLthr = store.hrTargetLthr) }
     }
 
     fun stop() {
@@ -383,9 +400,18 @@ class WorkoutSession(
         }
     }
 
-    /** Tap on the Target tile: switch between the target and the target range. */
+    /**
+     * Tap on the Target tile: switch between the target and the target range, or on a heart-rate
+     * step between bpm and % of LTHR.
+     */
     fun toggleTargetView() {
         scope.launch {
+            if (_state.value.hrStep) {
+                val lthr = !_state.value.hrTargetLthr
+                store.hrTargetLthr = lthr
+                _state.update { it.copy(hrTargetLthr = lthr) }
+                return@launch
+            }
             val range = !_state.value.targetShowsRange
             store.targetShowsRange = range
             _state.update { it.copy(targetShowsRange = range) }

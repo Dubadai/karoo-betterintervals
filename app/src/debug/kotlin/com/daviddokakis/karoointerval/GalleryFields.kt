@@ -20,8 +20,32 @@ object GalleryFields {
         "ready", "ready-countdown", "karoo", "karoo-number", "karoo-background", "karoo-colours", "karoo-colours-route", "gauge-countdown", "gauge-route", "gauge", "free", "free-first-lap", "free-instant", "free-5s", "free-10s", "free-lap-np", "free-ride", "top-target", "top-cadence", "gauge-top-hr", "gauge-top-cadence", "gauge-top-target", "countdown-gauge", "done", "done-route",
         "choose", "restart", "cancelled", "countdown", "paused", "zoomed", "target-range", "lap-np",
         "outline", "cadence",
+        // Heart-rate targets, two values at the top, the gear while the Karoo has the ride paused
+        "hr-gauge", "hr-gauge-pct", "hr-number", "hr-top-two", "top-two", "ride-paused", "ride-auto-paused", "hr-ready",
     )
     val sizes: List<String>? = listOf("full")   // BetterIntervals is always a full-page field
+
+    /** 10 min warm-up, 5 × (4 min hard, 2 min easy), 10 min cool-down, in bpm; LTHR 180. */
+    private val HR_PLAN = WorkoutPlan(
+        id = "example-hr",
+        name = "HR intervals 5 × 4 min",
+        // Written as % of max HR (max 200), as in intervals.icu: "10m 67% HR", 5 × ("4m 82% HR", "2m 69% HR"), "10m 62% HR"
+        steps = listOf(PlanStep(600, 134, 134, rangeLow = 131, rangeHigh = 137, hr = true, pctUnit = "%hr", pctLow = 67, pctHigh = 67)) +
+            List(5) {
+                listOf(
+                    PlanStep(240, 164, 164, rangeLow = 160, rangeHigh = 168, hr = true, pctUnit = "%hr", pctLow = 82, pctHigh = 82),
+                    PlanStep(120, 138, 138, rangeLow = 135, rangeHigh = 141, hr = true, pctUnit = "%hr", pctLow = 69, pctHigh = 69),
+                )
+            }.flatten() +
+            PlanStep(600, 124, 124, rangeLow = 122, rangeHigh = 126, hr = true, pctUnit = "%hr", pctLow = 62, pctHigh = 62),
+        ftp = 280,
+        lthr = 180,
+    )
+
+    /** Interval 4 of 12 (the second hard one), 1:33 left: 164 bpm in range, 236 W, lap 162 bpm. */
+    private fun hrWorkout(mode: WattsMode) = ExampleScreen.state(wattsMode = mode).copy(
+        plan = HR_PLAN, stepIndex = 3, elapsedInStepSec = 147, heartRate = 164, lapHrAvg = 162, powerShown = 236, power = 236, hrZones = HR_ZONES,
+    )
 
     fun render(context: Context, variant: String, w: Int, h: Int, night: Boolean): Bitmap {
         val k = ExampleScreen.state(wattsMode = WattsMode.PLAIN)
@@ -72,6 +96,18 @@ object GalleryFields {
             "lap-np" -> k.copy(lapShowsNp = true, lapNp = 289, targetShowsRange = true)
             "outline" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, tileOutline = true)
             "cadence" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, secondField = SecondField.CADENCE)
+            // A workout with heart-rate targets only (as intervals.icu sends one: % of max HR, resolved to bpm)
+            "hr-gauge" -> hrWorkout(WattsMode.GAUGE)
+            // The Target tile tapped to %: as written, % of max HR ("% HR 82", Next up "2m @ 69% HR")
+            "hr-gauge-pct" -> hrWorkout(WattsMode.GAUGE).copy(hrTargetLthr = true)
+            "hr-number" -> hrWorkout(WattsMode.BOTH)
+            "hr-top-two" -> hrWorkout(WattsMode.GAUGE).copy(topRowRight = TopRow.CADENCE)
+            "hr-ready" -> hrWorkout(WattsMode.GAUGE).copy(notStarted = true, stepIndex = 0, elapsedInStepSec = 0)
+            // Settings › Top row › Two: heart rate and cadence
+            "top-two" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(topRowRight = TopRow.CADENCE)
+            // The Karoo has the ride paused: its yellow bar covers the top, the gear comes down
+            "ride-paused" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(paused = true)
+            "ride-auto-paused" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(paused = true, autoPaused = true)
             else -> k
         }
         // Layouts are inflated on the main thread, as on the Karoo.

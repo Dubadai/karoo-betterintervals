@@ -61,12 +61,13 @@ class IntervalDataType(
                 val key = Key(
                     s.countdown, s.stepIndex, s.workoutPaused, s.chartZoomed, s.plan?.id, s.selectTarget,
                     s.selectProgress, s.moveCancelled, s.targetShowsRange, s.wattsMode, s.powerSmoothing, s.tileOutline, s.secondField, s.notStarted, s.appearance, s.navigating, s.freeSecond, s.freePower, s.topRow, s.lapShowsNp,
-                    s.autoConfirmLeft,
+                    s.autoConfirmLeft, s.topRowRight, s.plan?.scalePct, s.hrTargetLthr, s.paused,
                 )
                 val since = SystemClock.elapsedRealtime() - lastRender
                 val changed = key != shown
                 val counting = s.countdown != null || shown?.countdown != null
-                val newPower = s.powerShown != shownPower
+                // (the big number: heart rate on a heart-rate step)
+                val newPower = s.mainValue != shownPower
                 val due = if (counting) changed && since >= MIN_GAP_MS else since >= 1000 || ((changed || newPower) && since >= MIN_GAP_MS)
                 if (due) {
                     try {
@@ -74,7 +75,7 @@ class IntervalDataType(
                         lastRender = SystemClock.elapsedRealtime()
                         if (s.countdown != null && s.countdown != shown?.countdown) session.onCountdownShown()
                         shown = key
-                        shownPower = s.powerShown
+                        shownPower = s.mainValue
                     } catch (e: Exception) {
                         Timber.e(e, "Interval screen render failed")
                         lastRender = SystemClock.elapsedRealtime()
@@ -112,6 +113,10 @@ class IntervalDataType(
         val topRow: TopRow?,
         val lapNp: Boolean,
         val autoConfirmLeft: Int?,
+        val topRowRight: TopRow?,
+        val scalePct: Int?,
+        val hrTargetLthr: Boolean,
+        val ridePaused: Boolean,
     )
 
     companion object {

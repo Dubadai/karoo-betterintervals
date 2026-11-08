@@ -60,7 +60,7 @@ class SettingsActivity : AppearanceActivity() {
         val s = ExampleScreen.state(
             store.wattsMode, store.appearance.value,
             tileOutline = store.tileOutline.value, secondField = store.secondField.value, topRow = store.topRow.value,
-        )
+        ).copy(topRowRight = store.topRowRight.value)
         val full = ExampleScreen.draw(this, s, ExampleScreen.FULL_W, ExampleScreen.FULL_H)
         val h = dp(127)
         val small = Bitmap.createScaledBitmap(full, h * ExampleScreen.FULL_W / ExampleScreen.FULL_H, h, true)
@@ -134,18 +134,33 @@ class SettingsActivity : AppearanceActivity() {
         }
         form.addView(settingsDivider())
 
-        // Top row of the workout screen: heart rate, cadence or the target (the other goes in the
-        // tile next to Lap avg). Not picked yet: shows what the number styles have at the top.
+        // Top row of the workout screen: one value or two (Left and Right), each heart rate,
+        // cadence or the target; what isn't at the top goes in the tile next to Lap avg.
+        // Design: docs/design/hr-targets/ (Two values at the top).
         form.addView(settingsHeading(R.drawable.ic_top_row, getString(R.string.top_row)))
+        val topOptions = listOf(R.string.heart_rate to TopRow.HEART_RATE, R.string.cadence to TopRow.CADENCE, R.string.target to TopRow.TARGET)
+        val left = store.topRow.value ?: if (store.secondField.value == SecondField.CADENCE) TopRow.CADENCE else TopRow.HEART_RATE
+        val right = store.topRowRight.value?.takeIf { it != left }
         form.addView(
-            segmented(
-                listOf(R.string.heart_rate to TopRow.HEART_RATE, R.string.cadence to TopRow.CADENCE, R.string.target to TopRow.TARGET),
-                store.topRow.value ?: if (store.secondField.value == SecondField.CADENCE) TopRow.CADENCE else TopRow.HEART_RATE,
-            ) { picked ->
-                store.setTopRow(picked)
+            segmented(listOf(R.string.top_row_one to false, R.string.top_row_two to true), right != null) { two ->
+                // Two: the right one starts as the first that isn't on the left
+                store.setTopRowRight(if (two) TopRow.entries.first { it != left } else null)
                 render()
             },
         )
+        form.addView(settingsSubLabel(getString(R.string.top_row_left)))
+        form.addView(
+            segmented(topOptions, left) { picked ->
+                store.setTopRow(picked)
+                // The right one can't be the same: it moves to the first other one
+                if (store.topRowRight.value == picked) store.setTopRowRight(TopRow.entries.first { it != picked })
+                render()
+            },
+        )
+        if (right != null) {
+            form.addView(settingsSubLabel(getString(R.string.top_row_right)))
+            form.addView(segmented(topOptions, right, disabled = left) { picked -> store.setTopRowRight(picked); render() })
+        }
         form.addView(settingsHelp(getString(R.string.top_row_help)))
         form.addView(settingsDivider())
 
