@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HR target workouts</title>
+<style>
+  @font-face { font-family: PlexCond; src: url(__FONT_COND__); font-weight: 500; }
+  @font-face { font-family: PlexSemi; src: url(__FONT_SEMI__); font-weight: 600; }
+  @font-face { font-family: PlexMed; src: url(__FONT_MED__); font-weight: 500; }
+  @font-face { font-family: PlexReg; src: url(__FONT_REG__); font-weight: 400; }
+  :root { color-scheme: dark; }
+  body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
+  h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
+  p.d { color:#A9A6A0; margin:0 auto 22px; max-width:780px; text-align:center; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:24px; margin-bottom:34px; }
+  .dev { display:grid; justify-items:center; gap:8px; }
+  .cap { color:#A9A6A0; font-size:13px; max-width:380px; text-align:center; }
+</style>
+</head>
+<body>
+<h1>Workouts with heart-rate targets</h1>
+<p class="d">A step with an HR target runs on heart rate. The big number and the gauge show your heart rate against the step's bpm range. Power moves to where heart rate was, at the top. The tiles show lap avg HR and the bpm target, and Next up shows bpm. The chart draws HR steps by bpm in the Karoo's own heart-rate zone colours, from 80 bpm up so the steps don't all look the same height. Drawn on the app's own gauge screen (field gallery).</p>
+<div id="rows"></div>
+<script>/*__KAROO_DEVICE_JS__*/</script>
+<script>
+const FRAME = "__FRAME__";
+const B = /*__BASE__*/;
+const img = src => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
+const INK = { light: '#000000', dark: '#FFFFFF' }, GREY = { light: '#6E6E6E', dark: '#A8A8A8' }, GRID = { light: '#E2E2E2', dark: '#3A3A3A' };
+// Karoo HR zone colours for 5 zones: c1 c2 c3 c4 c6
+const HRZ = ['#60EEB2', '#00B988', '#FFF500', '#FB8C65', '#D60404'];
+const ZONE_TOP = [130, 145, 158, 170, 220];   // bpm at the top of each zone (example athlete)
+const zoneOf = bpm => ZONE_TOP.findIndex(t => bpm <= t);
+function txt(ctx, s, x, y, font, color, align = 'left', sx = 1, bold = 0) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(sx, 1); ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align;
+  if (bold) { ctx.strokeStyle = color; ctx.lineWidth = bold; ctx.lineJoin = 'round'; ctx.strokeText(s, 0, 0); }
+  ctx.fillText(s, 0, 0); ctx.restore();
+}
+const sample = (ctx, x, y) => { const k = ctx.canvas.width / 480, d = ctx.getImageData(x * k, y * k, 1, 1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; };
+// Example: 10 m warm-up 110→135, 4 × (6 m @ 160–168, 4 m @ 138), 8 m cool-down 135→105
+const STEPS = [{ d: 600, a: 110, b: 135 }];
+for (let i = 0; i < 4; i++) STEPS.push({ d: 360, a: 164, b: 164 }, { d: 240, a: 138, b: 138 });
+STEPS.push({ d: 480, a: 135, b: 105 });
+const CUR = 3, IN_STEP = 360 - 93;
+function chart(ctx, theme, bg) {
+  ctx.fillStyle = bg; ctx.fillRect(8, 668, 464, 116);
+  const L = 16, W = 448, top = 690, bottom = 750, lo = 80, hi = 180;
+  const total = STEPS.reduce((s, x) => s + x.d, 0);
+  const X = s => L + s / total * W, Y = v => bottom - (v - lo) / (hi - lo) * (bottom - top);
+  ctx.lineWidth = 1;
+  for (const v of [100, 150]) {
+    ctx.strokeStyle = GRID[theme]; ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(L + W, Y(v)); ctx.stroke();
+    txt(ctx, String(v), L + 4, Y(v) - 4, '500 19px PlexMed', GREY[theme]);
+  }
+  let t = 0; const gap = 1.4;
+  STEPS.forEach((s, i) => {
+    const x0 = X(t) + gap, x1 = X(t + s.d) - gap, ya = Y(s.a), yb = Y(s.b);
+    const p = new Path2D(); p.moveTo(x0, bottom); p.lineTo(x0, ya); p.lineTo(x1, yb); p.lineTo(x1, bottom); p.closePath();
+    ctx.fillStyle = HRZ[zoneOf((s.a + s.b) / 2)];
+    if (i === CUR) {
+      const k = 3.75, q = new Path2D(); q.moveTo(x0 + k, bottom); q.lineTo(x0 + k, ya + k); q.lineTo(x1 - k, yb + k); q.lineTo(x1 - k, bottom); q.closePath();
+      ctx.fill(q); ctx.strokeStyle = INK[theme]; ctx.lineWidth = 3.75; ctx.stroke(p);
+    } else ctx.fill(p);
+    t += s.d;
+  });
+  const now = STEPS.slice(0, CUR).reduce((s, x) => s + x.d, 0) + IN_STEP, nx = X(now);
+  ctx.strokeStyle = INK[theme]; ctx.lineWidth = 3.75; ctx.beginPath(); ctx.moveTo(nx, top - 11); ctx.lineTo(nx, bottom); ctx.stroke();
+  ctx.fillStyle = INK[theme]; ctx.beginPath(); ctx.moveTo(nx - 9.4, top - 15); ctx.lineTo(nx + 9.4, top - 15); ctx.lineTo(nx, top - 3.75); ctx.fill();
+  txt(ctx, '58:00', L + W, 776, '500 19px PlexMed', GREY[theme], 'right');
+}
+// Bounding box of text ink (black in light, white in dark) inside [x, y, w, h] of the 480 × 800 screenshot
+function inkBox(shot, [x, y, w, h], theme) {
+  const c = document.createElement('canvas'); c.width = 480; c.height = 800; const g = c.getContext('2d'); g.drawImage(shot, 0, 0);
+  const d = g.getImageData(x, y, w, h).data; let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1;
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    const k = (j * w + i) * 4, l = (d[k] + d[k + 1] + d[k + 2]) / 3, sat = Math.max(d[k], d[k + 1], d[k + 2]) - Math.min(d[k], d[k + 1], d[k + 2]);
+    if (sat < 20 && (theme === 'light' ? l < 90 : l > 200)) { x0 = Math.min(x0, i); y0 = Math.min(y0, j); x1 = Math.max(x1, i); y1 = Math.max(y1, j); }
+  }
+  return [x + x0, y + y0, x1 - x0 + 1, y1 - y0 + 1];
+}
+function hrScreen(shot, theme) {
+  return ctx => {
+    ctx.drawImage(shot, 0, 0);
+    const bg = sample(ctx, 100, 130), tile1 = sample(ctx, 90, 540), tile2 = sample(ctx, 300, 545);
+    const red = sample(ctx, 205, 97), green = sample(ctx, 57, 491);
+    const HEART = new Path2D('M19.5,12.572L12,20l-7.5,-7.428A5,5 0,1 1,12 6.006a5,5 0,1 1,7.5 6.572');
+    const BOLT = new Path2D('M13,2v8h6l-8,12v-8H5l8,-12z');
+    const icon = (path, col, x, y, size, vb) => { ctx.save(); ctx.translate(x, y); ctx.scale(size / vb, size / vb);
+      ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.lineJoin = 'round'; ctx.fill(path); ctx.stroke(path); ctx.restore(); };
+    const heart = (x, y, size) => icon(HEART, red, x, y - size * 0.18, size, 22);
+    // Top row: power instead of heart rate
+    ctx.fillStyle = bg; ctx.fillRect(180, 74, 125, 46);
+    icon(BOLT, green, 192, 80, 32, 24);
+    txt(ctx, '215', 228, 111, '500 38px PlexMed', INK[theme]);
+    // The big number: heart rate
+    const box = inkBox(shot, [110, 196, 260, 160], theme); ctx.fillStyle = bg; ctx.fillRect(box[0] - 3, box[1] - 3, box[2] + 6, box[3] + 6);
+    txt(ctx, '164', 240, 345, '500 196px PlexMed', INK[theme], 'center', 0.92);
+    // Tile 1: LAP AVG heart rate (lap arrow + heart)
+    ctx.fillStyle = tile1; ctx.fillRect(46, 474, 30, 32); ctx.fillRect(120, 506, 115, 52);
+    heart(48, 481, 24);
+    txt(ctx, '162', 230, 551, '500 58px PlexMed', INK[theme], 'right', 0.92);
+    // Tile 2: TARGET in bpm (target + heart)
+    ctx.fillStyle = tile2; ctx.fillRect(250, 506, 222, 52);
+    heart(280, 481, 24);
+    txt(ctx, '160–168', 466, 551, '500 58px PlexMed', INK[theme], 'right', 0.92);
+    // Next up in bpm
+    ctx.fillStyle = bg; ctx.fillRect(110, 612, 260, 44);
+    txt(ctx, '4m @ 138 bpm', 240, 646, '500 34px PlexCond', INK[theme], 'center', 1, 1.2);
+    chart(ctx, theme, bg);
+  };
+}
+(async () => {
+  await Promise.all(['500 38px PlexMed', '500 34px PlexCond'].map(f => document.fonts.load(f)));
+  const I = {}; for (const [k, v] of Object.entries(B)) I[k] = await img(v);
+  const rows = [
+    ['Gauge · power workout (now)', t => ctx => ctx.drawImage(I['gauge-' + t], 0, 0)],
+    ['Gauge · heart-rate workout: HR is the big number, power goes to the top', t => hrScreen(I['gauge-' + t], t)],
+  ];
+  for (const [cap, make] of rows) {
+    const row = document.createElement('div'); row.className = 'devices';
+    for (const t of ['light', 'dark']) {
+      const dev = await KarooDevice.load({ frame: FRAME, screen: B['gauge-' + t] });
+      const scr = dev.screen({ draw: make(t), scale: 2 });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 380));
+      const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${t})`; el.append(c);
+      row.append(el);
+    }
+    document.getElementById('rows').append(row);
+  }
+})();
+</script>
+</body>
+</html>
