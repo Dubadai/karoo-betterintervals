@@ -245,14 +245,15 @@ function workouts(theme, pct) {
     rr(ctx, 344, 172, 114, 81, 16, k.track); txt(ctx, 'Sync', 401, 223, '700 28px PlexBold', k.ink, 'center');
     txt(ctx, 'Last synced 20:20', 22, 287, '400 22px PlexReg', k.grey);
     // Scale (only while a workout is loaded): the Karoo's own control, with clear buttons
-    txt(ctx, 'SCALE', 22, 358, '700 24px PlexBold', k.grey);
-    rr(ctx, 22, 376, 436, 124, 18, k.tile);
+    txt(ctx, 'SCALE WORKOUT', 22, 358, '700 24px PlexBold', k.grey);
+    // Outlined like the ride screen's Next up box; only the buttons are filled
+    ctx.strokeStyle = theme === 'light' ? '#8F8D86' : '#6E6C66'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.roundRect(23.25, 377.25, 433.5, 121.5, 18); ctx.stroke();
     for (const [x, plus] of [[38, false], [350, true]]) {
       rr(ctx, x, 392, 92, 92, 16, k.track);
       ctx.fillStyle = k.ink; ctx.fillRect(x + 28, 435, 36, 6); if (plus) ctx.fillRect(x + 43, 420, 6, 36);
     }
-    txt(ctx, pct + '%', 240, 446, '500 48px PlexMed', k.ink, 'center');
-    txt(ctx, 'of every power target', 240, 476, '400 19px PlexReg', k.grey, 'center');
+    txt(ctx, pct + '%', 240, 455, '500 48px PlexMed', k.ink, 'center');
     txt(ctx, 'CURRENT WORKOUT', 22, 552, '700 24px PlexBold', k.grey);
     rr(ctx, 22, 570, 436, 300, 18, k.tile);
     txt(ctx, 'Threshold 4×8m', 40, 614, '700 30px PlexBold', k.ink);
@@ -274,7 +275,7 @@ function workouts(theme, pct) {
       ['Heart-rate workout · same setting: power takes heart rate\u2019s place', t => hrScreen(I['gauge-' + t], t, false, [['bolt', '215'], ['cadence', '88']])],
       ['Settings › Top row', t => settings(t)],
     ]],
-    ['Scale the workout', 'The gear on the ride screen opens Workouts. While a workout is loaded, Scale sits above it: − and + in 1% steps (like the Karoo’s own), shown on the card. Heart-rate targets don’t scale.', [
+    ['Scale the workout', 'The gear on the ride screen opens Workouts. While a workout is loaded, Scale workout sits above it and scales that loaded workout: − and + in 1% steps (like the Karoo’s own), shown on the card. Picking another workout starts it at 100%. Heart-rate targets don’t scale.', [
       ['Workouts · 100%', t => workouts(t, 100)],
       ['Workouts · 105%: the profile grows with it', t => workouts(t, 105)],
     ]],

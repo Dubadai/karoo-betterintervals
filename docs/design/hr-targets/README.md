@@ -15,8 +15,8 @@ Proposal (`mockup.html`, light and dark, drawn on field gallery screens and the 
   tile switches it to % LTHR (label "% LTHR", Next up follows). Chart: bpm in Karoo HR zone colours from 80 bpm.
 - Mixed workouts: each step uses its own target; a step with both stays on power.
 - Settings › Top row: One | Two, then Left and Right (Right can't repeat Left).
-- Workouts: SCALE block above Current workout while one is loaded: − / + (1% steps), "of every
-  power target"; the card shows the scale and its profile grows with it. HR targets don't scale.
+- Workouts: "Scale workout" above Current workout while one is loaded: outlined box, filled − / + buttons (1% steps), just the percentage; scales the loaded workout, a newly picked one starts at 100%;
+  the card shows the scale and its profile grows with it. HR targets don't scale.
 - Only when the Karoo itself has the ride paused or auto-paused (its yellow bar covers the gear and top row): the gear moves to the start of the interval row and the pill shortens to PAUSED / AUTO-PAUSED so the clock fits (today "WORKOUT AUTO-PAUSED" pushes the clock off screen). Pausing only the workout while riding changes nothing.
 - `base/karoo-ride-paused-real.png`: David's Karoo with the ride auto-paused (2026-11-08).
 
