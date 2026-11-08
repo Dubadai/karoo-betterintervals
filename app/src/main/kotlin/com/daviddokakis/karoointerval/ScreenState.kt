@@ -150,11 +150,32 @@ data class ScreenState(
     /** The big number: heart rate on a heart-rate step, else the (smoothed) power. */
     val mainValue: Int? get() = if (hrStep) heartRate else powerShown
 
-    /** % of LTHR is possible: the workout says the rider's LTHR. */
-    val showsLthr: Boolean get() = hrTargetLthr && (plan?.lthr ?: 0) > 0
+    /**
+     * How a heart-rate step's target shows as a percentage: as the workout writes it ("%hr", of
+     * max HR, or "%lthr"), else % of LTHR worked out from bpm when the workout says the LTHR;
+     * null: bpm only.
+     */
+    fun pctUnitOf(step: PlanStep): String? = step.pctUnit ?: if ((plan?.lthr ?: 0) > 0) "%lthr" else null
 
-    /** [bpm] as % of the workout's LTHR. */
-    fun lthrPct(bpm: Int): Int = plan?.lthr?.takeIf { it > 0 }?.let { (bpm * 100.0 / it).roundToInt() } ?: bpm
+    /** The Target tile was tapped to % and the current step can show it. */
+    val showsPct: Boolean get() = hrTargetLthr && currentStep?.let(::pctUnitOf) != null
+
+    /**
+     * [step]'s target in %, low to high (the same twice for a single target): the written numbers,
+     * else bpm / LTHR. For a ramp, [elapsedSec] picks the point on it.
+     */
+    fun pctOf(step: PlanStep, elapsedSec: Int = 0): Pair<Int, Int>? {
+        if (step.pctUnit != null && step.pctLow != null && step.pctHigh != null) {
+            if (!step.isRamp) return step.pctLow to step.pctHigh
+            val f = if (step.durationSec > 0) elapsedSec.coerceIn(0, step.durationSec).toDouble() / step.durationSec else 0.0
+            val p = (step.pctLow + (step.pctHigh - step.pctLow) * f).roundToInt()
+            return p to p
+        }
+        val lthr = plan?.lthr?.takeIf { it > 0 } ?: return null
+        fun pct(bpm: Int) = (bpm * 100.0 / lthr).roundToInt()
+        val band = if (step.isRamp) step.targetAt(elapsedSec).let { it..it } else step.rangeAt(elapsedSec)
+        return pct(band.first) to pct(band.last)
+    }
 
     val target: Int? get() = currentStep?.targetAt(elapsedInStepSec)
     val targetRange: IntRange? get() = currentStep?.rangeAt(elapsedInStepSec)

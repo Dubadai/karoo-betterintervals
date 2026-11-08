@@ -113,11 +113,19 @@ class IntervalsIcu(private val athleteId: String, private val apiKey: String) {
 
             val low = resolvedOr("start")
             val high = resolvedOr("end")
+            // A heart-rate step written in % (of max HR or of LTHR): keep the written numbers too
+            val unit = written?.optString("units")?.lowercase()?.takeIf { hr && (it == "%hr" || it == "%lthr") }
+            val pctValue = unit?.let { written?.optDoubleOrNull("value")?.roundToInt() }
+            val pctLow = unit?.let { written?.optDoubleOrNull("start")?.roundToInt() } ?: pctValue
+            val pctHigh = unit?.let { written?.optDoubleOrNull("end")?.roundToInt() } ?: pctValue
             if (ramp && low != null && high != null) {
-                return PlanStep(duration, low, high, ramp = true, hr = hr)
+                return PlanStep(duration, low, high, ramp = true, hr = hr, pctUnit = unit, pctLow = pctLow, pctHigh = pctHigh)
             }
             val target = resolvedOr("value") ?: if (low != null && high != null) (low + high) / 2 else 0
-            return PlanStep(duration, target, target, rangeLow = low, rangeHigh = high, isRange = writtenAsRange, hr = hr)
+            return PlanStep(
+                duration, target, target, rangeLow = low, rangeHigh = high, isRange = writtenAsRange, hr = hr,
+                pctUnit = unit, pctLow = pctLow, pctHigh = pctHigh,
+            )
         }
 
         internal fun JSONObject.optDoubleOrNull(key: String): Double? =

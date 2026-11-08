@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import io.hammerhead.karooext.models.ViewConfig
+import kotlin.math.roundToInt
 
 /** Turns a [ScreenState] into the RemoteViews shown in the Karoo data field. */
 class ScreenRenderer(private val context: Context, private val config: ViewConfig) {
@@ -659,10 +660,24 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         val dur = formatDuration(step.durationSec)
         val lo = if (step.isRange && step.rangeLow != null) step.rangeLow else if (step.isRamp) step.startWatts else null
         val hi = if (step.isRange && step.rangeHigh != null) step.rangeHigh else if (step.isRamp) step.endWatts else null
-        return if (s.showsLthr) {
-            if (lo != null && hi != null) context.getString(R.string.step_summary_lthr_range, dur, s.lthrPct(lo), s.lthrPct(hi))
-            else context.getString(R.string.step_summary_lthr, dur, s.lthrPct(step.avgWatts))
-        } else {
+        // % as the step is written ("85% HR", "95% LTHR"), else % of LTHR from bpm
+        val unit = s.pctUnitOf(step)
+        if (s.hrTargetLthr && unit != null) {
+            val pct = if (step.pctUnit != null && step.pctLow != null && step.pctHigh != null) {
+                step.pctLow to step.pctHigh
+            } else {
+                val lthr = s.plan?.lthr ?: 1
+                fun p(bpm: Int) = (bpm * 100.0 / lthr).roundToInt()
+                if (lo != null && hi != null) p(lo) to p(hi) else p(step.avgWatts).let { it to it }
+            }
+            val ofMax = unit == "%hr"
+            return if (pct.first != pct.second) {
+                context.getString(if (ofMax) R.string.step_summary_hrpct_range else R.string.step_summary_lthr_range, dur, pct.first, pct.second)
+            } else {
+                context.getString(if (ofMax) R.string.step_summary_hrpct else R.string.step_summary_lthr, dur, pct.first)
+            }
+        }
+        return run {
             if (lo != null && hi != null) context.getString(R.string.step_summary_bpm_range, dur, lo, hi)
             else context.getString(R.string.step_summary_bpm, dur, step.avgWatts)
         }
@@ -670,7 +685,13 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
 
     /** The label a top-row item has in the second tile. */
     private fun itemLabel(s: ScreenState, item: TopRow): String = when (item) {
-        TopRow.TARGET -> context.getString(if (s.hrStep && s.showsLthr) R.string.lthr_label else R.string.target)
+        TopRow.TARGET -> context.getString(
+            when {
+                !s.hrStep || !s.showsPct -> R.string.target
+                s.currentStep?.let(s::pctUnitOf) == "%hr" -> R.string.hr_pct_label
+                else -> R.string.lthr_label
+            },
+        )
         TopRow.CADENCE -> cadenceLabel(lap = false)
         TopRow.HEART_RATE -> context.getString(if (s.hrStep) R.string.power_label else R.string.hr)
     }
@@ -685,12 +706,17 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         TopRow.HEART_RATE -> (if (s.hrStep) s.powerShown else s.heartRate)?.toString() ?: "--"
         TopRow.TARGET -> {
             val band = s.targetRange
-            val pct = s.hrStep && s.showsLthr
-            fun f(v: Int) = (if (pct) s.lthrPct(v) else v).toString()
             val dash = if (inTile) "–" else " – "
-            val showRange = band != null && band.first != band.last && (!inTile || gaugeMode || s.hrStep || s.targetShowsRange)
-            val text = if (showRange && band != null) "${f(band.first)}$dash${f(band.last)}" else s.target?.let(::f) ?: "--"
-            if (pct && !inTile && text != "--") "$text%" else text
+            val step = s.currentStep
+            val pct = if (s.hrStep && s.showsPct && step != null) s.pctOf(step, s.elapsedInStepSec) else null
+            if (pct != null) {
+                // As written: "85" (one number) or "82–88"; at the top with its "%"
+                val text = if (pct.first != pct.second) "${pct.first}$dash${pct.second}" else "${pct.first}"
+                if (inTile) text else "$text%"
+            } else {
+                val showRange = band != null && band.first != band.last && (!inTile || gaugeMode || s.hrStep || s.targetShowsRange)
+                if (showRange && band != null) "${band.first}$dash${band.last}" else s.target?.toString() ?: "--"
+            }
         }
     }
 

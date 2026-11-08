@@ -26,3 +26,7 @@ intervals.icu HR step format (read from a real HR-only workout, 2026-11-08):
 `{"duration":240,"hr":{"value":85,"units":"%hr"},"_hr":{"value":175.0,"start":172.0,"end":178.0}}`.
 `_hr` (resolve=true) is in bpm, with the range in start/end. The workout_doc also has `lthr` and
 `"target":"HR"`, so % of LTHR is bpm / lthr. Repeat blocks are as for power.
+
+Change after review (2026-11-08): the Target tile's % shows the percentage the way the workout is
+written: "% HR" (of max HR, intervals.icu "85% HR") or "% LTHR"; a workout in bpm or zones shows % of
+LTHR worked out from bpm. Next up follows ("2m @ 69% HR").

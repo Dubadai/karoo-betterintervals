@@ -21,7 +21,7 @@ object GalleryFields {
         "choose", "restart", "cancelled", "countdown", "paused", "zoomed", "target-range", "lap-np",
         "outline", "cadence",
         // Heart-rate targets, two values at the top, the gear while the Karoo has the ride paused
-        "hr-gauge", "hr-gauge-lthr", "hr-number", "hr-top-two", "top-two", "ride-paused", "ride-auto-paused", "hr-ready",
+        "hr-gauge", "hr-gauge-pct", "hr-number", "hr-top-two", "top-two", "ride-paused", "ride-auto-paused", "hr-ready",
     )
     val sizes: List<String>? = listOf("full")   // BetterIntervals is always a full-page field
 
@@ -29,9 +29,15 @@ object GalleryFields {
     private val HR_PLAN = WorkoutPlan(
         id = "example-hr",
         name = "HR intervals 5 × 4 min",
-        steps = listOf(PlanStep(600, 134, 134, rangeLow = 131, rangeHigh = 137, hr = true)) +
-            List(5) { listOf(PlanStep(240, 164, 164, rangeLow = 160, rangeHigh = 168, hr = true), PlanStep(120, 138, 138, rangeLow = 135, rangeHigh = 141, hr = true)) }.flatten() +
-            PlanStep(600, 124, 124, rangeLow = 122, rangeHigh = 126, hr = true),
+        // Written as % of max HR (max 200), as in intervals.icu: "10m 67% HR", 5 × ("4m 82% HR", "2m 69% HR"), "10m 62% HR"
+        steps = listOf(PlanStep(600, 134, 134, rangeLow = 131, rangeHigh = 137, hr = true, pctUnit = "%hr", pctLow = 67, pctHigh = 67)) +
+            List(5) {
+                listOf(
+                    PlanStep(240, 164, 164, rangeLow = 160, rangeHigh = 168, hr = true, pctUnit = "%hr", pctLow = 82, pctHigh = 82),
+                    PlanStep(120, 138, 138, rangeLow = 135, rangeHigh = 141, hr = true, pctUnit = "%hr", pctLow = 69, pctHigh = 69),
+                )
+            }.flatten() +
+            PlanStep(600, 124, 124, rangeLow = 122, rangeHigh = 126, hr = true, pctUnit = "%hr", pctLow = 62, pctHigh = 62),
         ftp = 280,
         lthr = 180,
     )
@@ -92,7 +98,8 @@ object GalleryFields {
             "cadence" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, secondField = SecondField.CADENCE)
             // A workout with heart-rate targets only (as intervals.icu sends one: % of max HR, resolved to bpm)
             "hr-gauge" -> hrWorkout(WattsMode.GAUGE)
-            "hr-gauge-lthr" -> hrWorkout(WattsMode.GAUGE).copy(hrTargetLthr = true)
+            // The Target tile tapped to %: as written, % of max HR ("% HR 82", Next up "2m @ 69% HR")
+            "hr-gauge-pct" -> hrWorkout(WattsMode.GAUGE).copy(hrTargetLthr = true)
             "hr-number" -> hrWorkout(WattsMode.BOTH)
             "hr-top-two" -> hrWorkout(WattsMode.GAUGE).copy(topRowRight = TopRow.CADENCE)
             "hr-ready" -> hrWorkout(WattsMode.GAUGE).copy(notStarted = true, stepIndex = 0, elapsedInStepSec = 0)

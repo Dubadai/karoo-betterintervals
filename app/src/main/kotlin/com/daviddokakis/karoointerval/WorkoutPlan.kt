@@ -11,6 +11,9 @@ import kotlin.math.roundToInt
  *
  * [hr]: the step has a heart-rate target instead of a power target. Then the "watts" fields hold
  * beats per minute, and the screen runs the step on heart rate.
+ * [pctUnit]: a heart-rate step written as a percentage, "%hr" (of max HR, "85% HR") or "%lthr"
+ * ("95% LTHR"), with the written numbers: [pctLow]..[pctHigh] for a range or a ramp, else both
+ * the same. Shown as written when the Target tile is tapped to %.
  */
 data class PlanStep(
     val durationSec: Int,
@@ -21,6 +24,9 @@ data class PlanStep(
     val rangeHigh: Int? = null,
     val isRange: Boolean = false,
     val hr: Boolean = false,
+    val pctUnit: String? = null,
+    val pctLow: Int? = null,
+    val pctHigh: Int? = null,
 ) {
     val avgWatts: Int get() = (startWatts + endWatts) / 2
     val isRamp: Boolean get() = ramp && startWatts != endWatts
