@@ -143,11 +143,12 @@ class ChartRenderer(private val context: Context) {
             val inset = 2f * d   // half the outline (1dp) + the gap (1dp)
             val current = !card && i == state.stepIndex
             val fillPath = if (current && x1 - x0 > 2 * inset + 1f * d) {
+                // The gap goes all around, the bottom too (the outline closes along the bottom).
                 Path().apply {
-                    moveTo(x0 + inset, bottom)
-                    lineTo(x0 + inset, minOf(ys.first + inset, bottom))
-                    lineTo(x1 - inset, minOf(ys.second + inset, bottom))
-                    lineTo(x1 - inset, bottom)
+                    moveTo(x0 + inset, bottom - inset)
+                    lineTo(x0 + inset, minOf(ys.first + inset, bottom - inset))
+                    lineTo(x1 - inset, minOf(ys.second + inset, bottom - inset))
+                    lineTo(x1 - inset, bottom - inset)
                     close()
                 }
             } else {

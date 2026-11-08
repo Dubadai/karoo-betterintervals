@@ -58,6 +58,15 @@ object Zones {
         return picks.getOrNull(zone - 1)?.let { HR_COLORS[it - 1] }
     }
 
+    /** The chart's version of a Karoo HR colour (deeper in light mode, the original in dark). */
+    @ColorRes
+    private fun chartColor(@ColorRes hr: Int): Int = CHART_HR_COLORS[HR_COLORS.indexOf(hr).coerceAtLeast(0)]
+
+    private val CHART_HR_COLORS = listOf(
+        R.color.chart_hr_c1, R.color.chart_hr_c2, R.color.chart_hr_c3, R.color.chart_hr_c4,
+        R.color.chart_hr_c5, R.color.chart_hr_c6, R.color.chart_hr_c7,
+    )
+
     private val HR_COLORS = listOf(
         R.color.karoo_hr_c1, R.color.karoo_hr_c2, R.color.karoo_hr_c3, R.color.karoo_hr_c4,
         R.color.karoo_hr_c5, R.color.karoo_hr_c6, R.color.karoo_hr_c7,
@@ -76,7 +85,7 @@ object Zones {
                 bpm > profileZones.last().last -> profileZones.size
                 else -> 1
             }
-            hrZoneColor(zone, profileZones.size)?.let { return it }
+            hrZoneColor(zone, profileZones.size)?.let { return chartColor(it) }
         }
         if (lthr != null && lthr > 0) {
             val pct = bpm * 100 / lthr
@@ -87,8 +96,8 @@ object Zones {
                 pct < 100 -> 4
                 else -> 5
             }
-            return hrZoneColor(zone, 5) ?: R.color.karoo_hr_c3
+            return chartColor(hrZoneColor(zone, 5) ?: R.color.karoo_hr_c3)
         }
-        return R.color.karoo_hr_c3
+        return R.color.chart_hr_c3
     }
 }
