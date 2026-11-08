@@ -228,7 +228,8 @@ internal object ThemeOverrides {
         Op(R.id.done_value_4, Kind.TEXT, R.color.text),
         Op(R.id.btn_done, Kind.BG, R.color.karoo_yellow),
         Op(R.id.th_done_karoo_1, Kind.TEXT, R.color.karoo_yellow_fg),
-        Op(R.id.th_done_karoo_2, Kind.TINT, R.color.recording),
+        Op(R.id.rec_ring, Kind.TINT, R.color.text),
+        Op(R.id.rec_dot, Kind.TINT, R.color.recording),
         Op(R.id.th_done_karoo_3, Kind.TEXT, R.color.text_secondary),
         Op(R.id.done_gear_icon, Kind.TINT, R.color.text),
     )

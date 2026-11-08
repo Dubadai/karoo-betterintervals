@@ -71,7 +71,7 @@ Tap the chart to zoom in on the current interval. Tap again to see the whole wor
 
 After the last interval a **Workout complete** screen shows the workout's own numbers: its time,
 average power, NP and average heart rate. Tap **DONE** to take the workout off and go back to the
-free-ride screen. The ride itself is still recording, as the red bike under DONE says.
+free-ride screen. The ride itself is still recording, as the blinking red dot under DONE says.
 
 <img src="images/done.png" width="240" alt="Workout complete: a green check, the workout's name, time 52:00, average power 232, NP 251, average HR 132, and a yellow DONE button">
 

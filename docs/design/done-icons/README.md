@@ -8,7 +8,8 @@ left, centred on the label): TIME the timer, AVG POWER and NP the bolt (Karoo gr
 heart (red; cadence's icon when Settings shows cadence). With a route (79 px shorter) the screen
 already fits: the check gets smaller and everything moves up.
 Title: WORKOUT COMPLETE instead of WORKOUT DONE!, so DONE is only the button.
-Under DONE: a red bike (the recording dot's red) and RIDE IS STILL RECORDING, in place of the red dot
+Under DONE: RIDE IS STILL RECORDING with an icon (a bike here; the build uses the record symbol, see
+../recording-icon/), in place of the red dot
 and THE RIDE KEEPS RECORDING.
 
 `base/`: field gallery done screens (with and without a route) the mockup is drawn on.
