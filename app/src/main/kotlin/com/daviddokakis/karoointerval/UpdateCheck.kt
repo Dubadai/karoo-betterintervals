@@ -54,6 +54,9 @@ class UpdateCheck(
         if (prefs.getString(KEY_URL, null) != manifestUrl) {
             prefs.edit().putString(KEY_URL, manifestUrl).remove(KEY_NEXT_CHECK).remove(KEY_NOTIFIED_CODE).apply()
         }
+        // Every start of the app (so every time the Karoo starts) checks once, whatever the last
+        // check was; after that once a day.
+        var checkNow = true
         rideStates()
             .map { it is RideState.Idle }
             .distinctUntilChanged()
@@ -62,8 +65,9 @@ class UpdateCheck(
                 if (!idle) return@collectLatest
                 delay(SETTLE_MS) // after boot or a ride, let the Karoo get its connection first
                 while (true) {
-                    val wait = prefs.getLong(KEY_NEXT_CHECK, 0) - System.currentTimeMillis()
+                    val wait = if (checkNow) 0 else prefs.getLong(KEY_NEXT_CHECK, 0) - System.currentTimeMillis()
                     if (wait > 0) delay(wait)
+                    checkNow = false
                     val ok = !isEnabled(context) || runCatching { checkOnce(manifestUrl) }
                         .onFailure { Timber.w(it, "Update check failed") }
                         .isSuccess
