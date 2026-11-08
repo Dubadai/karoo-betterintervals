@@ -54,8 +54,8 @@ Releases must always be signed with the **same key**, or Karoos with an older ve
 From 0.5.3, the app names `releases/latest/download/manifest.json` in its AndroidManifest
 (`io.hammerhead.karooext.MANIFEST_URL`). With it, the Karoo's Settings › Apps › DDB BetterIntervals
 page shows the release notes and an **UPDATE** button that installs `betterintervals.apk` on the
-Karoo. The Karoo only reads it when that page is opened, so `UpdateCheck.kt` tells the rider: when
-the Karoo starts and then once a day, never during a ride, it reads the manifest and puts one
+Karoo. The Karoo only reads it when that page is opened, so `UpdateCheck.kt` tells the rider:
+every time the Karoo starts and then once a day, never during a ride, it reads the manifest and puts one
 "Update available" card per new version in Control Center › Notifications. Tapping the card
 opens that Karoo page. Riders can turn it off in Settings › Update notices.
 
