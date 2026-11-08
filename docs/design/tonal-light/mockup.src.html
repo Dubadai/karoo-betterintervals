@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Softer light tiles</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
+  h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
+  h2 { font-size:16px; font-weight:500; margin:22px 0 4px; text-align:center; }
+  p.d { color:#A9A6A0; margin:0 auto 18px; max-width:780px; text-align:center; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:24px; margin-bottom:30px; }
+  .dev { display:grid; justify-items:center; gap:8px; }
+  .cap { color:#A9A6A0; font-size:13px; max-width:380px; text-align:center; }
+</style>
+</head>
+<body>
+<h1>Softer tonal tiles in light mode</h1>
+<p class="d">The Lap avg and Target tiles. Dark mode (#1F1F1F on black) stays as it is. Light mode today is #DDDDDD on white; the options are lighter greys so the tiles sit back the way they do in dark mode. Drawn on the app's own screens (field gallery), only the tile colour changed.</p>
+<div id="rows"></div>
+<script>/*__KAROO_DEVICE_JS__*/</script>
+<script>
+const FRAME = "__FRAME__";
+const B = /*__BASE__*/;
+const img = src => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
+const OLD = 0xDD, INK = 0x0B;
+// Tile rectangles: the bounding box of the exact tile grey in each half, rows 300–700
+function tiles(d) {
+  const boxes = [];
+  for (const [x0, x1] of [[0, 240], [240, 480]]) {
+    let a = 1e9, b = 1e9, c = -1, e = -1;
+    for (let y = 300; y < 700; y++) for (let x = x0; x < x1; x++) {
+      const k = (y * 480 + x) * 4;
+      if (d[k] === OLD && d[k + 1] === OLD && d[k + 2] === OLD) { a = Math.min(a, x); b = Math.min(b, y); c = Math.max(c, x); e = Math.max(e, y); }
+    }
+    if (c > 0 && (c - a) > 60 && (e - b) > 40) boxes.push([a, b, c, e]);
+  }
+  return boxes;
+}
+// Inside each tile: tile grey -> [to]; text and icon edges keep their mix with the tile
+function recolour(shot, to) {
+  return ctx => {
+    const c = document.createElement('canvas'); c.width = 480; c.height = 800; const g = c.getContext('2d'); g.drawImage(shot, 0, 0);
+    if (to !== OLD) {
+      const im = g.getImageData(0, 0, 480, 800), d = im.data;
+      for (const [x0, y0, x1, y1] of tiles(d)) for (let y = y0 - 2; y <= y1 + 2; y++) for (let x = x0 - 2; x <= x1 + 2; x++) {
+        const k = (y * 480 + x) * 4;
+        for (let i = 0; i < 3; i++) {
+          const v = d[k + i];
+          if (v >= OLD) d[k + i] = Math.round(to + (v - OLD) / (255 - OLD) * (255 - to));          // tile to page (rounded corners)
+          else { const a = (OLD - v) / (OLD - INK); d[k + i] = Math.round(v + (to - OLD) * (1 - a)); } // ink over tile
+        }
+      }
+      g.putImageData(im, 0, 0);
+    }
+    ctx.drawImage(c, 0, 0);
+  };
+}
+const hex = v => '#' + v.toString(16).toUpperCase().repeat(3);
+(async () => {
+  const I = {}; for (const [k, v] of Object.entries(B)) I[k] = await img(v);
+  const options = [[0xDD, 'Now'], [0xE6, 'A'], [0xEB, 'B (recommended)'], [0xF0, 'C']];
+  const root = document.getElementById('rows');
+  for (const screen of ['gauge', 'karoo', 'free']) {
+    const h = document.createElement('h2'); h.textContent = { gauge: 'Workout · gauge', karoo: 'Workout · number style', free: 'No workout (free ride)' }[screen]; root.append(h);
+    const row = document.createElement('div'); row.className = 'devices';
+    const cells = [...options.map(([v, name]) => [`${name}: ${hex(v)}${v === OLD ? '' : ` (${Math.round((255 - v) / 2.55)}% black)`}`, 'light', recolour(I[screen + '-light'], v)]),
+      ['Dark mode (stays): #1F1F1F', 'dark', ctx => ctx.drawImage(I[screen + '-dark'], 0, 0)]];
+    for (const [cap, theme, draw] of cells) {
+      const dev = await KarooDevice.load({ frame: FRAME, screen: B[screen + '-' + theme] });
+      const scr = dev.screen({ draw, scale: 2 });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 380));
+      const c = document.createElement('div'); c.className = 'cap'; c.textContent = cap; el.append(c);
+      row.append(el);
+    }
+    root.append(row);
+  }
+})();
+</script>
+</body>
+</html>

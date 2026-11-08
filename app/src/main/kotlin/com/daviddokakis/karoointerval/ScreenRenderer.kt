@@ -477,8 +477,11 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (s.showsCadence) {
             v.setTextViewText(R.id.done_label_4, context.getString(R.string.avg_cadence))
             v.setTextViewText(R.id.done_value_4, sum?.avgCadence?.toString() ?: "--")
+            showCadenceIcon(v, R.id.done_icon_4, onTint = false)
         } else {
             v.setTextViewText(R.id.done_value_4, sum?.avgHr?.toString() ?: "--")
+            // The heart in this mode's red (Dark / Light forced too), like the workout screen's
+            v.setInt(R.id.done_icon_4, "setColorFilter", color(R.color.heart_icon))
         }
         applyTiles(v, listOf(R.id.done_tile_1, R.id.done_tile_2, R.id.done_tile_3, R.id.done_tile_4), s.tileOutline, R.drawable.bg_tile_tonal)
         v.setOnClickPendingIntent(R.id.btn_done, doneIntent)

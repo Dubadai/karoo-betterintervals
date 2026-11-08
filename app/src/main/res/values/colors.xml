@@ -90,9 +90,10 @@
     <!-- Countdown (regular style): the darker blue it fills with, and "Jumping to" on the pale blue -->
     <color name="countdown_fill">#FF85B7EB</color>
     <color name="countdown_sub">#FF2E5A85</color>
-    <!-- Tonal tile with data field boundaries on (black at 13%: the Karoo's page grey #DDDDDD on white, measured on the
-         Karoo 3), see-through so a range tint still shows. -->
-    <color name="tile_boundary">#22000000</color>
+    <!-- Tonal tile with data field boundaries on: black at 8% (#EBEBEB on white), as soft as the dark
+         mode tile on black (the Karoo's own page grey, #DDDDDD, read as a heavy block; design:
+         docs/design/tonal-light/). See-through so a range tint still shows. -->
+    <color name="tile_boundary">#14000000</color>
     <!-- Workout done: the "ride keeps recording" dot -->
     <color name="recording">#FFD93025</color>
     <!-- Chart bars for heart-rate steps in light mode: the Karoo's HR zone colours, deeper so they stand out on white and the light card (on white: mint 3.0:1 instead of 1.5, yellow 2.5 instead of 1.1, the rest 3.3–7.1). Same hues; the HR tile keeps the originals (black text on them). -->
