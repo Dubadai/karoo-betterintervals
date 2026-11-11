@@ -197,7 +197,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
                 val band = color(if (hrStep) R.color.heart_icon else R.color.karoo_green)
                 v.setImageViewBitmap(
                     R.id.gauge,
-                    gauge.render(gaugeW, gaugeHeightPx(s.navigating), s.mainValue, s.target, s.targetRange, color(wattsColor), band, empty = mainSensor(s).emptyText),
+                    gauge.render(gaugeW, gaugeHeightPx(s.navigating), s.mainValue, s.target, s.targetRange, color(wattsColor), band, empty = mainSensor(s).emptyText, pill = ergPill(s)),
                 )
             }
         } else {
@@ -299,6 +299,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setViewVisibility(R.id.btn_settings_paused, if (ridePaused) View.VISIBLE else View.GONE)
         v.setViewVisibility(R.id.btn_settings, if (ridePaused) View.INVISIBLE else View.VISIBLE)
         gearBelowKarooBar(v, R.id.btn_settings, s)
+        showErgPill(v, s, gaugeMode)
         // Tonal: the text colour at 55%, so a range tint shows through (a translucent tint colour
         // alone comes out solid on the Karoo).
         v.setInt(R.id.btn_pause_icon, "setColorFilter", color(R.color.text))
@@ -323,6 +324,10 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
                     },
                 ),
             )
+            // Paused by you with ERG on: the box says what the trainer holds meanwhile.
+            if (!ridePaused && s.erg == ErgStatus.HOLDING && s.ergWatts != null) {
+                v.setTextViewText(R.id.paused_text, context.getString(R.string.erg_paused, s.ergWatts))
+            }
             // Blink the pause icon: flip on every redraw (Karoo redraws a field about once a second).
             blinkOn = !blinkOn
             v.setInt(R.id.paused_icon, "setImageAlpha", if (blinkOn) 255 else 70)
@@ -847,6 +852,35 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         return out
     }
 
+    /**
+     * The ERG pill (indoor ERG on), above the watts: drawn into the gauge, or its own view over the
+     * plain number. Null when ERG is off.
+     */
+    private fun ergPill(s: ScreenState): android.graphics.Bitmap? {
+        val erg = s.erg ?: return null
+        val (bg, fg) = when (erg) {
+            ErgStatus.HOLDING -> R.color.erg_on_bg to R.color.erg_on_fg
+            ErgStatus.FREE, ErgStatus.CONNECTING -> R.color.erg_wait_bg to R.color.erg_wait_fg
+            ErgStatus.LOST -> R.color.erg_warn_bg to R.color.erg_warn_fg
+        }
+        return ErgPillArt.draw(erg, color(bg), color(fg), density / 1.875f * scale)
+    }
+
+    /** The plain-number layout: the pill above the watts, which move down to make room. */
+    private fun showErgPill(v: RemoteViews, s: ScreenState, gaugeMode: Boolean) {
+        if (gaugeMode) return
+        val pill = ergPill(s)
+        val top = (WATTS_TOP_DP * density).roundToInt()
+        if (pill == null) {
+            v.setViewVisibility(R.id.erg_pill, View.GONE)
+            v.setViewPadding(R.id.watts, 0, top, 0, 0)
+            return
+        }
+        v.setImageViewBitmap(R.id.erg_pill, pill)
+        v.setViewVisibility(R.id.erg_pill, View.VISIBLE)
+        v.setViewPadding(R.id.watts, 0, top + pill.height + (4 * density).roundToInt(), 0, 0)
+    }
+
     /** Screens without an interval row: the gear moves down out from under the Karoo's top strip. */
     private fun gearBelowKarooBar(v: RemoteViews, id: Int, s: ScreenState) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
@@ -1074,6 +1108,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     companion object {
         /** The Karoo's PAUSE / "Searching GPS…" strip over a field's top, about 40 px on a Karoo 3. */
         private const val KAROO_BAR_DP = 24f
+        /** The plain watts' top padding (layout: 24dp), more with the ERG pill above them. */
+        private const val WATTS_TOP_DP = 24f
         /** The Karoo's seven HR zone colours (hr_colors.xml), picked per zone count by hrZoneDrawable. */
         private val HR_ZONE_COLORS = listOf(
             R.color.karoo_hr_c1, R.color.karoo_hr_c2, R.color.karoo_hr_c3, R.color.karoo_hr_c4,

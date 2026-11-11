@@ -109,6 +109,12 @@ class WorkoutSession(
     /** Interval screens currently showing. While one is, it plays the countdown beeps (see [onCountdownShown]). */
     private val viewsActive = java.util.concurrent.atomic.AtomicInteger(0)
 
+    /** The ERG pill (from [ErgController]); only redraws when it changes. */
+    fun setErg(status: ErgStatus?, watts: Int?) {
+        val st = _state.value
+        if (st.erg != status || st.ergWatts != watts) _state.update { it.copy(erg = status, ergWatts = watts) }
+    }
+
     fun viewStarted() { viewsActive.incrementAndGet() }
     fun viewStopped() { viewsActive.decrementAndGet() }
 

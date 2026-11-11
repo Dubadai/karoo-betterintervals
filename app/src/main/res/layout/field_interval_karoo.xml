@@ -66,6 +66,17 @@
                 android:paddingTop="24dp"
                 android:textColor="@color/text" />
 
+            <!-- Indoor ERG pill above the watts (docs/design/indoor-erg); the watts' top padding
+                 grows by its height while it shows -->
+            <ImageView
+                android:id="@+id/erg_pill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginTop="26dp"
+                android:importantForAccessibility="no"
+                android:visibility="gone" />
+
             <!-- The Karoo's empty state ("No Sensor", "Searching…") where the number goes -->
             <ImageView
                 android:id="@+id/watts_empty"

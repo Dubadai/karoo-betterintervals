@@ -68,6 +68,16 @@
     <string name="tiles_outline">Outline</string>
     <string name="tiles_help">How Lap avg, Target and Heart rate sit on the workout screen: a grey fill, or a thin border like Next up.</string>
     <string name="power_smoothing">Power</string>
+    <!-- Indoor ERG (docs/design/indoor-erg) -->
+    <string name="erg_heading">Trainer (indoors)</string>
+    <string name="erg_on">ERG on indoor rides</string>
+    <string name="erg_trainer_found">%1$s · %2$s</string>
+    <string name="erg_no_trainer">No trainer paired. Add it in the Karoo\'s Sensors.</string>
+    <string name="erg_no_permission">Allow Nearby devices so the app can reach the trainer.</string>
+    <string name="erg_when_paused">When paused</string>
+    <string name="erg_pct_ftp">%1$d %% FTP</string>
+    <string name="erg_help">On an indoor ride profile, the trainer follows the workout. Set the Karoo\'s trainer card to Read-Only so only this app sets ERG.</string>
+    <string name="erg_paused">Paused · ERG %1$d W</string>
     <string name="power_smoothing_help">The big watts: instant, or averaged over 3, 5 or 10 seconds. 3 s is steady and still quick.</string>
     <string name="smoothing_instant">Instant</string>
     <string name="smoothing_3s">3 s</string>

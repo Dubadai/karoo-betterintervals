@@ -152,6 +152,26 @@ class PlanStore private constructor(context: Context) {
         _tileOutline.value = on
     }
 
+    private val _ergOn = MutableStateFlow(prefs.getBoolean(KEY_ERG_ON, false))
+
+    /** Settings › Trainer (indoors): the app sets ERG on the trainer during an indoor ride. */
+    val ergOn: StateFlow<Boolean> = _ergOn
+
+    fun setErgOn(on: Boolean) {
+        prefs.edit().putBoolean(KEY_ERG_ON, on).apply()
+        _ergOn.value = on
+    }
+
+    private val _ergRecoveryPct = MutableStateFlow(prefs.getInt(KEY_ERG_RECOVERY, ErgPlanner.RECOVERY_PCT))
+
+    /** Settings › Trainer › When paused: the trainer's target while paused or done, in % of FTP. */
+    val ergRecoveryPct: StateFlow<Int> = _ergRecoveryPct
+
+    fun setErgRecoveryPct(pct: Int) {
+        prefs.edit().putInt(KEY_ERG_RECOVERY, pct).apply()
+        _ergRecoveryPct.value = pct
+    }
+
     private val _appearance = MutableStateFlow(
         Appearance.entries.firstOrNull { it.name == prefs.getString(KEY_APPEARANCE, null) } ?: Appearance.AUTO,
     )
@@ -321,6 +341,8 @@ class PlanStore private constructor(context: Context) {
         const val SCALE_MAX = 150
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_TILE_OUTLINE = "tile_outline"
+        private const val KEY_ERG_ON = "erg_on"
+        private const val KEY_ERG_RECOVERY = "erg_recovery_pct"
         private const val KEY_POWER_SMOOTHING = "power_smoothing"
         private const val KEY_SECOND_FIELD = "second_field"
         private const val KEY_CADENCE_SMOOTHING = "cadence_smoothing"

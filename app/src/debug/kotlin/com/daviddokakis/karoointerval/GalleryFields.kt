@@ -31,6 +31,8 @@ object GalleryFields {
         "empty-free", "empty-gauge", "empty-number", "empty-ready",
         // A workout selected again mid-ride: CONTINUE (interval 4, 2:13 in) or START OVER
         "resume-ready",
+        // Indoor ERG: the pill right of the gear (docs/design/indoor-erg)
+        "erg-gauge", "erg-number", "erg-connecting", "erg-lost", "erg-free", "erg-paused", "erg-top-two", "erg-gauge-route",
     ) + SEQ.indices.flatMap { i -> listOf("seq-gauge-%02d", "seq-both-%02d", "seq-background-%02d").map { it.format(i) } }
     val sizes: List<String>? = listOf("full")   // BetterIntervals is always a full-page field
 
@@ -134,6 +136,14 @@ object GalleryFields {
             // Settings › Top row › Two: heart rate and cadence
             "top-two" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(topRowRight = TopRow.CADENCE)
             // The Karoo has the ride paused: its yellow bar covers the top, the gear comes down
+            "erg-gauge" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(erg = ErgStatus.HOLDING, ergWatts = 300)
+            "erg-number" -> k.copy(erg = ErgStatus.HOLDING, ergWatts = 300)
+            "erg-connecting" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(erg = ErgStatus.CONNECTING)
+            "erg-lost" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(erg = ErgStatus.LOST)
+            "erg-free" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(erg = ErgStatus.FREE)
+            "erg-paused" -> k.copy(workoutPaused = true, erg = ErgStatus.HOLDING, ergWatts = 140)
+            "erg-top-two" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(topRowRight = TopRow.CADENCE, erg = ErgStatus.HOLDING, ergWatts = 300)
+            "erg-gauge-route" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(navigating = true, erg = ErgStatus.HOLDING, ergWatts = 300)
             "resume-ready" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 3, elapsedInStepSec = 0, resumeFromSec = 133)
             "empty-free" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES, powerShown = null, powerSensor = SensorState.NONE, heartRate = null, hrSensor = SensorState.SEARCHING)
             "empty-gauge" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(powerShown = null, powerSensor = SensorState.NONE, heartRate = null, hrSensor = SensorState.SEARCHING)

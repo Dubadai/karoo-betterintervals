@@ -85,4 +85,11 @@
     <color name="select_blue">#FF0A84FF</color>
     <color name="select_tint">#FF0F2440</color>
     <color name="remove_tonal">#FF3D1F1C</color>
+    <!-- Indoor ERG pill (docs/design/indoor-erg) -->
+    <color name="erg_on_bg">#FF123A2A</color>
+    <color name="erg_on_fg">#FF49C98A</color>
+    <color name="erg_wait_bg">#FF2A2A2A</color>
+    <color name="erg_wait_fg">#FFA0A0A0</color>
+    <color name="erg_warn_bg">#FF4A3510</color>
+    <color name="erg_warn_fg">#FFF2B54A</color>
 </resources>

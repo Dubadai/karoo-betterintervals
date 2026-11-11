@@ -18,6 +18,8 @@ data class ErgInputs(
     /** A ride is recording (running or paused). */
     val recording: Boolean,
     val state: ScreenState,
+    /** Settings › When paused, % of FTP. */
+    val recoveryPct: Int = ErgPlanner.RECOVERY_PCT,
 )
 
 /**
@@ -39,7 +41,7 @@ class ErgPlanner {
             return ErgCommand.Release
         }
         val cap = capFor(plan, s.ftp)
-        val recovery = recoveryWatts(s.ftp).coerceAtMost(cap)
+        val recovery = recoveryWatts(s.ftp, input.recoveryPct).coerceAtMost(cap)
         if (s.finished || s.paused || s.workoutPaused) {
             resting = true; soft = null
             return ErgCommand.Target(recovery)
@@ -75,8 +77,8 @@ class ErgPlanner {
             return cap
         }
 
-        fun recoveryWatts(ftp: Int?): Int =
-            if (ftp != null && ftp > 0) maxOf(RECOVERY_MIN, ftp * RECOVERY_PCT / 100) else RECOVERY_NO_FTP
+        fun recoveryWatts(ftp: Int?, pct: Int = RECOVERY_PCT): Int =
+            if (ftp != null && ftp > 0) maxOf(RECOVERY_MIN, ftp * pct / 100) else RECOVERY_NO_FTP
     }
 }
 

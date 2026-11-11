@@ -107,7 +107,12 @@ data class ScreenState(
     val hrZones: List<IntRange> = emptyList(),
     /** FTP from the Karoo rider profile, used when the plan has none. */
     val profileFtp: Int? = null,
-) {
+    /** Indoor ERG: the pill next to the gear, or null when ERG is off or the ride isn't indoors. */
+    val erg: ErgStatus? = null,
+    /** The watts the trainer holds now, while [erg] is [ErgStatus.HOLDING]. */
+    val ergWatts: Int? = null,
+)
+ {
     val workoutLoaded: Boolean get() = plan != null
     val stepCount: Int get() = plan?.steps?.size ?: 0
     val currentStep: PlanStep? get() = plan?.steps?.getOrNull(stepIndex)
@@ -276,3 +281,15 @@ internal fun startStepAfter(index: Int, delta: Int, count: Int): Int =
 
 internal fun endingCountdown(remainingMs: Long, seconds: Int = 5): Int? =
     ((remainingMs + 999) / 1000).toInt().takeIf { remainingMs > 0 && it in 1..seconds }
+
+/** The ERG pill (docs/design/indoor-erg): what the trainer is doing. */
+enum class ErgStatus {
+    /** ● ERG, green: the trainer follows the workout. */
+    HOLDING,
+    /** ERG, grey: connected, not holding a target (before START, a heart-rate step). */
+    FREE,
+    /** ERG …, grey: looking for or connecting to the trainer. */
+    CONNECTING,
+    /** ERG ✕, amber: the trainer is lost or refused control. */
+    LOST,
+}

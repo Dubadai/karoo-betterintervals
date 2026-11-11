@@ -1,7 +1,12 @@
 package com.daviddokakis.karoointerval
 
 import com.dubadai.karoo.common.*
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import io.hammerhead.karooext.KarooSystemService
+import io.hammerhead.karooext.models.SavedDevices
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -18,6 +23,9 @@ class SettingsActivity : AppearanceActivity() {
     private lateinit var store: PlanStore
     private lateinit var form: LinearLayout
     private lateinit var example: ExampleCard
+    private lateinit var karoo: KarooSystemService
+    /** The trainer paired on the Karoo, as Settings names it; null: none (or not heard yet). */
+    private var trainerName: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +47,30 @@ class SettingsActivity : AppearanceActivity() {
                 textColor = getColor(R.color.settings_title),
             ),
         )
+        render()
+        // The trainer paired on the Karoo, for the Trainer section.
+        karoo = KarooSystemService(this)
+        karoo.connect { connected ->
+            if (!connected) return@connect
+            karoo.addConsumer<SavedDevices> { e ->
+                val t = e.devices.firstOrNull { it.enabled && "TYPE_TRAINER_ID" in it.supportedDataTypes }
+                val name = t?.let { getString(R.string.erg_trainer_found, it.name, if (it.connectionType == "BLE") "Bluetooth" else "ANT+") }
+                if (name != trainerName) { trainerName = name; runOnUiThread { render() } }
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        karoo.disconnect()
+        super.onDestroy()
+    }
+
+    private fun hasBluetoothPermission() = Build.VERSION.SDK_INT < 31 ||
+        BLUETOOTH_PERMISSIONS.all { checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }
+
+    @Deprecated("Deprecated in Java")
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         render()
     }
 
@@ -145,6 +177,31 @@ class SettingsActivity : AppearanceActivity() {
             section(R.string.cadence_smoothing_help)
         }
 
+        // Trainer (indoors): ERG on an indoor ride profile (docs/design/indoor-erg)
+        form.addView(settingsHeading(R.drawable.ic_settings_target, getString(R.string.erg_heading)))
+        form.addView(
+            settingsSwitchRow(R.drawable.ic_settings_power, getString(R.string.erg_on), store.ergOn.value) { on ->
+                store.setErgOn(on)
+                if (on && !hasBluetoothPermission() && Build.VERSION.SDK_INT >= 31) requestPermissions(BLUETOOTH_PERMISSIONS, 1)
+                render()
+            },
+        )
+        if (store.ergOn.value) {
+            when {
+                !hasBluetoothPermission() -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, getString(R.string.erg_no_permission), SettingsTone.WARN))
+                trainerName == null -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, getString(R.string.erg_no_trainer), SettingsTone.WARN))
+                else -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, trainerName!!, SettingsTone.OK))
+            }
+            form.addView(settingsSubLabel(getString(R.string.erg_when_paused)))
+            form.addView(
+                settingsSegmented(RECOVERY_CHOICES.map { getString(R.string.erg_pct_ftp, it) to it }, store.ergRecoveryPct.value) { pct ->
+                    store.setErgRecoveryPct(pct)
+                    render()
+                },
+            )
+        }
+        section(R.string.erg_help)
+
         // intervals.icu: one row, opens the Account page
         form.addView(
             settingsNavRow(
@@ -170,6 +227,11 @@ class SettingsActivity : AppearanceActivity() {
     private fun section(help: Int) {
         form.addView(settingsHelp(getString(help)))
         form.addView(settingsDivider())
+    }
+
+    private companion object {
+        val BLUETOOTH_PERMISSIONS = arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+        val RECOVERY_CHOICES = listOf(40, 50, 60)
     }
 
     private fun <T> named(vararg options: Pair<Int, T>) = options.map { (name, value) -> getString(name) to value }

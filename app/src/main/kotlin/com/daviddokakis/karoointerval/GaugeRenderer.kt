@@ -44,7 +44,7 @@ class GaugeRenderer(private val context: Context) {
     }
 
     /** The arc that gives the watts the biggest size in a [w] × [h] space (flatter when short). */
-    private fun layout(w: Float, h: Float, text: String): Layout {
+    private fun layout(w: Float, h: Float, text: String, reserve: Float = 0f, reserveW: Float = 0f): Layout {
         val sw = w * 0.07f
         val gap = w * 0.014f
         // Room around the arc for the needle, which sticks out past the arc's edge (plus its
@@ -69,7 +69,10 @@ class GaugeRenderer(private val context: Context) {
                     val top = base - CAP * f
                     val x = min(tw / 2f, inner - 1f)
                     val arcY = cy - sqrt(max(0f, inner * inner - x * x))
-                    if (tw / 2f < inner && top >= arcY) lo = f else hi = f
+                    // [reserve] × [reserveW]: the ERG pill above the digits, checked against the arc
+                    // at its own (narrow) width, where the arc is highest
+                    val pillArcY = cy - sqrt(max(0f, inner * inner - reserveW * reserveW / 4f))
+                    if (tw / 2f < inner && top >= arcY && top - reserve >= pillArcY) lo = f else hi = f
                 }
                 if (best == null || lo > best.textSize + 0.5f) {
                     best = Layout(sweep, r, cy, sw, lo, min(h - gap, endY + 0.22f * lo))
@@ -87,13 +90,14 @@ class GaugeRenderer(private val context: Context) {
      * @param bandColor the target range's colour: Karoo green for power, the heart red for a
      *   heart-rate step (then [watts] is the heart rate and the target and range are in bpm).
      */
-    fun render(width: Int, height: Int, watts: Int?, target: Int?, range: IntRange?, numberColor: Int, bandColor: Int = color(R.color.karoo_green), empty: String? = null): Bitmap {
+    fun render(width: Int, height: Int, watts: Int?, target: Int?, range: IntRange?, numberColor: Int, bandColor: Int = color(R.color.karoo_green), empty: String? = null, pill: Bitmap? = null): Bitmap {
         val w = width.coerceAtLeast(1)
         val h = height.coerceAtLeast(1)
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
         val text = watts?.toString() ?: "--"
-        val g = layout(w.toFloat(), h.toFloat(), text)
+        val pillGap = w * PILL_GAP
+        val g = layout(w.toFloat(), h.toFloat(), text, reserve = pill?.let { it.height + 2 * pillGap } ?: 0f, reserveW = pill?.width?.toFloat() ?: 0f)
 
         val cx = w / 2f
         val oval = RectF(cx - g.r, g.cy - g.r, cx + g.r, g.cy + g.r)
@@ -145,6 +149,12 @@ class GaugeRenderer(private val context: Context) {
             }
         }
 
+        // The ERG pill between the arc and the digits (docs/design/indoor-erg)
+        if (pill != null) {
+            val digitsTop = g.baseline - CAP * g.textSize
+            c.drawBitmap(pill, cx - pill.width / 2f, digitsTop - pillGap - pill.height, null)
+        }
+
         if (empty != null) {
             // The Karoo's empty state, centred where the number goes (as BigWatts)
             val k = context.resources.displayMetrics.density / 1.875f
@@ -173,6 +183,9 @@ class GaugeRenderer(private val context: Context) {
          * show you're out of it (one-number power targets are ± 12 % since 2026-11-10).
          */
         private const val BAND_TIMES = 2f
+
+        /** Space between the ERG pill and the digits, as a share of the width. */
+        private const val PILL_GAP = 0.02f
 
         /** Digit height as a share of the text size (IBM Plex). */
         private const val CAP = 0.71f
