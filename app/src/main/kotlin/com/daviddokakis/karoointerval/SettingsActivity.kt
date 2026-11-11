@@ -81,10 +81,7 @@ class SettingsActivity : AppearanceActivity() {
 
     /** The workout screen with a made-up workout, drawn full size and shown small (127 dp tall). */
     private fun showExample() {
-        val s = ExampleScreen.state(
-            store.wattsMode, store.appearance.value,
-            tileOutline = store.tileOutline.value, secondField = store.secondField.value, topRow = store.topRow.value,
-        ).copy(topRowRight = store.topRowRight.value)
+        val s = store.exampleState()
         val full = ExampleScreen.draw(this, s, ExampleScreen.FULL_W, ExampleScreen.FULL_H)
         val h = dp(127)
         val small = Bitmap.createScaledBitmap(full, h * ExampleScreen.FULL_W / ExampleScreen.FULL_H, h, true)
@@ -131,34 +128,38 @@ class SettingsActivity : AppearanceActivity() {
         )
         form.addView(settingsDivider())
 
-        // Top row of the workout screen: one value or two (Left and Right), each heart rate,
-        // cadence or the target; what isn't at the top goes in the tile next to Lap avg.
-        // Design: docs/design/hr-targets/ (Two values at the top).
-        form.addView(settingsHeading(R.drawable.ic_settings_top_row, getString(R.string.top_row)))
-        form.addView(settingsIntro(getString(R.string.top_row_help)))
-        val topOptions = named(R.string.heart_rate to TopRow.HEART_RATE, R.string.cadence to TopRow.CADENCE, R.string.target to TopRow.TARGET)
-        val left = store.topRow.value ?: if (store.secondField.value == SecondField.CADENCE) TopRow.CADENCE else TopRow.HEART_RATE
-        val right = store.topRowRight.value?.takeIf { it != left }
-        form.addView(
-            settingsSegmented(named(R.string.top_row_one to false, R.string.top_row_two to true), right != null) { two ->
-                // Two: the right one starts as the first that isn't on the left
-                store.setTopRowRight(if (two) TopRow.entries.first { it != left } else null)
-                render()
-            },
-        )
-        form.addView(settingsSubLabel(getString(R.string.top_row_left)))
-        form.addView(
-            settingsSegmented(topOptions, left) { picked ->
-                store.setTopRow(picked)
-                // The right one can't be the same: it moves to the first other one
-                if (store.topRowRight.value == picked) store.setTopRowRight(TopRow.entries.first { it != picked })
-                render()
-            },
-        )
-        if (right != null) {
-            form.addView(settingsSubLabel(getString(R.string.top_row_right)))
-            form.addView(settingsSegmented(topOptions, right, unavailable = setOf(left)) { picked -> store.setTopRowRight(picked); render() })
+        // Workout screen: what each spot shows, one row per spot opening its own page
+        // (docs/design/more-control). The row's second line says what's picked now.
+        form.addView(settingsHeading(R.drawable.ic_settings_layout, getString(R.string.workout_screen)))
+        form.addView(settingsIntro(getString(R.string.workout_screen_help)))
+        val top = store.topRow.value ?: if (store.secondField.value == SecondField.CADENCE) TopRow.CADENCE else TopRow.HEART_RATE
+        val topNames = listOfNotNull(top, store.topRowRight.value?.takeIf { it != top }).joinToString(", ") { topName(it) }
+        val tileNames = { items: List<TileItem> -> items.joinToString(", ") { getString(SpotSettingsActivity.tileRow(it).second) } }
+        listOf(
+            Triple(R.drawable.ic_settings_top_row, SpotSettingsActivity.Spot.TOP_ROW, topNames),
+            Triple(R.drawable.ic_settings_under, SpotSettingsActivity.Spot.UNDER_WATTS, store.underWatts.value?.let { topName(it) } ?: getString(R.string.nothing)),
+            Triple(R.drawable.ic_settings_left_tile, SpotSettingsActivity.Spot.LEFT_TILE, tileNames(store.leftItems.value)),
+            Triple(R.drawable.ic_settings_right_tile, SpotSettingsActivity.Spot.RIGHT_TILE, tileNames(store.rightItems.value)),
+        ).forEach { (icon, spot, status) ->
+            form.addView(settingsNavRow(icon, getString(spot.title), status) { SpotSettingsActivity.open(this, spot) })
         }
+        form.addView(settingsDivider())
+
+        // Zone colours: the chart's power zones as the Karoo, Zwift or intervals.icu colour them
+        form.addView(settingsHeading(R.drawable.ic_settings_colours, getString(R.string.zone_colours)))
+        form.addView(settingsIntro(getString(R.string.zone_colours_help)))
+        val palettes = listOf(ZonePalette.KAROO to R.string.zone_karoo, ZonePalette.ZWIFT to R.string.zone_zwift, ZonePalette.INTERVALS to R.string.zone_intervals)
+        val cards = settingsChoiceCards(palettes.map { (p, n) -> Triple(getString(n), null, p) }, store.zonePalette.value) { picked ->
+            store.setZonePalette(picked)
+            render()
+        }
+        // Each card shows its seven zones under its name
+        val night = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        palettes.forEachIndexed { i, (p, _) ->
+            val texts = ((cards.getChildAt(i) as? android.view.ViewGroup)?.getChildAt(0) as? android.view.ViewGroup)?.getChildAt(0) as? android.widget.LinearLayout
+            texts?.addView(zoneStrip(p, night))
+        }
+        form.addView(cards)
         form.addView(settingsDivider())
 
         // Power: how the big watts are smoothed; cadence's own smoothing when cadence is shown
@@ -256,6 +257,27 @@ class SettingsActivity : AppearanceActivity() {
         ) { render() }
     }
 
+    /** A palette's seven zones as small rounded blocks, for its choice card. */
+    private fun zoneStrip(p: ZonePalette, night: Boolean) = android.widget.LinearLayout(this).apply {
+        orientation = android.widget.LinearLayout.HORIZONTAL
+        setPadding(0, (8 * resources.displayMetrics.density).toInt(), 0, (2 * resources.displayMetrics.density).toInt())
+        val d = resources.displayMetrics.density
+        for (z in 1..7) {
+            addView(
+                android.view.View(context).apply {
+                    background = android.graphics.drawable.GradientDrawable().apply {
+                        cornerRadius = 3 * d
+                        // As the graph draws them (+15 % contrast)
+                        setColor(ZonePalette.boosted(p.fill(z, night), night))
+                        p.edge(z, night)?.let { setStroke((1.5f * d).toInt().coerceAtLeast(1), ZonePalette.boosted(it, night)) }
+                    }
+                },
+                android.widget.LinearLayout.LayoutParams((21 * d).toInt(), (15 * d).toInt()).apply { marginEnd = (4 * d).toInt() },
+            )
+        }
+        importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO
+    }
+
     /** "Last ride with Power 12027, trainer vs PM: 150 W +5 %, 250 W +3 %. Cold start +7 %, warm after 12 min." */
     private fun matchSummary(pm: String?, s: PmSummary): String {
         val bands = s.bands.joinToString(", ") { (w, p) -> "$w W ${if (p >= 0) "+" else "\u2212"}${kotlin.math.abs(p)} %" }
@@ -268,6 +290,16 @@ class SettingsActivity : AppearanceActivity() {
         internal val BLUETOOTH_PERMISSIONS = arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
         internal val RECOVERY_CHOICES = listOf(40, 50, 60)
     }
+
+    private fun topName(t: TopRow) = getString(
+        when (t) {
+            TopRow.HEART_RATE -> R.string.heart_rate
+            TopRow.CADENCE -> R.string.cadence
+            TopRow.TARGET -> R.string.target
+            TopRow.CALORIES -> R.string.calories
+            TopRow.SPEED -> R.string.speed
+        },
+    )
 
     private fun <T> named(vararg options: Pair<Int, T>) = options.map { (name, value) -> getString(name) to value }
 }

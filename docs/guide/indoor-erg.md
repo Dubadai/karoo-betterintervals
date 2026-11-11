@@ -34,7 +34,8 @@ the trainer sets the watts anyway.
 
 ## During the workout
 
-The trainer holds the target of each interval, and the top row shows **● ERG**. Jumping with
+The trainer holds the target of each interval (the workout screen keeps ERG off it: its state is on
+the Workouts page). Jumping with
 ⏭ / ⏮ moves the trainer to the new interval's watts. The watts for workouts in % of FTP come from
 intervals.icu, using the FTP you set there.
 

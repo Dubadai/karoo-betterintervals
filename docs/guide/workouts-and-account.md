@@ -11,12 +11,26 @@ app list. ⚙ on the Workouts page opens [Settings](settings.md).
   synced.
 - Today's workouts come first, then the coming days, then the days already past this week.
 - Each card shows the workout's name, its shape in zone colours, its length and its day.
-- Tap a card to pick it. You go straight back to the ride screen.
+- Tap a card for its [details](#workout-details); **Select workout** there picks it and takes you
+  back to the ride screen.
 - **Remove workout** takes the current workout off, so the ride screen shows the
   [free-ride screen](free-ride.md).
 - **Back to ride** (yellow) returns to the ride.
 
 The app never picks a workout by itself.
+
+### Workout details
+
+A workout's page: its picture in your zone colours with your FTP as a dashed line, then its
+numbers (time, TSS, IF, average power, NP and estimated calories), the notes from intervals.icu,
+the time in each power zone, and every interval with its watts, % of FTP and zone (repeats grouped).
+**Select workout** (top right) picks it.
+
+### Changed on intervals.icu
+
+If you change the workout you're riding on intervals.icu and open the Workouts page mid-ride, an
+orange card asks: **Keep current workout** or **Use new targets**. Neither restarts the workout; it
+carries on where it is. Tick **Restart workout with new targets** to start the new version over.
 
 ### Scale workout
 
@@ -24,7 +38,8 @@ The app never picks a workout by itself.
 
 While a workout is loaded, **Scale workout** sits above it: − and + make every power target 1%
 easier or harder (100% is the workout as planned). The card shows the scale and its shape grows
-or shrinks with it, and the ride screen uses the scaled watts at once: where you are in the
+or shrinks with it, and the ride screen uses the scaled watts at once (the card above the − and +
+shows the current interval's watts before → after): where you are in the
 workout doesn't change. Heart-rate targets aren't scaled. Picking another workout starts it at
 100%.
 

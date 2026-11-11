@@ -64,8 +64,8 @@ class IntervalDataType(
                 val s = session.state.value
                 val key = Key(
                     s.countdown, s.stepIndex, s.workoutPaused, s.chartZoomed, s.plan?.id, s.selectTarget,
-                    s.selectProgress, s.moveCancelled, s.targetShowsRange, s.wattsMode, s.powerSmoothing, s.tileOutline, s.secondField, s.notStarted, s.appearance, s.navigating, s.freeSecond, s.freePower, s.topRow, s.lapShowsNp,
-                    s.autoConfirmLeft, s.topRowRight, s.plan?.scalePct, s.hrTargetLthr, s.paused,
+                    s.selectProgress, s.moveCancelled, s.targetShowsRange, s.wattsMode, s.powerSmoothing, s.tileOutline, s.secondField, s.notStarted, s.appearance, s.navigating, s.freeSecond, s.freePower, s.topRow, s.leftItems, s.leftIndex, s.underWatts,
+                    s.autoConfirmLeft, s.topRowRight, s.plan?.scalePct, s.hrTargetLthr, s.paused, s.elapsedInStepSec, s.infoOpen, s.rightIndex, s.rightItems, s.zonePalette,
                 )
                 val now = SystemClock.elapsedRealtime()
                 val since = now - lastRender
@@ -122,12 +122,24 @@ class IntervalDataType(
         val freeSecond: FreeSecond,
         val freePower: FreePower,
         val topRow: TopRow?,
-        val lapNp: Boolean,
+        val leftItems: List<TileItem>,
+        val leftIndex: Int,
+        val underWatts: TopRow?,
         val autoConfirmLeft: Int?,
         val topRowRight: TopRow?,
         val scalePct: Int?,
         val hrTargetLthr: Boolean,
         val ridePaused: Boolean,
+        /**
+         * The interval clock's second: each new one redraws as soon as the Karoo allows, so the
+         * clock never skips one (redraws paced only by power samples could land either side of
+         * a second and skip it: 2026-11-11).
+         */
+        val elapsedSec: Int,
+        val infoOpen: Boolean,
+        val rightIndex: Int,
+        val rightItems: List<TileItem>,
+        val zonePalette: ZonePalette,
     )
 
     companion object {

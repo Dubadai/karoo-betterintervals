@@ -471,8 +471,7 @@
             android:id="@+id/next_box"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginBottom="6dp"
-            android:background="@drawable/bg_outline">
+            android:layout_marginBottom="6dp">
 
             <ImageView
                 android:id="@+id/select_fill"
@@ -499,7 +498,7 @@
                         android:layout_height="34dp"
                         android:layout_gravity="start|center_vertical"
                         android:layout_marginStart="7dp"
-                        android:background="@drawable/bg_btn_pause">
+                        android:background="@drawable/bg_outline">
 
                         <ImageView
                             android:id="@+id/th_interval_gauge_karoo_8"
@@ -667,8 +666,8 @@
          48dp touch area each. -->
     <FrameLayout
         android:id="@+id/btn_settings"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:layout_gravity="top|start">
 
         <ImageView
@@ -682,6 +681,27 @@
             android:contentDescription="@string/cd_settings"
             android:src="@drawable/ic_settings"
             android:alpha="0.55"
+            android:tint="@color/text" />
+    </FrameLayout>
+
+    <!-- ⓘ: the whole workout so far (docs/design/indoor-ride-notes). Top right; outdoors the pause
+         button keeps the corner and this sits just left of it (the renderer sets the margin). -->
+    <FrameLayout
+        android:id="@+id/btn_info"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="top|end"
+        android:contentDescription="@string/cd_info">
+
+        <ImageView
+            android:id="@+id/btn_info_icon"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="7dp"
+            android:layout_marginEnd="6dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_info_circle"
             android:tint="@color/text" />
     </FrameLayout>
 

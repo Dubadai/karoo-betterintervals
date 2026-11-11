@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- DONE on the workout done screen, Karoo style: Karoo yellow, like START WORKOUT. -->
+<!-- Close summary on the workout done screen: the text colour (black in light mode, white in dark),
+     like the skip button, calm (docs/design/indoor-ride-notes). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/karoo_yellow" />
+    <solid android:color="@color/text" />
     <corners android:radius="12dp" />
 </shape>

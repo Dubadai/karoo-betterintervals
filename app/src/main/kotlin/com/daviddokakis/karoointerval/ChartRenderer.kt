@@ -29,7 +29,8 @@ class ChartRenderer(private val context: Context) {
 
     private fun color(id: Int) = ContextCompat.getColor(context, id)
 
-    fun render(state: ScreenState, width: Int, height: Int, scale: Float, look: Style = Style.SCREEN): Bitmap {
+    /** [ftpLine]: a dashed line at FTP with its watts (the workout details page). */
+    fun render(state: ScreenState, width: Int, height: Int, scale: Float, look: Style = Style.SCREEN, ftpLine: Boolean = false): Bitmap {
         val card = look == Style.CARD
         // The screen chart has no panel: it's drawn on the page colour (follows light/dark mode).
         val bmp = Bitmap.createBitmap(width.coerceAtLeast(1), height.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
@@ -39,6 +40,10 @@ class ChartRenderer(private val context: Context) {
         if (plan.steps.isEmpty() || plan.totalSec <= 0) return bmp
 
         val d = context.resources.displayMetrics.density * scale
+        val night = (context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val palette = state.zonePalette
+        // The graph's colours with extra contrast against the page (+15 %: the Karoo's screen is pale)
+        fun contrast(c: Int): Int = ZonePalette.boosted(c, night, state.zoneContrast)
         // The step a jump lands on and its ▼: the text colour, which no zone uses (Karoo zone
         // colours include blue and purple, the old jump colours).
         val landColor = R.color.text
@@ -128,10 +133,24 @@ class ChartRenderer(private val context: Context) {
                 lineTo(x1, bottom)
                 close()
             }
-            val bar = if (step.hr) Zones.BarStyle(Zones.hrBarColor(step.avgWatts, state.hrZones, lthr), null) else Zones.barStyle(step.avgWatts, ftp)
+            // Power steps in Settings › Zone colours' palette; a ramp fades from its start zone's colour
+            // to its end zone's (docs/design/indoor-ride-notes). Heart-rate steps keep the Karoo's
+            // heart rate zone colours.
+            val zA = if (step.hr) null else Zones.zoneOf(if (step.isRamp) step.startWatts else step.avgWatts, ftp)
+            val zB = if (step.hr) null else Zones.zoneOf(if (step.isRamp) step.endWatts else step.avgWatts, ftp)
+            val fillA = when {
+                step.hr -> contrast(color(Zones.hrBarColor(step.avgWatts, state.hrZones, lthr)))
+                zA != null -> contrast(palette.fill(zA, night))
+                else -> color(R.color.done)
+            }
+            val fillB = if (zB != null) contrast(palette.fill(zB, night)) else fillA
+            val edgeA = zA?.let { palette.edge(it, night)?.let(::contrast) }
+            val edgeB = zB?.let { palette.edge(it, night)?.let(::contrast) } ?: edgeA
             // Every step in its zone colour (finished ones too); the jump target solid black/white.
             val alpha = 255
-            fill.color = color(if (isTarget) landColor else bar.fill)
+            fill.shader = null
+            fill.color = if (isTarget) color(landColor) else fillA
+            if (!isTarget && fillA != fillB) fill.shader = android.graphics.LinearGradient(x0, 0f, x1, 0f, fillA, fillB, android.graphics.Shader.TileMode.CLAMP)
             // Current step: its 2dp outline goes on the bar's edge, and the fill moves in to leave
             // a 1dp gap of page colour between them, so the zone colour and outline both read
             // (design: docs/design/karoo-zone-colours/, outline gap A). Too narrow: fill as usual.
@@ -149,7 +168,8 @@ class ChartRenderer(private val context: Context) {
                 path
             }
             canvas.drawPath(fillPath, fill)
-            bar.edge?.let { edge ->
+            fill.shader = null
+            (if (isTarget) null else edgeA)?.let { edge ->
                 // Karoo draws easy bars with a bright outline, just inside the bar.
                 val inset = edgePaint.strokeWidth / 2
                 val edgePath = Path().apply {
@@ -158,9 +178,11 @@ class ChartRenderer(private val context: Context) {
                     lineTo(x1 - inset, ys.second + inset)
                     lineTo(x1 - inset, bottom)
                 }
-                edgePaint.color = color(edge)
+                edgePaint.shader = if (edgeB != null && edgeB != edge) android.graphics.LinearGradient(x0, 0f, x1, 0f, edge, edgeB, android.graphics.Shader.TileMode.CLAMP) else null
+                edgePaint.color = edge
                 edgePaint.alpha = alpha
                 canvas.drawPath(edgePath, edgePaint)
+                edgePaint.shader = null
             }
             if (!card && i == state.stepIndex) canvas.drawPath(path, outline)
             if (isTarget) {
@@ -178,6 +200,20 @@ class ChartRenderer(private val context: Context) {
             t += step.durationSec
         }
 
+        if (ftpLine && ftp != null && !hrChart && ftp < maxWatts) {
+            val fy = y(ftp)
+            val dash = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                this.style = Paint.Style.STROKE; strokeWidth = 1f * d; color = color(R.color.text_secondary)
+                pathEffect = android.graphics.DashPathEffect(floatArrayOf(3f * d, 3f * d), 0f)
+            }
+            canvas.drawLine(0f, fy, width.toFloat(), fy, dash)
+            val text = context.getString(R.string.ftp_line, ftp)
+            label.textAlign = Paint.Align.RIGHT; label.textSize = 11f * d
+            // Above the line, or under it when the line is near the top
+            val ty = if (fy - 4f * d - label.textSize > 0) fy - 4f * d else fy + label.textSize + 2f * d
+            canvas.drawText(text, width.toFloat(), ty, label)
+            label.textAlign = Paint.Align.LEFT
+        }
         if (card) return bmp
 
         // "Now" marker
