@@ -32,6 +32,9 @@ you can jump forward **and back** between intervals.
 - **The Karoo's own look:** its fonts, field sizes, icons and colours. **Dark / Light / Auto** follows the
   Karoo or stays fixed.
 - **Remote button actions:** next interval, previous interval, pause or resume the workout.
+- **Indoor with a smart trainer (ERG):** on an indoor ride profile the trainer follows the workout
+  over Bluetooth. The Karoo's start button starts the ride and the workout together; **Match PM**
+  corrects the trainer so your power meter shows the target. [More in the guide](docs/guide/indoor-erg.md).
 
 ### Without a workout
 
@@ -41,6 +44,16 @@ whole ride's average, and heart rate now, for the lap and for the ride.
 <img src="docs/images/free-ride.png" alt="Free ride on a Karoo 3: 3S POWER 280, the current lap time 4:21, the tiles on LAP NP 289 and LAP HR 138 (heart rate in its zone colour), and the last lap">
 
 <img src="docs/images/free-ride-dark.png" alt="The same in dark mode">
+
+### Indoor with a trainer (ERG)
+
+On an indoor ride profile the trainer holds each interval's watts. Press the Karoo's start button to
+begin; the **Indoor ride** card on the Workouts page turns ERG off or on for the ride.
+See the [indoor guide](docs/guide/indoor-erg.md).
+
+<img src="docs/images/indoor-erg.png" alt="BetterIntervals indoors on three Karoo 3s: PRESS START TO BEGIN with the Karoo's start button flashing green and ERG READY at the top; riding with ERG holding 280 W; the Workouts page with the Indoor ride card, ERG on, Trainer 28436 ERG READY">
+
+<img src="docs/images/indoor-erg-dark.png" alt="The indoor start and riding with ERG in dark mode">
 
 ### Settings
 
