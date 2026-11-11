@@ -28,12 +28,16 @@ data class ScreenState(
     val lapNp: Int? = null,
     /** Lap tile shows NP instead of the lap average (tap to toggle, remembered). */
     val lapShowsNp: Boolean = false,
-    /** The workout's lap tile (tap to go on): the lap's average, the lap's NP, the ride's average. */
-    val lapPower: FreePower = FreePower.LAP_AVG,
-    /** Settings › Right tile: the metrics its tap goes through; null: as before (what the top row leaves). */
-    val rightItems: List<RightItem>? = null,
+    /** Settings › Workout screen › Left tile: the metrics its tap goes through (at least one). */
+    val leftItems: List<TileItem> = listOf(TileItem.LAP_AVG),
+    /** Which of [leftItems] the left tile shows now. */
+    val leftIndex: Int = 0,
+    /** Settings › Workout screen › Right tile: the metrics its tap goes through (at least one). */
+    val rightItems: List<TileItem> = listOf(TileItem.CADENCE),
     /** Which of [rightItems] the right tile shows now. */
     val rightIndex: Int = 0,
+    /** Settings › Workout screen › Under the watts: the small line under the big number (null: none). */
+    val underWatts: TopRow? = TopRow.TARGET,
     /** The ride's calories so far (the Karoo's). */
     val calories: Int? = null,
     /** Speed in m/s (the Karoo's). */
@@ -276,7 +280,11 @@ data class WorkoutSummary(
 )
 
 /** Settings › Right tile: what the tile next to the lap tile can show (a tap goes to the next one on). */
-enum class RightItem { TARGET, CALORIES, SPEED, LAP_NP, HEART_RATE, CADENCE }
+/**
+ * Settings › Workout screen › Left tile / Right tile: what a tile can show; a tap goes through the
+ * ones switched on, in this order (docs/design/more-control). Stored by name.
+ */
+enum class TileItem { LAP_AVG, LAP_NP, RIDE_AVG, TARGET, HEART_RATE, CADENCE, CALORIES, SPEED }
 
 /**
  * Settings › Zone colours: the workout chart's power zone colours (Z1…Z7), light and dark, and an

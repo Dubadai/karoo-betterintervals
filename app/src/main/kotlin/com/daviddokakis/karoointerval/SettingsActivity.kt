@@ -81,10 +81,7 @@ class SettingsActivity : AppearanceActivity() {
 
     /** The workout screen with a made-up workout, drawn full size and shown small (127 dp tall). */
     private fun showExample() {
-        val s = ExampleScreen.state(
-            store.wattsMode, store.appearance.value,
-            tileOutline = store.tileOutline.value, secondField = store.secondField.value, topRow = store.topRow.value,
-        ).copy(topRowRight = store.topRowRight.value, rightItems = store.rightItems.value, rightIndex = 0, zonePalette = store.zonePalette.value, calories = 412)
+        val s = store.exampleState()
         val full = ExampleScreen.draw(this, s, ExampleScreen.FULL_W, ExampleScreen.FULL_H)
         val h = dp(127)
         val small = Bitmap.createScaledBitmap(full, h * ExampleScreen.FULL_W / ExampleScreen.FULL_H, h, true)
@@ -131,64 +128,20 @@ class SettingsActivity : AppearanceActivity() {
         )
         form.addView(settingsDivider())
 
-        // Top row of the workout screen: one value or two (Left and Right), each heart rate,
-        // cadence or the target; what isn't at the top goes in the tile next to Lap avg.
-        // Design: docs/design/hr-targets/ (Two values at the top).
-        form.addView(settingsHeading(R.drawable.ic_settings_top_row, getString(R.string.top_row)))
-        form.addView(settingsIntro(getString(R.string.top_row_help)))
-        val topOptions = named(R.string.heart_rate to TopRow.HEART_RATE, R.string.cadence to TopRow.CADENCE, R.string.target to TopRow.TARGET)
-        val left = store.topRow.value ?: if (store.secondField.value == SecondField.CADENCE) TopRow.CADENCE else TopRow.HEART_RATE
-        val right = store.topRowRight.value?.takeIf { it != left }
-        form.addView(
-            settingsSegmented(named(R.string.top_row_one to false, R.string.top_row_two to true), right != null) { two ->
-                // Two: the right one starts as the first that isn't on the left
-                store.setTopRowRight(if (two) TopRow.entries.first { it != left } else null)
-                render()
-            },
-        )
-        form.addView(settingsSubLabel(getString(R.string.top_row_left)))
-        form.addView(
-            settingsSegmented(topOptions, left) { picked ->
-                store.setTopRow(picked)
-                // The right one can't be the same: it moves to the first other one
-                if (store.topRowRight.value == picked) store.setTopRowRight(TopRow.entries.first { it != picked })
-                render()
-            },
-        )
-        if (right != null) {
-            form.addView(settingsSubLabel(getString(R.string.top_row_right)))
-            form.addView(settingsSegmented(topOptions, right, unavailable = setOf(left)) { picked -> store.setTopRowRight(picked); render() })
-        }
-        form.addView(settingsDivider())
-
-        // Right tile: the metrics its tap goes through, any of them (docs/design/indoor-ride-notes).
-        // Not set yet: on is what the tile shows today (the top row's leftover).
-        form.addView(settingsHeading(R.drawable.ic_settings_one_tile, getString(R.string.right_tile)))
-        form.addView(settingsIntro(getString(R.string.right_tile_help)))
-        val onNow = store.rightItems.value ?: listOf(
-            when {
-                TopRow.TARGET !in listOfNotNull(left, right) -> RightItem.TARGET
-                TopRow.HEART_RATE !in listOfNotNull(left, right) -> RightItem.HEART_RATE
-                else -> RightItem.CADENCE
-            },
-        )
+        // Workout screen: what each spot shows, one row per spot opening its own page
+        // (docs/design/more-control). The row's second line says what's picked now.
+        form.addView(settingsHeading(R.drawable.ic_settings_layout, getString(R.string.workout_screen)))
+        form.addView(settingsIntro(getString(R.string.workout_screen_help)))
+        val top = store.topRow.value ?: if (store.secondField.value == SecondField.CADENCE) TopRow.CADENCE else TopRow.HEART_RATE
+        val topNames = listOfNotNull(top, store.topRowRight.value?.takeIf { it != top }).joinToString(", ") { topName(it) }
+        val tileNames = { items: List<TileItem> -> items.joinToString(", ") { getString(SpotSettingsActivity.tileRow(it).second) } }
         listOf(
-            Triple(RightItem.TARGET, R.drawable.ic_settings_target, R.string.target),
-            Triple(RightItem.CALORIES, R.drawable.ic_settings_calories, R.string.calories),
-            Triple(RightItem.SPEED, R.drawable.ic_settings_speed, R.string.speed),
-            Triple(RightItem.LAP_NP, R.drawable.ic_settings_lap, R.string.np),
-            Triple(RightItem.HEART_RATE, R.drawable.ic_settings_heart, R.string.heart_rate),
-            Triple(RightItem.CADENCE, R.drawable.ic_settings_cadence, R.string.cadence),
-        ).forEach { (item, icon, name) ->
-            // The last one on stays on: the tile always shows something
-            val on = item in onNow
-            form.addView(
-                settingsSwitchRow(icon, getString(name), on) { now ->
-                    // Switching the last one off does nothing (the switch flips back)
-                    if (now || onNow.size > 1) store.setRightItems(if (now) onNow + item else onNow - item)
-                    render()
-                },
-            )
+            Triple(R.drawable.ic_settings_top_row, SpotSettingsActivity.Spot.TOP_ROW, topNames),
+            Triple(R.drawable.ic_settings_under, SpotSettingsActivity.Spot.UNDER_WATTS, store.underWatts.value?.let { topName(it) } ?: getString(R.string.nothing)),
+            Triple(R.drawable.ic_settings_left_tile, SpotSettingsActivity.Spot.LEFT_TILE, tileNames(store.leftItems.value)),
+            Triple(R.drawable.ic_settings_right_tile, SpotSettingsActivity.Spot.RIGHT_TILE, tileNames(store.rightItems.value)),
+        ).forEach { (icon, spot, status) ->
+            form.addView(settingsNavRow(icon, getString(spot.title), status) { SpotSettingsActivity.open(this, spot) })
         }
         form.addView(settingsDivider())
 
@@ -337,6 +290,16 @@ class SettingsActivity : AppearanceActivity() {
         internal val BLUETOOTH_PERMISSIONS = arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
         internal val RECOVERY_CHOICES = listOf(40, 50, 60)
     }
+
+    private fun topName(t: TopRow) = getString(
+        when (t) {
+            TopRow.HEART_RATE -> R.string.heart_rate
+            TopRow.CADENCE -> R.string.cadence
+            TopRow.TARGET -> R.string.target
+            TopRow.CALORIES -> R.string.calories
+            TopRow.SPEED -> R.string.speed
+        },
+    )
 
     private fun <T> named(vararg options: Pair<Int, T>) = options.map { (name, value) -> getString(name) to value }
 }

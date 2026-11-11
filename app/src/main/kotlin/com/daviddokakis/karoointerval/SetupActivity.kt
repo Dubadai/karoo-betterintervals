@@ -301,7 +301,8 @@ class SetupActivity : AppearanceActivity() {
         if (current != null) {
             val currentWorkout = week.firstOrNull { it.plan.id == current.id }
             content.addView(settingsHeading(R.drawable.ic_settings_intro, getString(R.string.current_workout)))
-            content.addView(card(current.scaled(pct), currentWorkout?.date, loaded = true, onClick = null))
+            val json = currentWorkout?.json ?: store.selectedJson
+            content.addView(card(current.scaled(pct), currentWorkout?.date, loaded = true, onClick = json?.let { j -> { openDetails(j, selected = true) } }))
             content.addView(
                 settingsButton(SettingsButton.REMOVE, getString(R.string.stop_workout)) {
                     store.clearSelection()
@@ -349,10 +350,8 @@ class SetupActivity : AppearanceActivity() {
             )
             byDate.getValue(date).forEach { w ->
                 content.addView(
-                    card(w.plan, w.date, loaded = false) {
-                        store.select(w)
-                        goToRide()
-                    },
+                    // Its details first; Select workout there selects it and goes back to the ride
+                    card(w.plan, w.date, loaded = false) { openDetails(w.json, selected = false) },
                 )
             }
         }
@@ -406,6 +405,19 @@ class SetupActivity : AppearanceActivity() {
     private fun rounded(color: Int, radiusDp: Int) = GradientDrawable().apply {
         setColor(getColor(color))
         cornerRadius = dp(radiusDp).toFloat()
+    }
+
+    private fun openDetails(json: String, selected: Boolean) {
+        @Suppress("DEPRECATION")
+        startActivityForResult(WorkoutDetailsActivity.intent(this, json, selected), REQUEST_DETAILS)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        @Suppress("DEPRECATION")
+        super.onActivityResult(requestCode, resultCode, data)
+        // Select workout on its details page: back to the ride, as a tap on the card did before
+        if (requestCode == REQUEST_DETAILS && resultCode == RESULT_OK) goToRide() else render()
     }
 
     /**
@@ -605,6 +617,7 @@ class SetupActivity : AppearanceActivity() {
         /** Set when opened from the gear button on the interval screen. */
         const val EXTRA_FROM_RIDE = "from_ride"
         const val EXTRA_PREVIEW_ERG = "preview_erg"
+        private const val REQUEST_DETAILS = 7
         private const val RIDE_APP = "io.hammerhead.rideapp"
         private const val WIFI_SETTLE_MS = 2_000L
         private const val RING_STROKE_DP = 3

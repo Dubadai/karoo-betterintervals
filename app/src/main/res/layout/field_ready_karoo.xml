@@ -492,8 +492,8 @@
          48dp touch area each. -->
     <FrameLayout
         android:id="@+id/btn_settings"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:layout_gravity="top|start">
 
         <ImageView

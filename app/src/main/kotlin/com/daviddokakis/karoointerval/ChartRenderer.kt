@@ -29,7 +29,8 @@ class ChartRenderer(private val context: Context) {
 
     private fun color(id: Int) = ContextCompat.getColor(context, id)
 
-    fun render(state: ScreenState, width: Int, height: Int, scale: Float, look: Style = Style.SCREEN): Bitmap {
+    /** [ftpLine]: a dashed line at FTP with its watts (the workout details page). */
+    fun render(state: ScreenState, width: Int, height: Int, scale: Float, look: Style = Style.SCREEN, ftpLine: Boolean = false): Bitmap {
         val card = look == Style.CARD
         // The screen chart has no panel: it's drawn on the page colour (follows light/dark mode).
         val bmp = Bitmap.createBitmap(width.coerceAtLeast(1), height.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
@@ -199,6 +200,20 @@ class ChartRenderer(private val context: Context) {
             t += step.durationSec
         }
 
+        if (ftpLine && ftp != null && !hrChart && ftp < maxWatts) {
+            val fy = y(ftp)
+            val dash = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                this.style = Paint.Style.STROKE; strokeWidth = 1f * d; color = color(R.color.text_secondary)
+                pathEffect = android.graphics.DashPathEffect(floatArrayOf(3f * d, 3f * d), 0f)
+            }
+            canvas.drawLine(0f, fy, width.toFloat(), fy, dash)
+            val text = context.getString(R.string.ftp_line, ftp)
+            label.textAlign = Paint.Align.RIGHT; label.textSize = 11f * d
+            // Above the line, or under it when the line is near the top
+            val ty = if (fy - 4f * d - label.textSize > 0) fy - 4f * d else fy + label.textSize + 2f * d
+            canvas.drawText(text, width.toFloat(), ty, label)
+            label.textAlign = Paint.Align.LEFT
+        }
         if (card) return bmp
 
         // "Now" marker

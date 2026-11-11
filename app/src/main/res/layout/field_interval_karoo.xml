@@ -728,8 +728,8 @@
          48dp touch area each. -->
     <FrameLayout
         android:id="@+id/btn_settings"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:layout_gravity="top|start">
 
         <ImageView
@@ -750,8 +750,8 @@
          button keeps the corner and this sits just left of it (the renderer sets the margin). -->
     <FrameLayout
         android:id="@+id/btn_info"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:layout_gravity="top|end"
         android:contentDescription="@string/cd_info">
 

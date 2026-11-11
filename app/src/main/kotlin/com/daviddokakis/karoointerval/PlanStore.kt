@@ -104,20 +104,32 @@ class PlanStore private constructor(context: Context) {
         } ?: emptyList()
         set(value) = prefs.edit().putString(KEY_HR_ZONES, value.joinToString(",") { "${it.first}-${it.last}" }).apply()
 
-    /** The workout's lap tile: the lap's average, its NP or the ride's average (remembered between rides). */
-    var lapPower: FreePower
-        get() = enumPref(KEY_LAP_POWER, FreePower.entries, if (prefs.getBoolean(KEY_LAP_NP, false)) FreePower.LAP_NP else FreePower.LAP_AVG)
-        set(value) = prefs.edit().putString(KEY_LAP_POWER, value.name).apply()
+    private fun tileItems(key: String, default: TileItem): List<TileItem> =
+        prefs.getString(key, null)?.split(",")?.mapNotNull { n -> TileItem.entries.firstOrNull { it.name == n } }?.takeIf { it.isNotEmpty() } ?: listOf(default)
 
-    private val _rightItems = MutableStateFlow(
-        prefs.getString(KEY_RIGHT_ITEMS, null)?.split(",")?.mapNotNull { n -> RightItem.entries.firstOrNull { it.name == n } },
-    )
+    private val _leftItems = MutableStateFlow(tileItems(KEY_LEFT_ITEMS, TileItem.LAP_AVG))
 
-    /** Settings › Right tile: the metrics switched on, in the tile's order; null until first set (as before). */
-    val rightItems: StateFlow<List<RightItem>?> = _rightItems
+    /** Settings › Workout screen › Left tile: the metrics switched on, in the tile's order (default Lap avg). */
+    val leftItems: StateFlow<List<TileItem>> = _leftItems
 
-    fun setRightItems(value: List<RightItem>) {
-        val ordered = RightItem.entries.filter { it in value }
+    fun setLeftItems(value: List<TileItem>) {
+        val ordered = TileItem.entries.filter { it in value }.ifEmpty { return }
+        prefs.edit().putString(KEY_LEFT_ITEMS, ordered.joinToString(",") { it.name }).apply()
+        _leftItems.value = ordered
+    }
+
+    /** Which of the left tile's metrics shows (remembered between rides). */
+    var leftIndex: Int
+        get() = prefs.getInt(KEY_LEFT_INDEX, 0)
+        set(value) = prefs.edit().putInt(KEY_LEFT_INDEX, value).apply()
+
+    private val _rightItems = MutableStateFlow(tileItems(KEY_RIGHT_ITEMS, TileItem.CADENCE))
+
+    /** Settings › Workout screen › Right tile: the metrics switched on, in the tile's order (default Cadence). */
+    val rightItems: StateFlow<List<TileItem>> = _rightItems
+
+    fun setRightItems(value: List<TileItem>) {
+        val ordered = TileItem.entries.filter { it in value }.ifEmpty { return }
         prefs.edit().putString(KEY_RIGHT_ITEMS, ordered.joinToString(",") { it.name }).apply()
         _rightItems.value = ordered
     }
@@ -126,6 +138,22 @@ class PlanStore private constructor(context: Context) {
     var rightIndex: Int
         get() = prefs.getInt(KEY_RIGHT_INDEX, 0)
         set(value) = prefs.edit().putInt(KEY_RIGHT_INDEX, value).apply()
+
+    private val _underWatts = MutableStateFlow(
+        when (val n = prefs.getString(KEY_UNDER_WATTS, null)) {
+            null -> TopRow.TARGET
+            NONE -> null
+            else -> TopRow.entries.firstOrNull { it.name == n } ?: TopRow.TARGET
+        },
+    )
+
+    /** Settings › Workout screen › Under the watts (default the target; null: nothing). */
+    val underWatts: StateFlow<TopRow?> = _underWatts
+
+    fun setUnderWatts(value: TopRow?) {
+        prefs.edit().putString(KEY_UNDER_WATTS, value?.name ?: NONE).apply()
+        _underWatts.value = value
+    }
 
     private val _zonePalette = MutableStateFlow(enumPref(KEY_ZONE_PALETTE, ZonePalette.entries, ZonePalette.KAROO))
 
@@ -364,6 +392,9 @@ class PlanStore private constructor(context: Context) {
         return WorkoutSummary(p[2].toIntOrNull() ?: 0, p[3].toIntOrNull(), p[4].toIntOrNull(), p[5].toIntOrNull(), p[6].toIntOrNull())
     }
 
+    /** The selected workout's intervals.icu event (its details page). */
+    val selectedJson: String? get() = prefs.getString(KEY_SELECTED_JSON, null)
+
     /** Only today's selection is restored, so yesterday's workout doesn't show up on today's ride. */
     private fun loadSelected(): WorkoutPlan? {
         if (prefs.getString(KEY_SELECTED_DATE, null) != LocalDate.now().toString()) return null
@@ -379,7 +410,10 @@ class PlanStore private constructor(context: Context) {
     companion object {
         private const val KEY_ATHLETE = "athlete_id"
         private const val KEY_API_KEY = "api_key"
-        private const val KEY_LAP_POWER = "lap_power"
+        private const val KEY_LEFT_ITEMS = "left_items"
+        private const val KEY_LEFT_INDEX = "left_index"
+        private const val KEY_UNDER_WATTS = "under_watts"
+        private const val NONE = "NONE"
         private const val KEY_RIGHT_ITEMS = "right_items"
         private const val KEY_RIGHT_INDEX = "right_index"
         private const val KEY_ZONE_PALETTE = "zone_palette"

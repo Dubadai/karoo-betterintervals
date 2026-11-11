@@ -34,7 +34,7 @@ object GalleryFields {
         // Indoor ERG: the pill right of the gear (docs/design/indoor-erg)
         "erg-gauge", "erg-number", "erg-connecting", "erg-lost", "erg-free", "erg-paused", "erg-top-two", "erg-gauge-route", "erg-off", "erg-off-top-two", "erg-start-connecting", "erg-start-ready", "erg-start-ready-b", "indoor-start", "indoor-start-dim", "trainer-hint", "start-outdoor", "indoor-gauge",
         // Indoor ride notes (docs/design/indoor-ride-notes): ⓘ view, right tile rotation, ramp, ride avg, done paused, zone colours
-        "info", "right-calories", "right-six", "ramp-number", "lap-ride", "done-paused", "zones-zwift", "zones-intervals", "indoor-number", "slot-defaults",
+        "info", "right-calories", "right-six", "ramp-number", "lap-ride", "done-paused", "zones-zwift", "zones-intervals", "indoor-number", "slot-defaults", "slot-custom", "slot-speed", "slot-nothing",
     ) + SEQ.indices.flatMap { i -> listOf("seq-gauge-%02d", "seq-both-%02d", "seq-background-%02d").map { it.format(i) } }
     val sizes: List<String>? = listOf("full")   // BetterIntervals is always a full-page field
 
@@ -125,18 +125,26 @@ object GalleryFields {
             "paused" -> k.copy(workoutPaused = true)
             "zoomed" -> k.copy(chartZoomed = true)
             "target-range" -> k.copy(targetShowsRange = true)
-            "lap-np" -> k.copy(lapPower = FreePower.LAP_NP, lapNp = 289, targetShowsRange = true)
+            "lap-np" -> k.copy(leftItems = listOf(TileItem.LAP_AVG, TileItem.LAP_NP), leftIndex = 1, lapNp = 289, targetShowsRange = true)
             "info" -> k.copy(infoOpen = true, calories = 742, live = WorkoutSummary(1707, 232, 251, 132, 90, maxPower = 318, calories = 412))
-            "right-calories" -> k.copy(rightItems = listOf(RightItem.TARGET, RightItem.CALORIES, RightItem.SPEED), rightIndex = 1, calories = 742)
-            "right-six" -> k.copy(rightItems = RightItem.entries, rightIndex = 1, calories = 742)
+            "right-calories" -> k.copy(rightItems = listOf(TileItem.TARGET, TileItem.CALORIES, TileItem.SPEED), rightIndex = 1, calories = 742)
+            "right-six" -> k.copy(rightItems = TileItem.entries.drop(2), rightIndex = 1, calories = 742)
             "ramp-number" -> k.copy(stepIndex = 0, elapsedInStepSec = 300, power = 182, powerShown = 182)
-            "lap-ride" -> k.copy(lapPower = FreePower.RIDE_AVG, rideAvgPower = 236)
+            "lap-ride" -> k.copy(leftItems = listOf(TileItem.RIDE_AVG), rideAvgPower = 236)
             "done-paused" -> k.copy(finished = true, stepIndex = 9, paused = true, indoor = true, summary = WorkoutSummary(3120, 232, 251, 132, 88))
             "zones-zwift" -> k.copy(zonePalette = ZonePalette.ZWIFT)
             "zones-intervals" -> k.copy(zonePalette = ZonePalette.INTERVALS)
             "indoor-number" -> k.copy(indoor = true, erg = ErgStatus.HOLDING, ergWatts = 280)
             // Settings › Workout screen defaults: heart rate on top, target under the watts, Lap avg, Cadence
-            "slot-defaults" -> k.copy(indoor = true, erg = ErgStatus.HOLDING, ergWatts = 280, rightItems = listOf(RightItem.CADENCE))
+            "slot-defaults" -> k.copy(indoor = true, erg = ErgStatus.HOLDING, ergWatts = 280)
+            // Set up differently: heart rate and target on top, cadence under the watts, Lap NP of three, Calories of two
+            "slot-custom" -> k.copy(
+                indoor = true, erg = ErgStatus.HOLDING, ergWatts = 280, topRowRight = TopRow.TARGET, underWatts = TopRow.CADENCE,
+                leftItems = listOf(TileItem.LAP_AVG, TileItem.LAP_NP, TileItem.RIDE_AVG), leftIndex = 1, lapNp = 268,
+                rightItems = listOf(TileItem.CALORIES, TileItem.SPEED), calories = 742,
+            )
+            "slot-speed" -> k.copy(indoor = true, underWatts = TopRow.SPEED, rightItems = listOf(TileItem.SPEED), speedMs = 8.7, topRowRight = TopRow.CALORIES, calories = 742)
+            "slot-nothing" -> k.copy(underWatts = null)
             "outline" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, tileOutline = true)
             "cadence" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, secondField = SecondField.CADENCE)
             // A workout with heart-rate targets only (as intervals.icu sends one: % of max HR, resolved to bpm)

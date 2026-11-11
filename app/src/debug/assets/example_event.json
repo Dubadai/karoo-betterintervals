@@ -1,0 +1,63 @@
+{
+ "id": 98765,
+ "name": "W3.1 - Tempo 3 x 15",
+ "type": "Ride",
+ "category": "WORKOUT",
+ "start_date_local": "2026-11-13T00:00:00",
+ "icu_training_load": 108,
+ "icu_intensity": 68.4,
+ "description": "Steady tempo, smooth pedalling. Stay seated on the efforts, 85–95 rpm.\n\nThe endurance block is easy: talk-pace. Eat something every 20 minutes and drink to thirst.\n\nWarmup\n- 20m ramp 43-64%\n\nMain set 3x\n- 15m 80%\n- 5m 57%\n\n- 45m 61%\n\nCooldown\n- 15m ramp 54-39%",
+ "workout_doc": {
+  "ftp": 280,
+  "steps": [
+   {
+    "duration": 1200,
+    "warmup": true,
+    "ramp": true,
+    "power": {
+     "start": 43,
+     "end": 64,
+     "units": "%ftp"
+    }
+   },
+   {
+    "reps": 3,
+    "text": "Main set",
+    "steps": [
+     {
+      "duration": 900,
+      "text": "Tempo",
+      "power": {
+       "value": 80,
+       "units": "%ftp"
+      }
+     },
+     {
+      "duration": 300,
+      "power": {
+       "value": 57,
+       "units": "%ftp"
+      }
+     }
+    ]
+   },
+   {
+    "duration": 2700,
+    "power": {
+     "value": 61,
+     "units": "%ftp"
+    }
+   },
+   {
+    "duration": 900,
+    "cooldown": true,
+    "ramp": true,
+    "power": {
+     "start": 54,
+     "end": 39,
+     "units": "%ftp"
+    }
+   }
+  ]
+ }
+}

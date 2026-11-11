@@ -14,8 +14,11 @@ enum class Smoothing(val label: Int, val power: String, val cadence: String, val
 /** Settings › Heart rate or cadence: what the HR spots on the screens show. */
 enum class SecondField { HEART_RATE, CADENCE }
 
-/** Settings › Top row: what the top of the workout screen shows; the other one goes in the second tile. */
-enum class TopRow { HEART_RATE, CADENCE, TARGET }
+/**
+ * Settings › Workout screen › Top row (one or two of these) and Under the watts (one, or none):
+ * docs/design/more-control.
+ */
+enum class TopRow { HEART_RATE, CADENCE, TARGET, CALORIES, SPEED }
 
 /** Free ride's power tile (tap to go on): the lap's average, the lap's NP, the ride's average. */
 enum class FreePower { LAP_AVG, LAP_NP, RIDE_AVG }

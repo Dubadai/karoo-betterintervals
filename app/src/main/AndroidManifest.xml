@@ -37,6 +37,19 @@
             android:label="@string/settings_title"
             android:theme="@style/AppTheme" />
 
+        <!-- Settings › Workout screen: one page per spot (top row, under the watts, the two tiles) -->
+        <activity
+            android:name=".SpotSettingsActivity"
+            android:exported="false"
+            android:label="@string/settings_title"
+            android:theme="@style/AppTheme" />
+
+        <!-- A workout's details, from its card on the Workouts page -->
+        <activity
+            android:name=".WorkoutDetailsActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
         <!-- First-run introduction (shown once; Settings can show it again) -->
         <activity
             android:name=".IntroActivity"

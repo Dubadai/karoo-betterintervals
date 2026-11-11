@@ -95,7 +95,7 @@ class IntervalsIcu(private val athleteId: String, private val apiKey: String) {
          * the range. Real example of an HR step:
          * `{"duration":240,"hr":{"value":85,"units":"%hr"},"_hr":{"value":175.0,"start":172.0,"end":178.0}}`
          */
-        private fun stepOf(step: JSONObject, duration: Int, ftp: Int?, lthr: Int?): PlanStep {
+        internal fun stepOf(step: JSONObject, duration: Int, ftp: Int?, lthr: Int?): PlanStep {
             val hr = !step.has("power") && (step.has("_hr") || step.has("hr"))
             val written = step.optJSONObject(if (hr) "hr" else "power")
             val resolved = step.optJSONObject(if (hr) "_hr" else "_power")

@@ -19,7 +19,7 @@ class ActionReceiver : BroadcastReceiver() {
             ACTION_CANCEL_MOVE -> session.cancelMove()
             ACTION_DISMISS_MOVE_CANCELLED -> session.dismissMoveCancelled()
             ACTION_TOGGLE_TARGET -> session.toggleTargetView()
-            ACTION_TOGGLE_LAP_NP -> session.toggleLapNp()
+            ACTION_TOGGLE_LAP_NP -> session.cycleLeftTile()
             ACTION_CYCLE_RIGHT -> session.cycleRightTile()
             ACTION_TOGGLE_INFO -> session.toggleInfo()
             ACTION_TOGGLE_LAP_HR -> session.cycleFreeSecond()

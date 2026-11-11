@@ -161,36 +161,19 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // (or % of LTHR), the lap tile shows the lap's average heart rate, and power takes heart
         // rate's place wherever heart rate would be. Design: docs/design/hr-targets/.
         val hrStep = s.hrStep
-        // Settings › Top row: one or two values at the top. The second tile (next to Lap avg)
-        // shows the Target, or, when the Target is at the top, what's left of heart rate / cadence.
+        // Settings › Workout screen (docs/design/more-control): one or two values at the top, a line
+        // under the watts, and two tiles that each go through the metrics switched on (tap).
         val left = s.topRow ?: if (s.showsCadence) TopRow.CADENCE else TopRow.HEART_RATE
         val tops = listOfNotNull(left, s.topRowRight?.takeIf { it != left })
-        val legacyItem = if (TopRow.TARGET !in tops) {
-            TopRow.TARGET
-        } else {
-            (if (s.showsCadence) listOf(TopRow.CADENCE, TopRow.HEART_RATE) else listOf(TopRow.HEART_RATE, TopRow.CADENCE)).first { it !in tops }
-        }
-        // Settings › Right tile: the metrics its tap goes through (docs/design/indoor-ride-notes);
-        // not set yet: what the top row leaves, as before.
-        val rightItems = s.rightItems?.takeIf { it.isNotEmpty() }
-        val right = rightItems?.let { it[s.rightIndex.coerceIn(0, it.lastIndex)] }
-        val tileItem = when (right) {
-            null -> legacyItem
-            RightItem.TARGET -> TopRow.TARGET
-            RightItem.HEART_RATE -> TopRow.HEART_RATE
-            RightItem.CADENCE -> TopRow.CADENCE
-            else -> null
-        }
-        val lapValue = when {
-            hrStep -> s.lapHrAvg
-            s.lapPower == FreePower.LAP_NP -> s.lapNp
-            s.lapPower == FreePower.RIDE_AVG -> s.rideAvgPower
-            else -> s.lapAvg
-        }
-        lapText = lapValue?.toString() ?: "--"
-        val tileItemValue = if (tileItem != null) itemValue(s, tileItem, inTile = true, gaugeMode = gaugeMode) else rightValue(s, right!!)
+        val leftItems = s.leftItems.ifEmpty { listOf(TileItem.LAP_AVG) }
+        val rightItems = s.rightItems.ifEmpty { listOf(TileItem.CADENCE) }
+        val leftItem = leftItems[s.leftIndex.coerceIn(0, leftItems.lastIndex)]
+        val rightItem = rightItems[s.rightIndex.coerceIn(0, rightItems.lastIndex)]
+        val leftShow = tileShow(s, leftItem, gaugeMode)
+        val rightShow = tileShow(s, rightItem, gaugeMode)
         // The cell values' texts, so a Karoo-style cell can shrink a value that's too wide.
-        targetText = tileItemValue
+        lapText = leftShow.value
+        targetText = rightShow.value
         applyTextSizes(v, gaugeMode)
 
         v.setViewVisibility(R.id.content, View.VISIBLE)
@@ -240,7 +223,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // tiles and everything else there, in every theme.
         if (upperBg != 0) setBg(v, R.id.upper, upperBg) else v.setInt(R.id.upper, "setBackgroundResource", 0)
         val onTint = upperBg != 0
-        if (!gaugeMode) targetLine(v, s, onTint)
+        if (!gaugeMode) underWattsLine(v, s, onTint) else v.setViewVisibility(R.id.target_line, View.GONE)
         // Labels in the text colour, like Karoo's own fields.
         val labelColor = color(R.color.text)
         v.setTextColor(R.id.lap_avg_label, labelColor)
@@ -262,60 +245,32 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setImageViewBitmap(R.id.top_img, TopRowArt.draw(res, topItems, TOP_ROW_PX * density / 1.875f * scale, (40 * density).roundToInt(), color(R.color.text), topLanding, iconGap = TOP_ICON_GAP))
         v.setContentDescription(R.id.top_img, topItems.joinToString(", ") { it.text })
 
-        tileItem?.let { showItemIcon(v, R.id.tile2_icon, s, it, top = false, onTint = onTint) }
-        // A heart-rate target: the heart next to the target icon
-        val hrTarget = hrStep && tileItem == TopRow.TARGET
-        v.setViewVisibility(R.id.tile2_icon2, if (hrTarget) View.VISIBLE else View.GONE)
-        if (hrTarget) {
-            v.setImageViewResource(R.id.tile2_icon2, R.drawable.ic_heart)
-            v.setInt(R.id.tile2_icon2, "setColorFilter", color(R.color.heart_icon))
-        }
-        val tileLabel = if (tileItem != null) itemLabel(s, tileItem) else rightLabel(right!!)
-        v.setTextViewText(R.id.tile2_label, tileLabel)
-        v.setTextViewText(R.id.tile2_value, tileItemValue)
-        // Tap the right tile: the next metric switched on (two or more); one Target: the target or
-        // its range (power), bpm or % of LTHR (heart rate).
-        v.setOnClickPendingIntent(
-            R.id.tile2,
-            when {
-                (rightItems?.size ?: 0) >= 2 -> rightCycleIntent
-                tileItem == TopRow.TARGET && (hrStep || !gaugeMode) -> targetToggleIntent
-                else -> null
-            },
-        )
-
-        // Lap tile: the lap's average power (tap: NP), or its average heart rate on a heart-rate step.
-        if (hrStep) {
-            v.setImageViewResource(R.id.icon_bolt, R.drawable.ic_heart)
-            v.setInt(R.id.icon_bolt, "setColorFilter", color(R.color.heart_icon))
-            v.setTextViewText(R.id.lap_avg_label, context.getString(R.string.lap_avg))
-            v.setTextViewText(R.id.lap_avg, lapText)
-        } else {
-            v.setTextViewText(R.id.lap_avg_label, context.getString(lapLabel(s.lapPower)))
-            v.setTextViewText(R.id.lap_avg, lapText)
-        }
-        v.setOnClickPendingIntent(R.id.lap_tile, lapNpToggleIntent)
-        // Both tiles drawn 1:1 like the Karoo's own fields (75dp: a native 140 px tile)
+        // Both tiles drawn 1:1 like the Karoo's own fields (75dp: a native 140 px tile). Two or more
+        // metrics: no icon, dots down the left edge say which one this is; a tap goes to the next.
+        // One Target: a tap shows the target or its range (power), bpm or % of LTHR (heart rate).
         val ink = color(R.color.text)
-        tileArt(
-            v, R.id.lap_tile_img, listOf(R.id.icon_lap, R.id.icon_bolt, R.id.lap_avg_label, R.id.lap_avg), halfTileW, 75 * density,
-            listOfNotNull(
-                TileArt.Glyph(KarooType.Glyph.LAP, ink).takeIf { hrStep || s.lapPower != FreePower.RIDE_AVG },
-                if (hrStep) TileArt.Glyph.RED_HEART else TileArt.Glyph(KarooType.Glyph.BOLT, ink),
-            ),
-            context.getString(if (hrStep) R.string.lap_avg else lapLabel(s.lapPower)), lapText,
-            empty = (if (hrStep) s.hrSensor else s.powerSensor).emptyText,
-        )
-        tileArt(
-            v, R.id.tile2_img, listOf(R.id.tile2_icon, R.id.tile2_icon2, R.id.tile2_label, R.id.tile2_value), halfTileW, 75 * density,
-            // Two or more metrics: no icon, dots down the left edge say which one this is
-            if ((rightItems?.size ?: 0) >= 2) emptyList() else listOfNotNull(tileItem?.let { itemIcon(s, it) }, if (hrTarget) TileArt.Glyph.RED_HEART else null),
-            tileLabel, tileItemValue, color(R.color.text),
-            // A jump being chosen or counting down: "→ 250" after the target, in the tile itself
-            landing = s.landStep?.takeIf { tileItem == TopRow.TARGET && tops.first() != TopRow.TARGET }?.targetAt(0)?.toString(),
-            empty = tileItem?.let { itemSensor(s, it)?.emptyText },
-            dots = rightItems?.takeIf { it.size >= 2 }?.let { it.size to s.rightIndex.coerceIn(0, it.lastIndex) },
-        )
+        val landing = s.landStep?.takeIf { tops.first() != TopRow.TARGET }?.targetAt(0)?.toString()
+        fun tile(container: Int, img: Int, hide: List<Int>, items: List<TileItem>, index: Int, show: TileShow, cycle: PendingIntent) {
+            v.setTextViewText(hide[2], show.label)
+            v.setOnClickPendingIntent(
+                container,
+                when {
+                    items.size >= 2 -> cycle
+                    show.item == TileItem.TARGET && (hrStep || !gaugeMode) -> targetToggleIntent
+                    else -> null
+                },
+            )
+            tileArt(
+                v, img, hide, halfTileW, 75 * density,
+                if (items.size >= 2) emptyList() else show.icons,
+                show.label, show.value, ink,
+                landing = landing?.takeIf { show.item == TileItem.TARGET },
+                empty = show.empty,
+                dots = items.takeIf { it.size >= 2 }?.let { it.size to index.coerceIn(0, it.lastIndex) },
+            )
+        }
+        tile(R.id.lap_tile, R.id.lap_tile_img, listOf(R.id.icon_lap, R.id.icon_bolt, R.id.lap_avg_label, R.id.lap_avg), leftItems, s.leftIndex, leftShow, lapNpToggleIntent)
+        tile(R.id.tile2, R.id.tile2_img, listOf(R.id.tile2_icon, R.id.tile2_icon2, R.id.tile2_label, R.id.tile2_value), rightItems, s.rightIndex, rightShow, rightCycleIntent)
 
         // Pause / resume (top right). Paused by you: green half-pill with a filled play symbol.
         // Ride paused by Karoo: hidden, since the workout resumes with the ride.
@@ -894,6 +849,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         )
         TopRow.CADENCE -> cadenceLabel(lap = false)
         TopRow.HEART_RATE -> context.getString(if (s.hrStep) R.string.power_label else R.string.hr)
+        TopRow.CALORIES -> context.getString(R.string.calories)
+        TopRow.SPEED -> context.getString(R.string.speed)
     }
 
     /**
@@ -904,6 +861,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     private fun itemValue(s: ScreenState, item: TopRow, inTile: Boolean, gaugeMode: Boolean): String = when (item) {
         TopRow.CADENCE -> s.cadence?.toString() ?: "--"
         TopRow.HEART_RATE -> (if (s.hrStep) s.powerShown else s.heartRate)?.toString() ?: "--"
+        TopRow.CALORIES -> s.calories?.toString() ?: "--"
+        // km/h or mph as the rider profile has it, one decimal (like SmallerFields)
+        TopRow.SPEED -> s.speedMs?.let { String.format(java.util.Locale.US, "%.1f", it * if (s.imperial) 2.236936 else 3.6) } ?: "--"
         TopRow.TARGET -> {
             val band = s.targetRange
             // A plain hyphen, like the Karoo's own target ("162-162"): Relative has no en dash
@@ -1020,6 +980,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             item == TopRow.TARGET -> TileArt.Icon(R.drawable.ic_target, green)
             // Cadence in the text colour: green reads as "on target", which cadence never is
             item == TopRow.CADENCE -> TileArt.Icon(R.drawable.ic_top_cadence, color(R.color.text))
+            item == TopRow.CALORIES -> TileArt.Icon(R.drawable.ic_settings_calories, color(R.color.text))
+            item == TopRow.SPEED -> TileArt.Icon(R.drawable.ic_settings_speed, color(R.color.text))
             s.hrStep -> TileArt.Icon(R.drawable.ic_bolt_filled, green)
             else -> TileArt.Icon(R.drawable.ic_karoo_heart, KarooType.HEART_RED)
         }
@@ -1029,6 +991,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     private fun itemSensor(s: ScreenState, item: TopRow): SensorState? = when {
         item == TopRow.TARGET -> null
         item == TopRow.CADENCE -> s.cadenceSensor
+        item == TopRow.CALORIES || item == TopRow.SPEED -> null
         s.hrStep -> s.powerSensor
         else -> s.hrSensor
     }
@@ -1070,61 +1033,70 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         return when {
             item == TopRow.TARGET -> TileArt.Glyph(KarooType.Glyph.TARGET, color(R.color.text))
             item == TopRow.CADENCE -> TileArt.Glyph(KarooType.Glyph.CADENCE, color(R.color.text))
+            item == TopRow.CALORIES -> TileArt.Glyph(FLAME, color(R.color.text))
+            item == TopRow.SPEED -> TileArt.Glyph(KarooType.Glyph.SPEED, color(R.color.text))
             s.hrStep -> TileArt.Glyph(KarooType.Glyph.BOLT, color(R.color.text))
             else -> TileArt.Glyph.RED_HEART
         }
     }
 
-    /** A top-row item's icon (top row: centred on the digits; tile: the small header icon). */
-    private fun showItemIcon(v: RemoteViews, id: Int, s: ScreenState, item: TopRow, top: Boolean, onTint: Boolean) {
-        val green = color(if (onTint) R.color.text else R.color.karoo_green)
-        when {
-            item == TopRow.TARGET -> {
-                v.setImageViewResource(id, R.drawable.ic_target)
-                v.setInt(id, "setColorFilter", green)
-                v.setContentDescription(id, context.getString(R.string.target))
-            }
-            item == TopRow.CADENCE -> {
-                v.setImageViewResource(id, if (top) R.drawable.ic_top_cadence else R.drawable.ic_cadence)
-                v.setInt(id, "setColorFilter", color(R.color.text))
-                v.setContentDescription(id, context.getString(R.string.cadence))
-            }
-            s.hrStep -> {
-                // Heart rate is the big number: power in its place
-                v.setImageViewResource(id, R.drawable.ic_bolt_filled)
-                v.setInt(id, "setColorFilter", green)
-                v.setContentDescription(id, context.getString(R.string.power_label))
-            }
+    /** What a tile shows for [item]: its label, value, header icons and empty state. */
+    private class TileShow(val item: TileItem, val label: String, val value: String, val icons: List<TileArt.Glyph>, val empty: String?)
+
+    private fun tileShow(s: ScreenState, item: TileItem, gaugeMode: Boolean): TileShow {
+        val ink = color(R.color.text)
+        val lapGlyph = TileArt.Glyph(KarooType.Glyph.LAP, ink)
+        val bolt = TileArt.Glyph(KarooType.Glyph.BOLT, ink)
+        fun power(label: Int, value: Int?, icons: List<TileArt.Glyph>) =
+            TileShow(item, context.getString(label), value?.toString() ?: "--", icons, s.powerSensor.emptyText)
+        val top = when (item) {
+            TileItem.TARGET -> TopRow.TARGET
+            TileItem.HEART_RATE -> TopRow.HEART_RATE
+            TileItem.CADENCE -> TopRow.CADENCE
+            TileItem.CALORIES -> TopRow.CALORIES
+            TileItem.SPEED -> TopRow.SPEED
+            else -> null
+        }
+        return when {
+            // A heart-rate step: the lap tile's power shows the lap's average heart rate
+            s.hrStep && (item == TileItem.LAP_AVG || item == TileItem.LAP_NP) ->
+                TileShow(item, context.getString(R.string.lap_avg), s.lapHrAvg?.toString() ?: "--", listOf(lapGlyph, TileArt.Glyph.RED_HEART), s.hrSensor.emptyText)
+            item == TileItem.LAP_AVG -> power(R.string.lap_avg, s.lapAvg, listOf(lapGlyph, bolt))
+            item == TileItem.LAP_NP -> power(R.string.np, s.lapNp, listOf(lapGlyph, bolt))
+            item == TileItem.RIDE_AVG -> power(R.string.ride_avg, s.rideAvgPower, listOf(bolt))
             else -> {
-                v.setImageViewResource(id, if (top) R.drawable.ic_top_heart else R.drawable.ic_heart)
-                v.setInt(id, "setColorFilter", color(R.color.heart_icon))
-                v.setContentDescription(id, context.getString(R.string.cd_heart_rate))
+                val t = top!!
+                val icons = listOfNotNull(itemIcon(s, t), if (s.hrStep && t == TopRow.TARGET) TileArt.Glyph.RED_HEART else null)
+                TileShow(item, itemLabel(s, t), itemValue(s, t, inTile = true, gaugeMode = gaugeMode), icons, itemSensor(s, t)?.emptyText)
             }
         }
     }
 
-    /** The lap tile's label for its three views (the free-ride power tile's words). */
-    private fun lapLabel(p: FreePower): Int = when (p) { FreePower.LAP_AVG -> R.string.lap_avg; FreePower.LAP_NP -> R.string.np; FreePower.RIDE_AVG -> R.string.ride_avg }
-
-    /** The right tile's label for a metric that isn't a top-row item. */
-    private fun rightLabel(item: RightItem): String = context.getString(
-        when (item) {
-            RightItem.CALORIES -> R.string.calories
-            RightItem.SPEED -> R.string.speed
-            RightItem.LAP_NP -> R.string.np
-            RightItem.TARGET -> R.string.target
-            RightItem.HEART_RATE -> R.string.hr
-            RightItem.CADENCE -> R.string.cadence
-        },
-    )
-
-    /** The right tile's value for a metric that isn't a top-row item. */
-    private fun rightValue(s: ScreenState, item: RightItem): String = when (item) {
-        RightItem.CALORIES -> s.calories?.toString() ?: "--"
-        // km/h or mph as the rider profile has it, one decimal (like SmallerFields)
-        RightItem.SPEED -> s.speedMs?.let { String.format(java.util.Locale.US, "%.1f", it * if (s.imperial) 2.236936 else 3.6) } ?: "--"
-        RightItem.LAP_NP -> s.lapNp?.toString() ?: "--"
-        else -> "--"
+    /**
+     * Settings › Workout screen › Under the watts: the target (its own line), another value with its
+     * icon and unit (heart rate, cadence, calories, speed), or nothing.
+     */
+    private fun underWattsLine(v: RemoteViews, s: ScreenState, onTint: Boolean) {
+        val item = s.underWatts
+        if (item == null || config.viewSize.first <= 0) { v.setViewVisibility(R.id.target_line, View.GONE); return }
+        if (item == TopRow.TARGET) { targetLine(v, s, onTint); return }
+        val value = itemValue(s, item, inTile = true, gaugeMode = false)
+        val unit = when (item) {
+            TopRow.HEART_RATE -> if (s.hrStep) "W" else "bpm"
+            TopRow.CADENCE -> "rpm"
+            TopRow.CALORIES -> "kcal"
+            TopRow.SPEED -> if (s.imperial) "mph" else "km/h"
+            TopRow.TARGET -> ""
+        }
+        val icon = topIcon(s, item, onTint)
+        smallLine(v, value, unit, 26f, "${itemLabel(s, item)} $value $unit") { c, x, base, digitH, iconW ->
+            val d = ContextCompat.getDrawable(res, icon.res)?.mutate() ?: return@smallLine
+            d.setTint(icon.color)
+            val sz = iconW.roundToInt()
+            val top = (base - digitH / 2f - sz / 2f).roundToInt()
+            d.setBounds(x.roundToInt(), top, x.roundToInt() + sz, top + sz)
+            d.draw(c)
+        }
     }
 
     /**
@@ -1150,17 +1122,46 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             s.showsPct -> "%"
             else -> "bpm"
         }
+        val green = color(if (onTint) R.color.text else R.color.karoo_green)
+        smallLine(v, value, unit, if (ramp) 30f else 26f, "${context.getString(R.string.target)} $value $unit") { c, x, base, digitH, iconW ->
+            if (ramp) {
+                // A ramp: a wedge rising to the right (falling for a ramp down), the chart's own shape
+                val up = step.endWatts >= step.startWatts
+                val path = android.graphics.Path().apply {
+                    moveTo(x, base); lineTo(x + iconW, base)
+                    if (up) lineTo(x + iconW, base - digitH) else lineTo(x, base - digitH)
+                    close()
+                }
+                c.drawPath(path, android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = green })
+            } else {
+                val icon = ContextCompat.getDrawable(res, if (step.hr) R.drawable.ic_heart else R.drawable.ic_target)?.mutate()
+                icon?.setTint(if (step.hr) color(R.color.heart_icon) else green)
+                val sz = iconW.roundToInt()
+                val top = (base - digitH / 2f - sz / 2f).roundToInt()
+                icon?.setBounds(x.roundToInt(), top, x.roundToInt() + sz, top + sz)
+                icon?.draw(c)
+            }
+        }
+    }
+
+    /**
+     * The small line under the watts as a picture: an icon ([drawIcon], [iconDp] wide at 1.875 px a
+     * dp), the number in Relative 40 px (Karoo values), the unit in Plex Medium 24 px, centred.
+     */
+    private fun smallLine(
+        v: RemoteViews, value: String, unit: String, iconDp: Float, description: String,
+        drawIcon: (c: android.graphics.Canvas, x: Float, base: Float, digitH: Float, iconW: Float) -> Unit,
+    ) {
+        val w = config.viewSize.first
         val k = density / 1.875f
         val h = (26 * density).roundToInt()
-        val ink = color(R.color.text)
-        val green = color(if (onTint) R.color.text else R.color.karoo_green)
         val num = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            typeface = KarooType.value; letterSpacing = -0.04f; textSize = 40 * k; color = ink
+            typeface = KarooType.value; letterSpacing = -0.04f; textSize = 40 * k; color = color(R.color.text)
         }
         val unitP = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
             typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL); textSize = 24 * k; color = color(R.color.text_secondary)
         }
-        val iconW = (if (ramp) 30 else 26) * k
+        val iconW = iconDp * k
         val gap = 10 * k
         val total = iconW + gap + num.measureText(value) + 6 * k + unitP.measureText(unit)
         val bmp = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
@@ -1168,30 +1169,13 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         val digits = android.graphics.Rect(); num.getTextBounds("8", 0, 1, digits)
         val base = h / 2f + digits.height() / 2f
         var x = (w - total) / 2f
-        val iconTop = base - digits.height().toFloat()
-        if (ramp) {
-            // A ramp: a wedge rising to the right (falling for a ramp down), the chart's own shape
-            val up = step.endWatts >= step.startWatts
-            val path = android.graphics.Path().apply {
-                moveTo(x, base); lineTo(x + iconW, base)
-                if (up) lineTo(x + iconW, iconTop) else lineTo(x, iconTop)
-                close()
-            }
-            c.drawPath(path, android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = green })
-        } else {
-            val icon = ContextCompat.getDrawable(res, if (step.hr) R.drawable.ic_heart else R.drawable.ic_target)?.mutate()
-            icon?.setTint(if (step.hr) color(R.color.heart_icon) else green)
-            val sz = iconW.roundToInt()
-            val top = (base - digits.height() / 2f - sz / 2f).roundToInt()
-            icon?.setBounds(x.roundToInt(), top, x.roundToInt() + sz, top + sz)
-            icon?.draw(c)
-        }
+        drawIcon(c, x, base, digits.height().toFloat(), iconW)
         x += iconW + gap
         c.drawText(value, x, base, num)
         x += num.measureText(value) + 6 * k
         c.drawText(unit, x, base, unitP)
         v.setImageViewBitmap(R.id.target_line, bmp)
-        v.setContentDescription(R.id.target_line, "${context.getString(R.string.target)} $value $unit")
+        v.setContentDescription(R.id.target_line, description)
         v.setViewVisibility(R.id.target_line, View.VISIBLE)
     }
 
@@ -1404,6 +1388,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     }
 
     companion object {
+        /** Calories' tile icon: a flame in the Karoo's 38-unit glyph box (KarooType has none). */
+        const val FLAME = "M19,3C24.5,9.5 31,14.5 31,23C31,29.9 25.6,35 19,35C12.4,35 7,29.9 7,23C7,18.2 9.4,14.6 12.6,12C12.4,15.8 13.9,18.6 16.8,19.8C15.6,13.9 16.6,8.2 19,3ZM19,15.5C17.8,19.5 14.8,21.5 14.8,25.5C14.8,28.4 16.7,30.6 19,30.6C21.3,30.6 23.2,28.4 23.2,25.5C23.2,21.5 20.2,19.5 19,15.5Z"
         /** A full-page field on the Karoo 3 (721 px) in dp. */
         private const val FULL_FIELD_DP = 721f / 1.875f
         /** On a full page the indoor START box grows by this into the big watts' room. */

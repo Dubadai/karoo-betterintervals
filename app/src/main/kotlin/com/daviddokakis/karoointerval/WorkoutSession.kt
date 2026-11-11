@@ -321,8 +321,10 @@ class WorkoutSession(
         scope.launch { store.topRow.collect { r -> _state.update { it.copy(topRow = r) } } }
         scope.launch { store.topRowRight.collect { r -> _state.update { it.copy(topRowRight = r) } } }
         scope.launch { store.zonePalette.collect { z -> _state.update { it.copy(zonePalette = z) } } }
-        scope.launch { store.rightItems.collect { r -> _state.update { it.copy(rightItems = r, rightIndex = store.rightIndex.coerceIn(0, ((r?.size ?: 1) - 1).coerceAtLeast(0))) } } }
-        _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapPower = store.lapPower, freePower = store.freePower, freeSecond = store.freeSecond, hrTargetLthr = store.hrTargetLthr) }
+        scope.launch { store.leftItems.collect { l -> _state.update { it.copy(leftItems = l, leftIndex = store.leftIndex.coerceIn(0, l.lastIndex)) } } }
+        scope.launch { store.rightItems.collect { r -> _state.update { it.copy(rightItems = r, rightIndex = store.rightIndex.coerceIn(0, r.lastIndex)) } } }
+        scope.launch { store.underWatts.collect { u -> _state.update { it.copy(underWatts = u) } } }
+        _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, freePower = store.freePower, freeSecond = store.freeSecond, hrTargetLthr = store.hrTargetLthr) }
     }
 
     fun stop() {
@@ -480,19 +482,21 @@ class WorkoutSession(
         }
     }
 
-    /** Tap on the lap tile: the lap's average → the lap's NP → the ride's average → back. */
-    fun toggleLapNp() {
+    /** Tap on the left tile: the next metric switched on in Settings › Workout screen › Left tile. */
+    fun cycleLeftTile() {
         scope.launch {
-            val next = _state.value.lapPower.next()
-            store.lapPower = next
-            _state.update { it.copy(lapPower = next) }
+            val items = _state.value.leftItems
+            if (items.size < 2) return@launch
+            val next = (_state.value.leftIndex + 1) % items.size
+            store.leftIndex = next
+            _state.update { it.copy(leftIndex = next) }
         }
     }
 
-    /** Tap on the right tile: the next metric switched on in Settings › Right tile. */
+    /** Tap on the right tile: the next metric switched on in Settings › Workout screen › Right tile. */
     fun cycleRightTile() {
         scope.launch {
-            val items = _state.value.rightItems ?: return@launch
+            val items = _state.value.rightItems
             if (items.size < 2) return@launch
             val next = (_state.value.rightIndex + 1) % items.size
             store.rightIndex = next
