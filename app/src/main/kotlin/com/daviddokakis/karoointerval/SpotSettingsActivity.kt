@@ -66,13 +66,17 @@ class SpotSettingsActivity : AppearanceActivity() {
         form.addView(settingsIntro(getString(R.string.top_row_help)))
         val left = store.topRow.value ?: if (store.secondField.value == SecondField.CADENCE) TopRow.CADENCE else TopRow.HEART_RATE
         val right = store.topRowRight.value?.takeIf { it != left }
+        val none = store.topRowNone.value
+        val count = when { none -> 0; right != null -> 2; else -> 1 }
         form.addView(
-            settingsSegmented(listOf(getString(R.string.top_row_one) to false, getString(R.string.top_row_two) to true), right != null) { two ->
+            settingsSegmented(listOf(getString(R.string.none) to 0, getString(R.string.top_row_one) to 1, getString(R.string.top_row_two) to 2), count) { n ->
+                store.setTopRowNone(n == 0)
                 // Two: the right one starts as the first that isn't on the left
-                store.setTopRowRight(if (two) TopRow.entries.first { it != left } else null)
+                if (n > 0) store.setTopRowRight(if (n == 2) right ?: TopRow.entries.first { it != left } else null)
                 render()
             },
         )
+        if (none) return
         form.addView(settingsSubLabel(getString(R.string.top_row_left)))
         form.addView(
             settingsChoiceCards(TopRow.entries.map { Triple(topName(it), null, it) }, left) { picked ->
@@ -95,22 +99,17 @@ class SpotSettingsActivity : AppearanceActivity() {
     /** The target (default), heart rate, cadence, calories, speed or nothing. */
     private fun underWatts() {
         form.addView(settingsIntro(getString(R.string.under_watts_help)))
-        val options = UNDER_ORDER.map { Triple(topName(it), null, it) } + Triple(getString(R.string.nothing), null, null)
+        val options = UNDER_ORDER.map { Triple(topName(it), null, it) } + Triple(getString(R.string.none), null, null)
         form.addView(settingsChoiceCards<TopRow?>(options, store.underWatts.value) { picked -> store.setUnderWatts(picked); render() })
     }
 
     /** A switch per metric; a tap on the tile goes through the ones on. The last one on stays on. */
     private fun tile(on: List<TileItem>, set: (List<TileItem>) -> Unit) {
-        form.addView(settingsIntro(getString(R.string.tile_help)))
+        form.addView(settingsIntro(getString(if (spot == Spot.LEFT_TILE) R.string.left_tile_help else R.string.right_tile_help)))
         TileItem.entries.forEach { item ->
             val (icon, name) = tileRow(item)
-            form.addView(
-                settingsSwitchRow(icon, getString(name), item in on) { now ->
-                    // Switching the last one off does nothing (the switch flips back)
-                    if (now || on.size > 1) set(if (now) on + item else on - item)
-                    render()
-                },
-            )
+            // All off: None (no tile; the other one takes the whole width)
+            form.addView(settingsSwitchRow(icon, getString(name), item in on) { now -> set(if (now) on + item else on - item); render() })
         }
     }
 
@@ -169,6 +168,6 @@ class SpotSettingsActivity : AppearanceActivity() {
 fun PlanStore.exampleState(): ScreenState = ExampleScreen.state(
     wattsMode, appearance.value, tileOutline = tileOutline.value, secondField = secondField.value, topRow = topRow.value,
 ).copy(
-    topRowRight = topRowRight.value, leftItems = leftItems.value, rightItems = rightItems.value, underWatts = underWatts.value,
+    topRowRight = topRowRight.value, topRowNone = topRowNone.value, leftItems = leftItems.value, rightItems = rightItems.value, underWatts = underWatts.value,
     zonePalette = zonePalette.value, calories = 412, speedMs = 8.7, lapNp = 268, rideAvgPower = 236,
 )

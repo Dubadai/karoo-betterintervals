@@ -61,15 +61,18 @@ field), **3 s**, **5 s** or **10 s**.
 What each spot on the workout screen shows. Each row opens its own page, with the example ringed
 where that spot is:
 
-- **Top row**: **One** value or **Two** side by side, between ⚙ and ⓘ. Each is **Heart rate**,
+- **Top row**: **None**, **One** value or **Two** side by side, between ⚙ and ⓘ. Each is **Heart rate**,
   **Cadence**, **Target**, **Calories** or **Speed**; the right one can't repeat the left.
   Default: heart rate.
 - **Under the watts**: the small line right under the big number: **Target** (the default),
-  **Heart rate**, **Cadence**, **Calories**, **Speed** or **Nothing**. The power gauge shows the
+  **Heart rate**, **Cadence**, **Calories**, **Speed** or **None**. The power gauge shows the
   target in its band instead.
 - **Left tile** and **Right tile**: switch on what the tile goes through when you tap it (see
-  [The two tiles](tiles.md)). The last one on stays on. Defaults: Lap avg on the left, Cadence on
-  the right.
+  [The two tiles](tiles.md)). All off is None: no tile, and the other one gets the full width.
+  Defaults: Lap avg on the left, Cadence on the right.
+
+What's set to None leaves the screen, and the rest takes the room: with nothing under the watts, or
+no tiles at all, the watts grow as big as fits.
 
 On a [heart-rate interval](workout-screen.md#heart-rate-targets), power takes heart rate's place.
 

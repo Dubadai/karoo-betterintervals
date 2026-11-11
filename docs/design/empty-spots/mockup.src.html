@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Empty Spots</title>
+<style>
+@font-face { font-family: Plex; src: url(__FONT_REG__); font-weight: 400; }
+@font-face { font-family: Plex; src: url(__FONT_MED__); font-weight: 500; }
+@font-face { font-family: Plex; src: url(__FONT_SEMI__); font-weight: 600; }
+@font-face { font-family: Plex; src: url(__FONT_BOLD__); font-weight: 700; }
+@font-face { font-family: Relative; src: url(__RELATIVE__); }
+:root { --bg:#f6f5f2; --fg:#1d1d1b; --muted:#6b6a66; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; } }
+:root[data-theme="dark"] { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system, system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 28px; margin: 0 0 4px; } p { color: var(--muted); max-width: 72ch; }
+.flow { display:flex; flex-wrap:wrap; gap: 18px; } .step { flex: 0 1 240px; max-width: 240px; }
+.step canvas { display:block; max-width:100%; height:auto; } .step h3 { font-size: 15px; margin: 8px 0 2px; }
+</style>
+</head>
+<body>
+<main>
+<h1>None for every spot</h1>
+<p>Every spot can be None: the top row, the line under the watts, and each tile. What's left takes
+the room: one tile goes full width, and with nothing above or below them the watts grow.</p>
+<div class="flow">
+  <div class="step"><div id="one-tile"></div><h3>Right tile None: Lap avg full width</h3></div>
+  <div class="step"><div id="no-top-under"></div><h3>Top row and under the watts None</h3></div>
+  <div class="step"><div id="just-watts"></div><h3>Everything None</h3></div>
+  <div class="step"><div id="set-top"></div><h3>Top row: None / One / Two</h3></div>
+  <div class="step"><div id="set-under"></div><h3>Under the watts: None</h3></div>
+  <div class="step"><div id="set-tile"></div><h3>Right tile: all off</h3></div>
+</div>
+</main>
+<script>
+/*__KAROO_DEVICE_JS__*/
+const IMGS = "__IMGS__";
+const ICONS = "__ICONS__";
+const FRAME_PNG = '__FRAME__';
+const HASH = new URLSearchParams(location.hash.slice(1));
+const SHOT = HASH.get('shot'), THEME = HASH.get('theme') || 'light';
+const FRAME = +(HASH.get('frame') || 0), FRAMES = +(HASH.get('frames') || 1);
+const W = SHOT ? 1100 : 240;
+const BACKDROP = THEME === 'dark' ? 'linear-gradient(#120E0B,#3F342E)' : 'linear-gradient(#7E9CB4,#F1F4F6)';   // Night / Sky
+/*__KIT_JS__*/
+(async () => {
+  await Promise.all([400, 500, 600, 700].map(w => document.fonts.load(`${w} 20px Plex`))); await document.fonts.load('20px Relative');
+  const I = {}; for (const k of Object.keys(IMGS)) I[k] = await loadImg(IMGS[k]);
+  const dev = await KarooDevice.load({ frame: FRAME_PNG, screen: IMGS.status });
+  const put = (id, draw) => { if (SHOT && id !== SHOT) return;
+    const t = FRAMES > 1 ? FRAME / (FRAMES - 1) : 0;
+    const cv = dev.device(dev.screen({ draw: c => draw(c, t) }), W);
+    if (SHOT) { document.body.innerHTML = ''; document.body.style.cssText = `margin:0;background:${BACKDROP};width:1300px;height:2000px;display:flex;align-items:center;justify-content:center`;
+      cv.style.width = '1100px'; document.body.append(cv); } else document.getElementById(id).append(cv); };
+  const pic = name => (THEME === 'dark' && I[name + '_dark']) || I[name];
+  const REL = px => `${px}px Relative`;
+  const px = (img, x, y) => { const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height; const g = cv.getContext('2d');
+    g.drawImage(img, 0, 0); const d = g.getImageData(x, y, 1, 1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; };
+  const BG = px(pic('screen'), 240, 200), TILE = px(pic('screen'), 120, 455);
+  const INK = THEME === 'dark' ? '#F2F2F2' : '#111111', GREYT = THEME === 'dark' ? '#BCBCBC' : '#636363';
+  const GREEN = THEME === 'dark' ? '#0DBA75' : '#13A05A', BLUE = THEME === 'dark' ? '#0A84FF' : '#007AFF';
+  const cp = (c, img, sx, sy, w, h, dx, dy) => c.drawImage(pic(img), sx, sy, w, h, dx, dy, w, h);
+
+
+  // ---- The workout screen, rebuilt from the app's own render (screen.png: the defaults) ----
+  const IMG = () => pic('screen');
+  const piece = (c, sx, sy, w, h, dx, dy) => c.drawImage(IMG(), sx, sy, w, h, dx, dy, w, h);
+  // The big watts in Relative, as large as fits [top, bottom] (and the width), centred
+  function watts(c, top, bottom) {
+    let px = 100; c.font = REL(px);
+    const fits = p => { c.font = REL(p); const m = c.measureText('280'); return m.actualBoundingBoxAscent <= bottom - top && m.width <= 440; };
+    while (fits(px + 2)) px += 2; c.font = REL(px);
+    const m = c.measureText('280'); c.fillStyle = INK; c.textAlign = 'center';
+    c.fillText('280', 240, top + m.actualBoundingBoxAscent + ((bottom - top) - m.actualBoundingBoxAscent) / 2); c.textAlign = 'left';
+  }
+  function base(c) { c.drawImage(IMG(), 0, 0, 480, 800); c.fillStyle = BG; c.fillRect(4, 64, 472, 528); }
+  const corners = c => { piece(c, 4, 64, 60, 62, 4, 64); piece(c, 416, 64, 60, 62, 416, 64); };   // ⚙ and ⓘ
+  const topRow = c => piece(c, 150, 66, 180, 60, 150, 66);
+  const bigDefault = c => piece(c, 60, 126, 360, 190, 60, 126);    // the watts as they are
+  const under = c => piece(c, 120, 314, 240, 56, 120, 314);        // ◎ 280 W
+  const interval = (c, y) => piece(c, 8, 372, 464, 74, 8, y);      // INTERVAL 4 / 10, -1:33, bar
+  const tiles = (c, y) => piece(c, 4, 448, 472, 142, 4, y);
+  // One tile across the whole width: Lap avg, its icons, label and number as the tiles draw them
+  function wideTile(c, y) {
+    c.fillStyle = TILE; c.beginPath(); c.roundRect(8, y + 4, 464, 134, 12); c.fill();
+    piece(c, 14, 460, 50, 36, 14, y + 12);
+    c.fillStyle = INK; c.font = F(500, 26); c.textAlign = 'right'; c.fillText('LAP AVG', 464, y + 44);
+    c.font = REL(84); c.fillText('282', 464, y + 124); c.textAlign = 'left';
+  }
+  const SCREENS = {
+    'one-tile': c => { base(c); corners(c); topRow(c); bigDefault(c); under(c); interval(c, 372); wideTile(c, 448); },
+    // Nothing above or below: the watts take the room from under the gear and ⓘ to the interval
+    'no-top-under': c => { base(c); corners(c); watts(c, 130, 362); interval(c, 372); tiles(c, 448); },
+    // Nothing at all: the watts down to the interval row, which sits right above NEXT UP
+    'just-watts': c => { base(c); corners(c); watts(c, 130, 500); interval(c, 516); },
+  };
+  Object.entries(SCREENS).forEach(([id, draw]) => put(id, draw));
+
+  // ---- Settings ----
+  DRAWN.calories = (c, x, y, s) => { c.strokeStyle = C.text; c.lineWidth = s * 0.1; c.lineJoin = 'round'; c.beginPath();
+    c.moveTo(x + s * 0.5, y + s * 0.05);
+    c.bezierCurveTo(x + s * 0.95, y + s * 0.45, x + s * 0.92, y + s * 0.95, x + s * 0.5, y + s * 0.95);
+    c.bezierCurveTo(x + s * 0.08, y + s * 0.95, x + s * 0.05, y + s * 0.55, x + s * 0.3, y + s * 0.35);
+    c.bezierCurveTo(x + s * 0.32, y + s * 0.55, x + s * 0.42, y + s * 0.6, x + s * 0.48, y + s * 0.55);
+    c.bezierCurveTo(x + s * 0.4, y + s * 0.35, x + s * 0.42, y + s * 0.2, x + s * 0.5, y + s * 0.05); c.stroke(); };
+  // Two tiles side by side, the one being set filled (like the top row and under icons)
+  const tilesIcon = filled => (c, x, y, s) => { const w = s * 0.42, h = s * 0.62, ty = y + s * 0.19;
+    [x + s * 0.04, x + s * 0.54].forEach((tx, i) => { c.beginPath(); c.roundRect(tx + 1.3, ty + 1.3, w - 2.6, h - 2.6, 4);
+      if (i === filled) { c.fillStyle = C.text; c.fill(); } c.strokeStyle = C.text; c.lineWidth = 2.6; c.stroke(); }); };
+  DRAWN.left_tile = tilesIcon(0); DRAWN.right_tile = tilesIcon(1);
+  DRAWN.ride = (c, x, y, s) => icon(c, 'power', x, y, s);
+  // settingsNavRow: icon, title, a status line under it, the arrow
+  const navRow = (ic, title, status) => ({ h: 112, draw(c, y) {
+    anyIcon(c, ic, X0, y + 24, ICON); c.fillStyle = C.text; c.font = F(400, 18 * D); c.fillText(title, X0 + ICON + GAP, y + 50);
+    c.fillStyle = C.help; c.font = F(400, 13 * D); c.fillText(status, X0 + ICON + GAP, y + 86);
+    icon(c, 'chevron', XR - 40, y + 38, ICON, C.help); } });
+  const subLabel = t => ({ h: 52, draw(c, y) { c.fillStyle = C.help; c.font = F(400, 12 * D); c.fillText(t, X0, y + 34); } });
+
+
+  // The Example card: a screen above, cut to the field
+  function cardOf(id) {
+    const cv = document.createElement('canvas'); cv.width = 480; cv.height = 800; SCREENS[id](cv.getContext('2d'));
+    const f = document.createElement('canvas'); f.width = 478; f.height = 721; f.getContext('2d').drawImage(cv, 1, 62, 478, 721, 0, 0, 478, 721);
+    return { img: f, w: Math.round(300 * 478 / 721), h: 300 };
+  }
+  const TOP = ['Heart rate', 'Cadence', 'Target', 'Calories', 'Speed'];
+  put('set-top', c => page(c, { title: 'Top row', card: cardOf('no-top-under'), form: layout([
+    intro('Nothing, one value, or two side by side, between the gear and ⓘ.'), seg(['None', 'One', 'Two'], 0), space(200)]) }));
+  put('set-under', c => page(c, { title: 'Under the watts', card: cardOf('no-top-under'), scrollTo: 'end', form: layout([
+    intro('The small line right under the watts.'), choiceCards(['Target', 'Heart rate', 'Cadence', 'Calories', 'Speed', 'None'], 5)]) }));
+  const TILES = [['lap', 'Lap avg'], ['lap', 'Lap NP'], ['ride', 'Ride avg'], ['target', 'Target'], ['heart', 'Heart rate'],
+    ['cadence', 'Cadence'], ['calories', 'Calories'], ['speed', 'Speed']];
+  put('set-tile', c => page(c, { title: 'Right tile', card: cardOf('one-tile'), form: layout([
+    intro('Tap the tile to switch between the ones that are on. All off: no right tile, and the left one gets the full width.'),
+    ...TILES.map(([i, t]) => switchRow(i, t, false)), space(12)]) }));
+})();
+</script>
+</body>
+</html>

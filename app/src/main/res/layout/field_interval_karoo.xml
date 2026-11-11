@@ -66,6 +66,21 @@
                 android:paddingTop="24dp"
                 android:textColor="@color/text" />
 
+            <!-- The watts when a spot around them is None (nothing under them, or no tiles): a picture
+                 of the digits cut to their own height, scaled to fill the room (docs/design/empty-spots).
+                 A text view can't: Relative's digits are only 58 % of its line. The top padding keeps
+                 the digits below the gear and ⓘ, never beside them. The renderer shows one of the two. -->
+            <ImageView
+                android:id="@+id/watts_big"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingStart="4dp"
+                android:paddingTop="34dp"
+                android:paddingEnd="4dp"
+                android:paddingBottom="6dp"
+                android:scaleType="fitCenter"
+                android:visibility="gone" />
+
             <!-- The Karoo's empty state ("No Sensor", "Searching…") where the number goes -->
             <ImageView
                 android:id="@+id/watts_empty"

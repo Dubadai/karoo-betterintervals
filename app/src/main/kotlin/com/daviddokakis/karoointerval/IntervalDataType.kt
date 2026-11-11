@@ -64,7 +64,7 @@ class IntervalDataType(
                 val s = session.state.value
                 val key = Key(
                     s.countdown, s.stepIndex, s.workoutPaused, s.chartZoomed, s.plan?.id, s.selectTarget,
-                    s.selectProgress, s.moveCancelled, s.targetShowsRange, s.wattsMode, s.powerSmoothing, s.tileOutline, s.secondField, s.notStarted, s.appearance, s.navigating, s.freeSecond, s.freePower, s.topRow, s.leftItems, s.leftIndex, s.underWatts,
+                    s.selectProgress, s.moveCancelled, s.targetShowsRange, s.wattsMode, s.powerSmoothing, s.tileOutline, s.secondField, s.notStarted, s.appearance, s.navigating, s.freeSecond, s.freePower, s.topRow, s.topRowNone, s.leftItems, s.leftIndex, s.underWatts,
                     s.autoConfirmLeft, s.topRowRight, s.plan?.scalePct, s.hrTargetLthr, s.paused, s.elapsedInStepSec, s.infoOpen, s.rightIndex, s.rightItems, s.zonePalette,
                 )
                 val now = SystemClock.elapsedRealtime()
@@ -122,6 +122,7 @@ class IntervalDataType(
         val freeSecond: FreeSecond,
         val freePower: FreePower,
         val topRow: TopRow?,
+        val topRowNone: Boolean,
         val leftItems: List<TileItem>,
         val leftIndex: Int,
         val underWatts: TopRow?,

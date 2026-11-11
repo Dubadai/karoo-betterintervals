@@ -28,11 +28,13 @@ data class ScreenState(
     val lapNp: Int? = null,
     /** Lap tile shows NP instead of the lap average (tap to toggle, remembered). */
     val lapShowsNp: Boolean = false,
-    /** Settings › Workout screen › Left tile: the metrics its tap goes through (at least one). */
+    /** Settings › Workout screen › Top row › None: no values at the top. */
+    val topRowNone: Boolean = false,
+    /** Settings › Workout screen › Left tile: the metrics its tap goes through (empty: None, no tile). */
     val leftItems: List<TileItem> = listOf(TileItem.LAP_AVG),
     /** Which of [leftItems] the left tile shows now. */
     val leftIndex: Int = 0,
-    /** Settings › Workout screen › Right tile: the metrics its tap goes through (at least one). */
+    /** Settings › Workout screen › Right tile: the metrics its tap goes through (empty: None, no tile). */
     val rightItems: List<TileItem> = listOf(TileItem.CADENCE),
     /** Which of [rightItems] the right tile shows now. */
     val rightIndex: Int = 0,
