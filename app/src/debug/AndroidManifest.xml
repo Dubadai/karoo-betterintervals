@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Debug builds only: lets adb fake a remote button press for testing. -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Indoor ERG spike: control the smart trainer over Bluetooth FTMS (debug only for now) -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="s" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <application>
         <receiver
             android:name=".DebugRemoteReceiver"
@@ -19,5 +26,13 @@
             android:name=".DebugSettings"
             android:exported="true"
             android:targetActivity=".SettingsActivity" />
+        <!-- Indoor ERG spike: drive the trainer from adb (see DebugTrainerReceiver). -->
+        <receiver
+            android:name=".DebugTrainerReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.daviddokakis.karoointerval.DEBUG_TRAINER" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
