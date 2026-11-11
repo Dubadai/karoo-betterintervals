@@ -32,7 +32,7 @@ object GalleryFields {
         // A workout selected again mid-ride: CONTINUE (interval 4, 2:13 in) or START OVER
         "resume-ready",
         // Indoor ERG: the pill right of the gear (docs/design/indoor-erg)
-        "erg-gauge", "erg-number", "erg-connecting", "erg-lost", "erg-free", "erg-paused", "erg-top-two", "erg-gauge-route", "erg-off", "erg-off-top-two", "erg-start-connecting", "erg-start-ready", "erg-start-ready-b", "indoor-start", "indoor-start-dim", "indoor-gauge",
+        "erg-gauge", "erg-number", "erg-connecting", "erg-lost", "erg-free", "erg-paused", "erg-top-two", "erg-gauge-route", "erg-off", "erg-off-top-two", "erg-start-connecting", "erg-start-ready", "erg-start-ready-b", "indoor-start", "indoor-start-dim", "trainer-hint", "start-outdoor", "indoor-gauge",
     ) + SEQ.indices.flatMap { i -> listOf("seq-gauge-%02d", "seq-both-%02d", "seq-background-%02d").map { it.format(i) } }
     val sizes: List<String>? = listOf("full")   // BetterIntervals is always a full-page field
 
@@ -147,6 +147,8 @@ object GalleryFields {
             "erg-off-top-two" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(topRowRight = TopRow.CADENCE, erg = ErgStatus.OFF, ergOffThisRide = true)
             "indoor-start" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0, erg = ErgStatus.READY, indoor = true, rideIdle = true, startFlash = true)
             "indoor-start-dim" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0, erg = ErgStatus.READY, indoor = true, rideIdle = true, startFlash = false)
+            "trainer-hint" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0, rideIdle = true, trainerOutdoor = true)
+            "start-outdoor" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0, rideIdle = true)
             "indoor-gauge" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(erg = ErgStatus.HOLDING, ergWatts = 300, indoor = true)
             "erg-start-connecting" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0, erg = ErgStatus.CONNECTING)
             "erg-start-ready" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0, erg = ErgStatus.READY)

@@ -97,26 +97,29 @@ class SettingsActivity : AppearanceActivity() {
 
         // Appearance: Dark / Light / Auto. The page itself switches right away.
         form.addView(settingsHeading(R.drawable.ic_settings_appearance, getString(R.string.appearance)))
+        form.addView(settingsIntro(getString(R.string.appearance_help)))
         form.addView(
             settingsSegmented(appearanceOptions(), store.appearance.value) { picked ->
                 store.setAppearance(picked)
                 recreate()
             },
         )
-        section(R.string.appearance_help)
+        form.addView(settingsDivider())
 
         // Tiles: Tonal / Outline (the Lap avg, Target and HR tiles on the workout screen)
         form.addView(settingsHeading(R.drawable.ic_settings_tiles, getString(R.string.tiles)))
+        form.addView(settingsIntro(getString(R.string.tiles_help)))
         form.addView(
             settingsSegmented(named(R.string.tiles_tonal to false, R.string.tiles_outline to true), store.tileOutline.value) { on ->
                 store.setTileOutline(on)
                 render()
             },
         )
-        section(R.string.tiles_help)
+        form.addView(settingsDivider())
 
         // Heart rate or cadence in the HR spots
         form.addView(settingsHeading(R.drawable.ic_settings_heart, getString(R.string.second_field)))
+        form.addView(settingsIntro(getString(R.string.second_field_help)))
         form.addView(
             settingsSegmented(
                 named(R.string.heart_rate to SecondField.HEART_RATE, R.string.cadence to SecondField.CADENCE),
@@ -126,12 +129,13 @@ class SettingsActivity : AppearanceActivity() {
                 render()
             },
         )
-        section(R.string.second_field_help)
+        form.addView(settingsDivider())
 
         // Top row of the workout screen: one value or two (Left and Right), each heart rate,
         // cadence or the target; what isn't at the top goes in the tile next to Lap avg.
         // Design: docs/design/hr-targets/ (Two values at the top).
         form.addView(settingsHeading(R.drawable.ic_settings_top_row, getString(R.string.top_row)))
+        form.addView(settingsIntro(getString(R.string.top_row_help)))
         val topOptions = named(R.string.heart_rate to TopRow.HEART_RATE, R.string.cadence to TopRow.CADENCE, R.string.target to TopRow.TARGET)
         val left = store.topRow.value ?: if (store.secondField.value == SecondField.CADENCE) TopRow.CADENCE else TopRow.HEART_RATE
         val right = store.topRowRight.value?.takeIf { it != left }
@@ -155,30 +159,33 @@ class SettingsActivity : AppearanceActivity() {
             form.addView(settingsSubLabel(getString(R.string.top_row_right)))
             form.addView(settingsSegmented(topOptions, right, unavailable = setOf(left)) { picked -> store.setTopRowRight(picked); render() })
         }
-        section(R.string.top_row_help)
+        form.addView(settingsDivider())
 
         // Power: how the big watts are smoothed; cadence's own smoothing when cadence is shown
         form.addView(settingsHeading(R.drawable.ic_settings_power, getString(R.string.power_smoothing)))
+        form.addView(settingsIntro(getString(R.string.power_smoothing_help)))
         form.addView(
             settingsSegmented(Smoothing.entries.map { getString(it.label) to it }, store.powerSmoothing.value) { picked ->
                 store.setPowerSmoothing(picked)
                 render()
             },
         )
-        section(R.string.power_smoothing_help)
+        form.addView(settingsDivider())
         if (store.secondField.value == SecondField.CADENCE) {
             form.addView(settingsHeading(R.drawable.ic_settings_cadence, getString(R.string.cadence_smoothing)))
+            form.addView(settingsIntro(getString(R.string.cadence_smoothing_help)))
             form.addView(
                 settingsSegmented(Smoothing.entries.map { getString(it.label) to it }, store.cadenceSmoothing.value) { picked ->
                     store.setCadenceSmoothing(picked)
                     render()
                 },
             )
-            section(R.string.cadence_smoothing_help)
+            form.addView(settingsDivider())
         }
 
         // Trainer (indoors): ERG on an indoor ride profile (docs/design/indoor-erg)
         form.addView(settingsHeading(R.drawable.ic_settings_target, getString(R.string.erg_heading)))
+        form.addView(settingsIntro(getString(R.string.erg_help)))
         form.addView(
             settingsSwitchRow(R.drawable.ic_settings_power, getString(R.string.erg_on), store.ergOn.value) { on ->
                 store.setErgOn(on)
@@ -212,6 +219,7 @@ class SettingsActivity : AppearanceActivity() {
                     ).apply { topMargin = (10 * resources.displayMetrics.density).toInt() }
                 },
             )
+            form.addView(settingsIntro(getString(R.string.match_pm_help)))
             if (match) {
                 val last = store.pmLastRide.value
                 val sum = last?.summary
@@ -223,9 +231,8 @@ class SettingsActivity : AppearanceActivity() {
                     else -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, matchSummary(last.pmName, sum!!), SettingsTone.OK))
                 }
             }
-            form.addView(settingsHelp(getString(if (match) R.string.match_pm_help_on else R.string.match_pm_help_off)))
         }
-        section(R.string.erg_help)
+        form.addView(settingsDivider())
 
         // intervals.icu: one row, opens the Account page
         form.addView(
@@ -255,11 +262,6 @@ class SettingsActivity : AppearanceActivity() {
         val head = if (pm != null) getString(R.string.match_pm_last_named, pm, bands) else getString(R.string.match_pm_last, bands)
         val cold = s.coldPct; val warm = s.warmMin
         return if (cold != null && warm != null) head + " " + getString(R.string.match_pm_cold, if (cold >= 0) "+$cold" else "\u2212${-cold}", warm) else head
-    }
-
-    private fun section(help: Int) {
-        form.addView(settingsHelp(getString(help)))
-        form.addView(settingsDivider())
     }
 
     companion object {

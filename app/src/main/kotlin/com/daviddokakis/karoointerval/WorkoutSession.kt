@@ -123,6 +123,11 @@ class WorkoutSession(
         if (st.erg != status || st.ergWatts != watts) _state.update { it.copy(erg = status, ergWatts = watts) }
     }
 
+    /** A trainer is sending power on an outdoor profile (from [ErgController]). */
+    fun setTrainerOutdoor(on: Boolean) {
+        if (_state.value.trainerOutdoor != on) _state.update { it.copy(trainerOutdoor = on) }
+    }
+
     fun viewStarted() { viewsActive.incrementAndGet() }
     fun viewStopped() { viewsActive.decrementAndGet() }
 

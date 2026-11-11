@@ -77,6 +77,15 @@ class ErgController(
         val st = workout.state.value
         val m = match.value
         // A finished workout keeps the trainer free until the next one starts.
+        // Outdoor profile, trainer sending the Karoo's power: the start screen says to pick an indoor
+        // profile (docs/design/indoor-erg/trainer-hint).
+        // Pedalling before the workout starts, with the Karoo's power coming from the trainer: shown
+        // until the ride starts or the trainer stops sending.
+        val src = pmSource
+        workout.setTrainerOutdoor(
+            !indoor.value && !recording.value && st.plan != null && st.notStarted &&
+                m != null && src != null && isTrainer(src, m) && System.currentTimeMillis() - pmAtMs < FRESH_MS,
+        )
         if (st.finished) afterFinish = true else if (st.plan != null && !st.notStarted) afterFinish = false
         // Also without a workout while a ride records: ERG holds the When paused watts between workouts.
         val wanted = indoor.value && store.ergOn.value && (st.plan != null || recording.value)

@@ -286,8 +286,8 @@ class SetupActivity : AppearanceActivity() {
         val pct = store.scalePct.value
         if (current != null && !current.hrOnly) {
             content.addView(settingsHeading(R.drawable.ic_settings_power, getString(R.string.scale_workout)))
+            content.addView(settingsIntro(getString(R.string.scale_help)))
             content.addView(scaleControl(pct))
-            content.addView(settingsHelp(getString(R.string.scale_help)))
             content.addView(settingsDivider())
         }
 
@@ -381,7 +381,7 @@ class SetupActivity : AppearanceActivity() {
             synced?.let { addView(small(it, R.color.settings_help)) }
             if (problem != null) {
                 if (synced != null) addView(small("  ·  ", R.color.settings_help))
-                addView(small(problem, R.color.segment_selected, bold = true))
+                addView(small(problem, R.color.settings_warn, bold = true))
             }
             if (wifiOff) {
                 addView(View(context), LinearLayout.LayoutParams(0, 0, 1f))

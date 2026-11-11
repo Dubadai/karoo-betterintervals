@@ -172,6 +172,43 @@
                 android:textSize="16sp" />
         </FrameLayout>
 
+        <!-- Outdoor profile with a trainer sending power, before the ride: pick an indoor profile
+             (docs/design/indoor-erg/trainer-hint). The kit's warning orange, 24 px. -->
+        <LinearLayout
+            android:id="@+id/trainer_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_trainer_hint"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="7dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/trainer_hint_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="5dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_indoor_trainer" />
+
+            <TextView
+                android:id="@+id/trainer_hint_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif"
+                android:includeFontPadding="false"
+                android:lineSpacingExtra="2dp"
+                android:maxLines="3"
+                android:text="@string/trainer_hint"
+                android:textColor="@color/settings_warn"
+                android:textSize="12.8sp" />
+        </LinearLayout>
+
         <!-- Indoors, before the workout starts: the trainer icon and INDOOR SESSION, grey, 24 px
              (the smallest text on the Karoo), above the workout's name -->
         <LinearLayout

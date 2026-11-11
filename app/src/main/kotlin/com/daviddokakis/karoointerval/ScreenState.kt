@@ -119,6 +119,8 @@ data class ScreenState(
     val rideIdle: Boolean = false,
     /** Indoor start box: the start button's green flash, on or off (flips once a second). */
     val startFlash: Boolean = false,
+    /** A trainer sends the Karoo's power on an outdoor profile: before the ride, a hint to pick an indoor one. */
+    val trainerOutdoor: Boolean = false,
 )
  {
     val workoutLoaded: Boolean get() = plan != null

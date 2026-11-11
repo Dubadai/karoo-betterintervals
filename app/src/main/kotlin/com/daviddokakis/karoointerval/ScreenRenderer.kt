@@ -545,7 +545,11 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
 
         v.setTextViewText(R.id.watts, s.powerShown?.toString() ?: "--")
         bigEmpty(v, R.id.watts, R.id.watts_empty, s.powerSensor, config.viewSize.first.toFloat(), 0f + config.viewSize.second)
-        if (s.indoor && s.rideIdle && s.countdown == null && s.resumeFromSec == null) {
+        // Outdoor profile with a trainer, before the ride: the orange hint (docs/design/indoor-erg/trainer-hint)
+        val trainerHint = !s.indoor && s.trainerOutdoor && s.rideIdle && s.countdown == null && s.resumeFromSec == null
+        // Every start screen (indoor and outdoor): the watts sit in the top row until the countdown.
+        val wattsUp = s.countdown == null && s.resumeFromSec == null
+        if (wattsUp) {
             v.setViewVisibility(R.id.watts, View.INVISIBLE)
             v.setViewVisibility(R.id.watts_empty, View.GONE)
         }
@@ -556,8 +560,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setViewVisibility(R.id.hr, View.GONE)
         // Indoors before the ride the watts join the top row (bolt and number, like ERG and the heart
         // rate) and the yellow box takes the big number's room (docs/design/indoor-erg/indoor-start).
-        val indoorStartScreen = s.indoor && s.rideIdle && s.countdown == null && s.resumeFromSec == null
-        val wattsItem = if (indoorStartScreen) TopRowArt.Item(TileArt.Icon(R.drawable.ic_bolt_filled, color(R.color.karoo_success_green)), s.powerShown?.toString() ?: "--") else null
+        // The trainer hint does the same: the watts go up, the box and the hint get the room.
+        val wattsItem = if (wattsUp) TopRowArt.Item(TileArt.Icon(R.drawable.ic_bolt_filled, color(R.color.karoo_success_green)), s.powerShown?.toString() ?: "--") else null
         // ERG first, as on the workout screen: "● ERG READY" once the trainer is connected.
         val topItems = listOfNotNull(ergItem(s), wattsItem) + tops.map {
             TopRowArt.Item(topIcon(s, it, onTint = false), itemValue(s, it, inTile = false, gaugeMode = true), heart = it == TopRow.HEART_RATE && !s.hrStep)
@@ -589,6 +593,14 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // Indoors, until the workout starts: INDOOR SESSION with the trainer icon above the name
         v.setViewVisibility(R.id.indoor_label, if (s.indoor) View.VISIBLE else View.GONE)
         v.setInt(R.id.indoor_icon, "setColorFilter", color(R.color.settings_help))
+        v.setViewVisibility(R.id.trainer_hint, if (trainerHint) View.VISIBLE else View.GONE)
+        if (trainerHint) {
+            v.setInt(R.id.trainer_hint_icon, "setColorFilter", color(R.color.settings_warn))
+            v.setTextColor(R.id.trainer_hint_text, color(R.color.settings_warn))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                v.setColorStateList(R.id.trainer_hint, "setBackgroundTintList", android.content.res.ColorStateList.valueOf(color(R.color.settings_warn_bg)))
+            }
+        }
         v.setTextViewText(R.id.ready_name, plan.name)
         v.setTextViewText(R.id.ready_total, formatClock(plan.totalSec))
 
@@ -612,7 +624,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             // Indoors before the ride the box is taller (its line at 24 px); the big watts give way.
             val indoorBox = s.indoor && s.rideIdle && countdown == null && s.resumeFromSec == null
-            v.setViewLayoutHeight(R.id.btn_start, when { s.resumeFromSec != null -> 60f; indoorBox -> indoorBoxDp(); else -> 96f }, TypedValue.COMPLEX_UNIT_DIP)
+            v.setViewLayoutHeight(R.id.btn_start, when { s.resumeFromSec != null -> 60f; indoorBox -> indoorBoxDp(); trainerHint -> indoorBoxDp() - HINT_BOX_DP; countdown == null -> indoorBoxDp() + if (s.indoor) 0f else LABEL_DP; else -> 96f }, TypedValue.COMPLEX_UNIT_DIP)
         }
         // Indoors before the ride: the Karoo's own start button starts it all, so the box shows it
         // (a real Karoo, its start button flashing). A tap on the box still starts the ride.
@@ -969,6 +981,11 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
      * The indoor START box's height: it takes the big watts' room (only the top row stays above it),
      * so it follows the field's height (a route makes the field shorter); never below its own minimum.
      */
+    /** The trainer hint's room (two lines at 24 px, its padding and margin), taken from the taller box. */
+    private val HINT_BOX_DP = 30f
+    /** INDOOR SESSION's room (outdoors there's none, so the box gets it). */
+    private val LABEL_DP = 28f
+
     private fun indoorBoxDp(): Float {
         val fieldDp = config.viewSize.second / density
         return (IndoorStartArt.HEIGHT_DP + (fieldDp - FULL_FIELD_DP) + INDOOR_BOX_EXTRA_DP).coerceIn(IndoorStartArt.HEIGHT_DP, IndoorStartArt.HEIGHT_DP + INDOOR_BOX_EXTRA_DP)
