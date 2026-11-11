@@ -289,13 +289,14 @@ enum class ZonePalette(private val light: IntArray, private val dark: IntArray, 
     ZWIFT(ZWIFT_ZONES, ZWIFT_ZONES),
     /**
      * intervals.icu's, read off its workout charts (light and dark, 2026-11-11): its six hues on
-     * Z1…Z6 as it draws them, and a dark grey for Z7 (it shows only six), so all seven differ.
+     * Z1…Z6 as it draws them, and magenta for Z7 (it shows only six; picked over grey, plum, indigo
+     * and ink: docs/design/intervals-z7), so all seven differ.
      */
     INTERVALS(
-        rgb(0x8FC4B6, 0x8FC380, 0xFAE191, 0xF7BA86, 0xE38395, 0xB6A3E6, 0x8C8C8C),
-        rgb(0x458376, 0x458234, 0xBFA34B, 0xBC773C, 0xA6374E, 0x5D41A5, 0x4A4A4A),
-        rgb(0x5CAD98, 0x5CAC43, 0xF9D660, 0xF49D4E, 0xD84B64, 0x7A58D1, 0x5E5E5E),
-        rgb(0x52A590, 0x52A438, 0xF2CE57, 0xE28F48, 0xD0415A, 0x714FC9, 0x6E6E6E),
+        rgb(0x8FC4B6, 0x8FC380, 0xFAE191, 0xF7BA86, 0xE38395, 0xB6A3E6, 0xE58FD0),
+        rgb(0x458376, 0x458234, 0xBFA34B, 0xBC773C, 0xA6374E, 0x5D41A5, 0xA3368A),
+        rgb(0x5CAD98, 0x5CAC43, 0xF9D660, 0xF49D4E, 0xD84B64, 0x7A58D1, 0xCC4FAE),
+        rgb(0x52A590, 0x52A438, 0xF2CE57, 0xE28F48, 0xD0415A, 0x714FC9, 0xC64FA9),
     );
 
     /** Zone [zone] (1–7)'s fill. */

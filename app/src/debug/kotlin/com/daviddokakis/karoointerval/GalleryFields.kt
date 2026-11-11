@@ -34,7 +34,7 @@ object GalleryFields {
         // Indoor ERG: the pill right of the gear (docs/design/indoor-erg)
         "erg-gauge", "erg-number", "erg-connecting", "erg-lost", "erg-free", "erg-paused", "erg-top-two", "erg-gauge-route", "erg-off", "erg-off-top-two", "erg-start-connecting", "erg-start-ready", "erg-start-ready-b", "indoor-start", "indoor-start-dim", "trainer-hint", "start-outdoor", "indoor-gauge",
         // Indoor ride notes (docs/design/indoor-ride-notes): ⓘ view, right tile rotation, ramp, ride avg, done paused, zone colours
-        "info", "right-calories", "right-six", "ramp-number", "lap-ride", "done-paused", "zones-zwift", "zones-intervals", "indoor-number",
+        "info", "right-calories", "right-six", "ramp-number", "lap-ride", "done-paused", "zones-zwift", "zones-intervals", "indoor-number", "slot-defaults",
     ) + SEQ.indices.flatMap { i -> listOf("seq-gauge-%02d", "seq-both-%02d", "seq-background-%02d").map { it.format(i) } }
     val sizes: List<String>? = listOf("full")   // BetterIntervals is always a full-page field
 
@@ -135,6 +135,8 @@ object GalleryFields {
             "zones-zwift" -> k.copy(zonePalette = ZonePalette.ZWIFT)
             "zones-intervals" -> k.copy(zonePalette = ZonePalette.INTERVALS)
             "indoor-number" -> k.copy(indoor = true, erg = ErgStatus.HOLDING, ergWatts = 280)
+            // Settings › Workout screen defaults: heart rate on top, target under the watts, Lap avg, Cadence
+            "slot-defaults" -> k.copy(indoor = true, erg = ErgStatus.HOLDING, ergWatts = 280, rightItems = listOf(RightItem.CADENCE))
             "outline" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, tileOutline = true)
             "cadence" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, secondField = SecondField.CADENCE)
             // A workout with heart-rate targets only (as intervals.icu sends one: % of max HR, resolved to bpm)

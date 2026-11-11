@@ -70,7 +70,8 @@ Pictures in `built/`, drawn by the app's own code (field gallery; Settings on th
   #BFA34B #BC773C #A6374E #5D41A5`, each bar with a stronger outline (light `#5CAD98 #5CAC43
   #F9D660 #F49D4E #D84B64 #7A58D1`, dark `#52A590 #52A438 #F2CE57 #E28F48 #D0415A #714FC9`).
   Its six hues on Z1…Z6 as intervals.icu draws them (teal recoveries, green endurance, orange
-  threshold); Z7 is a dark grey (light `#8C8C8C`, dark `#4A4A4A`), so all seven differ. (A grey Z1
+  threshold); Z7 is magenta (light `#E58FD0`, dark `#A3368A`, picked in docs/design/intervals-z7;
+  a dark grey read as "no zone"), so all seven differ. (A grey Z1
   was tried first: it shifted every colour a zone up and looked paler than intervals.icu.)
 - **Graph contrast +15 %** for every palette (docs/design/chart-contrast).
 - **Workouts page buttons:** Keep current workout and Use new targets are both tonal, not yellow:
