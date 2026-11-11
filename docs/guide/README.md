@@ -13,8 +13,9 @@ pictures from a real Karoo.
 | [Lap NP and Target range](tiles.md) | Tap the tiles to switch what they show |
 | [Pausing the workout](pausing.md) | Stop the interval timer without stopping the ride |
 | [Riding without a workout](free-ride.md) | The free-ride screen |
+| [Indoor with a trainer (ERG)](indoor-erg.md) | The trainer follows the workout on an indoor profile: setup, starting with the Karoo's button, ERG on/off, Match PM |
 | [Workouts and Account](workouts-and-account.md) | Syncing, choosing and removing workouts, your API key |
-| [Settings](settings.md) | Dark / Light / Auto, Tiles (tonal or outline), power smoothing, heart rate or cadence, your intervals.icu account, show the introduction again |
+| [Settings](settings.md) | Dark / Light / Auto, Tiles (tonal or outline), power smoothing, heart rate or cadence, Trainer (indoors), your intervals.icu account, show the introduction again |
 
 Light and dark mode follow the Karoo's own theme, unless you pick Dark or Light in
 [Settings](settings.md). Anything showing `--` is waiting for data, for

@@ -119,10 +119,12 @@ class SetupActivity : AppearanceActivity() {
      * settings are in Settings › Trainer (indoors).
      */
     private fun ergCard(): View? {
-        val session = IntervalExtension.session ?: return null
-        val st = session.state.value
+        // Debug builds: `--ez preview_erg true` draws the card as ERG READY without a Karoo (emulator pictures).
+        val preview = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0 && intent.getBooleanExtra(EXTRA_PREVIEW_ERG, false)
+        val session = IntervalExtension.session
+        val st = session?.state?.value ?: if (preview) ScreenState(erg = ErgStatus.READY) else return null
         val erg = st.erg ?: return null
-        val name = trainerName ?: getString(R.string.erg_card_trainer)
+        val name = trainerName ?: if (preview) "28436" else getString(R.string.erg_card_trainer)
         val text = when (erg) {
             ErgStatus.READY -> getString(R.string.erg_card_ready, name)
             ErgStatus.HOLDING -> getString(R.string.erg_card_on, name)
@@ -142,7 +144,7 @@ class SetupActivity : AppearanceActivity() {
             }
             addView(
                 settingsSwitchRow(R.drawable.ic_settings_target, getString(R.string.erg_card_title), !st.ergOffThisRide) { _ ->
-                    session.toggleErg()
+                    session?.toggleErg()
                 },
             )
             addView(settingsHelp(text).apply { setPadding(0, 0, 0, 0) })
@@ -514,6 +516,7 @@ class SetupActivity : AppearanceActivity() {
     companion object {
         /** Set when opened from the gear button on the interval screen. */
         const val EXTRA_FROM_RIDE = "from_ride"
+        const val EXTRA_PREVIEW_ERG = "preview_erg"
         private const val RIDE_APP = "io.hammerhead.rideapp"
         private const val WIFI_SETTLE_MS = 2_000L
         private const val RING_STROKE_DP = 3
