@@ -333,12 +333,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             },
         )
         v.setViewVisibility(R.id.btn_resume, if (resumeShown) View.VISIBLE else View.GONE)
-        // ⓘ: the whole workout so far. Top right; outdoors just left of the pause button.
-        val pauseShown = !s.indoor && !resumeShown
-        v.setViewVisibility(R.id.btn_info, if (barOnTop) View.INVISIBLE else View.VISIBLE)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            v.setViewLayoutMargin(R.id.btn_info, RemoteViews.MARGIN_END, if (pauseShown) 40f else 0f, TypedValue.COMPLEX_UNIT_DIP)
-        }
+        // ⓘ: the whole workout so far, indoor workouts only (outdoors the pause button has the corner)
+        v.setViewVisibility(R.id.btn_info, if (!s.indoor) View.GONE else if (barOnTop) View.INVISIBLE else View.VISIBLE)
         v.setOnClickPendingIntent(R.id.btn_info, infoIntent)
         // The Karoo's PAUSE strip covers the top of the screen: the gear comes down to the interval
         // row, next to the paused box. Its "Searching GPS…" strip: the gear just moves down below it.

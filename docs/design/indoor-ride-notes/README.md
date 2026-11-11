@@ -68,14 +68,16 @@ Pictures in `built/`, drawn by the app's own code (field gallery; Settings on th
 - **intervals.icu colours** were read off its own charts (light and dark), replacing the mock's
   guesses: fills light `#8FC4B6 #8FC380 #FAE191 #F7BA86 #E38395 #B6A3E6`, dark `#458376 #458234
   #BFA34B #BC773C #A6374E #5D41A5`, each bar with a stronger outline (light `#5CAD98 #5CAC43
-  #F9D660 #F49D4E #D84B64 #7A58D1`, dark `#52A590 #52A438 #F2CE57 #E28F48 #D0415A #714FC9`). Six
-  hues: Z7 shares Z6's purple.
+  #F9D660 #F49D4E #D84B64 #7A58D1`, dark `#52A590 #52A438 #F2CE57 #E28F48 #D0415A #714FC9`).
+  Its six hues are Z2…Z7; Z1 is a grey (fill light `#CFCFCF`, dark `#5C5C5C`), so all seven differ.
 - **Workouts page buttons:** Keep current workout and Use new targets are both tonal, not yellow:
   Back to ride stays the page's one yellow button (the kit rule).
 - **Right tile:** with one metric on, it keeps its icon; with two or more, the dots replace it. The
   last one on can't be switched off. Settings starts with what the tile shows today switched on.
-- **ⓘ** sits in the top right indoors; outdoors just left of the pause button. A countdown closes
-  the ⓘ view, so the interval change is never missed.
+- **ⓘ** only on indoor workouts, in the top right (outdoors the pause button has the corner). A
+  countdown closes the ⓘ view, so the interval change is never missed.
+- **⏮** is an outline button (the old NEXT UP outline) on the workout and start screens, so the
+  page has less tonal fill.
 - **Close summary** (black, white in dark mode) everywhere; the "ride is still recording" line
   only while the ride records. The Karoo's play button on the summary closes it too.
 - Not checked yet: the Workouts page cards (they need a ride running) and the Karoo's own PAUSE

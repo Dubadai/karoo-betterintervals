@@ -324,7 +324,7 @@
                         android:layout_height="34dp"
                         android:layout_gravity="start|center_vertical"
                         android:layout_marginStart="7dp"
-                        android:background="@drawable/bg_btn_pause">
+                        android:background="@drawable/bg_outline">
 
                         <ImageView
                             android:id="@+id/th_ready_karoo_8"

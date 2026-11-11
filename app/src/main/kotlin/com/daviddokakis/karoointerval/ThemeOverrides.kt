@@ -85,7 +85,7 @@ internal object ThemeOverrides {
         Op(R.id.move_cancelled_text, Kind.TEXT, R.color.info_fg),
         Op(R.id.next_box, Kind.BG, R.color.done),
         Op(R.id.select_fill, Kind.TINT, R.color.select_fill_jump),
-        Op(R.id.th_interval_karoo_7, Kind.BG, R.color.track),
+        Op(R.id.th_interval_karoo_7, Kind.BG, R.color.done),   // ⏮ as an outline button
         Op(R.id.th_interval_karoo_8, Kind.TINT, R.color.text),
         Op(R.id.next_label, Kind.TEXT, R.color.text_secondary),
         Op(R.id.next_value, Kind.TEXT, R.color.text),
@@ -137,7 +137,7 @@ internal object ThemeOverrides {
         Op(R.id.move_cancelled_text, Kind.TEXT, R.color.info_fg),
         Op(R.id.next_box, Kind.BG, R.color.done),
         Op(R.id.select_fill, Kind.TINT, R.color.select_fill_jump),
-        Op(R.id.th_interval_gauge_karoo_7, Kind.BG, R.color.track),
+        Op(R.id.th_interval_gauge_karoo_7, Kind.BG, R.color.done),   // ⏮ as an outline button
         Op(R.id.th_interval_gauge_karoo_8, Kind.TINT, R.color.text),
         Op(R.id.next_label, Kind.TEXT, R.color.text_secondary),
         Op(R.id.next_value, Kind.TEXT, R.color.text),
@@ -188,7 +188,7 @@ internal object ThemeOverrides {
         Op(R.id.ready_total, Kind.TEXT, R.color.text),
         Op(R.id.next_box, Kind.BG, R.color.done),
         Op(R.id.select_fill, Kind.TINT, R.color.select_fill_jump),
-        Op(R.id.th_ready_karoo_7, Kind.BG, R.color.track),
+        Op(R.id.th_ready_karoo_7, Kind.BG, R.color.done),   // ⏮ as an outline button
         Op(R.id.th_ready_karoo_8, Kind.TINT, R.color.text),
         Op(R.id.next_label, Kind.TEXT, R.color.text_secondary),
         Op(R.id.next_value, Kind.TEXT, R.color.text),
