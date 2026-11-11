@@ -85,7 +85,7 @@ class ErgTrainer(context: Context) {
     /** Hands the trainer back (FTMS reset) but stays connected. */
     fun release() = main.post {
         pending = null
-        if (controlled) { writeCp(byteArrayOf(OP_RESET)); controlled = false }
+        if (controlled) { Timber.i("ERG: handed the trainer back"); writeCp(byteArrayOf(OP_RESET)); controlled = false }
     }
 
     /** Hands back and disconnects. */
@@ -186,6 +186,7 @@ class ErgTrainer(context: Context) {
                         gg.writeDescriptor(d)
                     }
                 }
+                Timber.i("ERG: connected to the trainer (power data: %s)", svc.getCharacteristic(INDOOR_BIKE_DATA) != null)
                 ready = true
                 retryMs = RETRY_MIN_MS
                 problem = null
@@ -218,6 +219,7 @@ class ErgTrainer(context: Context) {
         if (result != RESULT_SUCCESS) Timber.w("ERG: op 0x%02x answered %d", op, result)
         when (op) {
             OP_REQUEST_CONTROL.toInt() -> if (result == RESULT_SUCCESS) {
+                Timber.i("ERG: trainer gave control")
                 controlled = true
                 writeCp(byteArrayOf(OP_START))
                 flush()

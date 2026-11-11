@@ -50,6 +50,10 @@ class ErgController(
     private var pmIsTrainer = false
     private var loggedSource: String? = null
 
+    // The ERG lines in the ride log (files/ridelog.txt, debug/pull.sh): every LOG_EVERY_MS and on a change.
+    private var logAtMs = 0L
+    private var logKey: String? = null
+
     fun start() {
         scope.launch { karoo.consumerFlow<ActiveRideProfile>().collect { indoor.value = it.profile.indoor } }
         scope.launch { karoo.consumerFlow<RideState>().collect { onRecording(it !is RideState.Idle) } }
@@ -73,7 +77,10 @@ class ErgController(
         val m = match.value
         val wanted = indoor.value && store.ergOn.value && st.plan != null
         if (!wanted || m == null) {
-            if (trainer.link.value != ErgLink.OFF) { Timber.i("ERG: off"); trainer.stop() }
+            if (trainer.link.value != ErgLink.OFF) {
+                Timber.i("ERG: off (indoor=%s ergOn=%s plan=%s trainer=%s)", indoor.value, store.ergOn.value, st.plan != null, m != null)
+                trainer.stop()
+            }
             workout.setErg(null, null)
             return
         }
@@ -96,6 +103,34 @@ class ErgController(
             ErgLink.CONNECTING, ErgLink.OFF -> ErgStatus.CONNECTING
         }
         workout.setErg(status, (cmd as? ErgCommand.Target)?.watts)
+        logTick(st, cmd, send, status)
+    }
+
+    /**
+     * "ERG HOLDING plan=198 sent=204 trainer=203 karoo=199(28436-11-5) link=READY step=2 rec":
+     * what the workout asks, what went to the trainer, what the trainer and the Karoo read.
+     */
+    private fun logTick(st: ScreenState, cmd: ErgCommand, send: ErgCommand, status: ErgStatus) {
+        val now = System.currentTimeMillis()
+        val plan = (cmd as? ErgCommand.Target)?.watts?.toString() ?: "release"
+        val key = "$status $plan ${st.stepIndex} ${st.paused || st.workoutPaused} ${trainer.link.value}"
+        if (key == logKey && now - logAtMs < LOG_EVERY_MS) return
+        logKey = key; logAtMs = now
+        val trainerW = trainer.watts?.takeIf { now - trainer.wattsAtMs < FRESH_MS }
+        val karooW = pmWatts?.takeIf { now - pmAtMs < FRESH_MS }
+        val flags = buildString {
+            if (recording.value) append(" rec")
+            if (st.paused) append(" ridePaused")
+            if (st.workoutPaused) append(" workoutPaused")
+            if (st.finished) append(" finished")
+            if (st.ergOffThisRide) append(" offThisRide")
+            if (store.matchPm.value) append(if (pmIsTrainer) " matchPm=trainerIsPm" else " matchPm=" + "%.3f".format(java.util.Locale.US, matcher?.ratioFor(PmMatcher.bandOf((cmd as? ErgCommand.Target)?.watts ?: 0)) ?: 1.0))
+        }
+        Timber.i(
+            "ERG %s plan=%s sent=%s trainer=%s karoo=%s(%s) link=%s step=%d%s",
+            status, plan, (send as? ErgCommand.Target)?.watts ?: "-", trainerW ?: "-", karooW ?: "-", pmSource ?: "?",
+            trainer.link.value, st.stepIndex, flags,
+        )
     }
 
     /** Match PM: the watts to send for the planner's [target]; the target as is when it's off. */
@@ -143,6 +178,7 @@ class ErgController(
 
     companion object {
         private const val FRESH_MS = 3_000L
+        private const val LOG_EVERY_MS = 5_000L
 
         /** The Karoo's power comes from the trainer itself: an ANT+ id with its device number, or its address. */
         fun isTrainer(source: String, m: ErgTrainer.Match): Boolean =
