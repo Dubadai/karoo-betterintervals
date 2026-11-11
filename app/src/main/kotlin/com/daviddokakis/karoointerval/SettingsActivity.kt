@@ -84,7 +84,7 @@ class SettingsActivity : AppearanceActivity() {
         val s = ExampleScreen.state(
             store.wattsMode, store.appearance.value,
             tileOutline = store.tileOutline.value, secondField = store.secondField.value, topRow = store.topRow.value,
-        ).copy(topRowRight = store.topRowRight.value)
+        ).copy(topRowRight = store.topRowRight.value, rightItems = store.rightItems.value, rightIndex = 0, zonePalette = store.zonePalette.value, calories = 412)
         val full = ExampleScreen.draw(this, s, ExampleScreen.FULL_W, ExampleScreen.FULL_H)
         val h = dp(127)
         val small = Bitmap.createScaledBitmap(full, h * ExampleScreen.FULL_W / ExampleScreen.FULL_H, h, true)
@@ -159,6 +159,54 @@ class SettingsActivity : AppearanceActivity() {
             form.addView(settingsSubLabel(getString(R.string.top_row_right)))
             form.addView(settingsSegmented(topOptions, right, unavailable = setOf(left)) { picked -> store.setTopRowRight(picked); render() })
         }
+        form.addView(settingsDivider())
+
+        // Right tile: the metrics its tap goes through, any of them (docs/design/indoor-ride-notes).
+        // Not set yet: on is what the tile shows today (the top row's leftover).
+        form.addView(settingsHeading(R.drawable.ic_settings_one_tile, getString(R.string.right_tile)))
+        form.addView(settingsIntro(getString(R.string.right_tile_help)))
+        val onNow = store.rightItems.value ?: listOf(
+            when {
+                TopRow.TARGET !in listOfNotNull(left, right) -> RightItem.TARGET
+                TopRow.HEART_RATE !in listOfNotNull(left, right) -> RightItem.HEART_RATE
+                else -> RightItem.CADENCE
+            },
+        )
+        listOf(
+            Triple(RightItem.TARGET, R.drawable.ic_settings_target, R.string.target),
+            Triple(RightItem.CALORIES, R.drawable.ic_settings_calories, R.string.calories),
+            Triple(RightItem.SPEED, R.drawable.ic_settings_speed, R.string.speed),
+            Triple(RightItem.LAP_NP, R.drawable.ic_settings_lap, R.string.np),
+            Triple(RightItem.HEART_RATE, R.drawable.ic_settings_heart, R.string.heart_rate),
+            Triple(RightItem.CADENCE, R.drawable.ic_settings_cadence, R.string.cadence),
+        ).forEach { (item, icon, name) ->
+            // The last one on stays on: the tile always shows something
+            val on = item in onNow
+            form.addView(
+                settingsSwitchRow(icon, getString(name), on) { now ->
+                    // Switching the last one off does nothing (the switch flips back)
+                    if (now || onNow.size > 1) store.setRightItems(if (now) onNow + item else onNow - item)
+                    render()
+                },
+            )
+        }
+        form.addView(settingsDivider())
+
+        // Zone colours: the chart's power zones as the Karoo, Zwift or intervals.icu colour them
+        form.addView(settingsHeading(R.drawable.ic_settings_colours, getString(R.string.zone_colours)))
+        form.addView(settingsIntro(getString(R.string.zone_colours_help)))
+        val palettes = listOf(ZonePalette.KAROO to R.string.zone_karoo, ZonePalette.ZWIFT to R.string.zone_zwift, ZonePalette.INTERVALS to R.string.zone_intervals)
+        val cards = settingsChoiceCards(palettes.map { (p, n) -> Triple(getString(n), null, p) }, store.zonePalette.value) { picked ->
+            store.setZonePalette(picked)
+            render()
+        }
+        // Each card shows its seven zones under its name
+        val night = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        palettes.forEachIndexed { i, (p, _) ->
+            val texts = ((cards.getChildAt(i) as? android.view.ViewGroup)?.getChildAt(0) as? android.view.ViewGroup)?.getChildAt(0) as? android.widget.LinearLayout
+            texts?.addView(zoneStrip(p, night))
+        }
+        form.addView(cards)
         form.addView(settingsDivider())
 
         // Power: how the big watts are smoothed; cadence's own smoothing when cadence is shown
@@ -254,6 +302,26 @@ class SettingsActivity : AppearanceActivity() {
             extra = listOf(intro),
             updateHelp = getString(R.string.update_notices_help),
         ) { render() }
+    }
+
+    /** A palette's seven zones as small rounded blocks, for its choice card. */
+    private fun zoneStrip(p: ZonePalette, night: Boolean) = android.widget.LinearLayout(this).apply {
+        orientation = android.widget.LinearLayout.HORIZONTAL
+        setPadding(0, (8 * resources.displayMetrics.density).toInt(), 0, (2 * resources.displayMetrics.density).toInt())
+        val d = resources.displayMetrics.density
+        for (z in 1..7) {
+            addView(
+                android.view.View(context).apply {
+                    background = android.graphics.drawable.GradientDrawable().apply {
+                        cornerRadius = 3 * d
+                        setColor(p.fill(z, night))
+                        p.edge(z, night)?.let { setStroke((1.5f * d).toInt().coerceAtLeast(1), it) }
+                    }
+                },
+                android.widget.LinearLayout.LayoutParams((21 * d).toInt(), (15 * d).toInt()).apply { marginEnd = (4 * d).toInt() },
+            )
+        }
+        importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO
     }
 
     /** "Last ride with Power 12027, trainer vs PM: 150 W +5 %, 250 W +3 %. Cold start +7 %, warm after 12 min." */

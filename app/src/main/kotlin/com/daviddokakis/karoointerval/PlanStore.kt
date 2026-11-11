@@ -104,7 +104,40 @@ class PlanStore private constructor(context: Context) {
         } ?: emptyList()
         set(value) = prefs.edit().putString(KEY_HR_ZONES, value.joinToString(",") { "${it.first}-${it.last}" }).apply()
 
-    /** Lap tile shows NP instead of the lap average (remembered between rides). */
+    /** The workout's lap tile: the lap's average, its NP or the ride's average (remembered between rides). */
+    var lapPower: FreePower
+        get() = enumPref(KEY_LAP_POWER, FreePower.entries, if (prefs.getBoolean(KEY_LAP_NP, false)) FreePower.LAP_NP else FreePower.LAP_AVG)
+        set(value) = prefs.edit().putString(KEY_LAP_POWER, value.name).apply()
+
+    private val _rightItems = MutableStateFlow(
+        prefs.getString(KEY_RIGHT_ITEMS, null)?.split(",")?.mapNotNull { n -> RightItem.entries.firstOrNull { it.name == n } },
+    )
+
+    /** Settings › Right tile: the metrics switched on, in the tile's order; null until first set (as before). */
+    val rightItems: StateFlow<List<RightItem>?> = _rightItems
+
+    fun setRightItems(value: List<RightItem>) {
+        val ordered = RightItem.entries.filter { it in value }
+        prefs.edit().putString(KEY_RIGHT_ITEMS, ordered.joinToString(",") { it.name }).apply()
+        _rightItems.value = ordered
+    }
+
+    /** Which of the right tile's metrics shows (remembered between rides). */
+    var rightIndex: Int
+        get() = prefs.getInt(KEY_RIGHT_INDEX, 0)
+        set(value) = prefs.edit().putInt(KEY_RIGHT_INDEX, value).apply()
+
+    private val _zonePalette = MutableStateFlow(enumPref(KEY_ZONE_PALETTE, ZonePalette.entries, ZonePalette.KAROO))
+
+    /** Settings › Zone colours (default: the Karoo's own). */
+    val zonePalette: StateFlow<ZonePalette> = _zonePalette
+
+    fun setZonePalette(value: ZonePalette) {
+        prefs.edit().putString(KEY_ZONE_PALETTE, value.name).apply()
+        _zonePalette.value = value
+    }
+
+    /** Lap tile shows NP instead of the lap average (before 0.10: read once by [lapPower]). */
     var lapShowsNp: Boolean
         get() = prefs.getBoolean(KEY_LAP_NP, false)
         set(value) = prefs.edit().putBoolean(KEY_LAP_NP, value).apply()
@@ -346,6 +379,10 @@ class PlanStore private constructor(context: Context) {
     companion object {
         private const val KEY_ATHLETE = "athlete_id"
         private const val KEY_API_KEY = "api_key"
+        private const val KEY_LAP_POWER = "lap_power"
+        private const val KEY_RIGHT_ITEMS = "right_items"
+        private const val KEY_RIGHT_INDEX = "right_index"
+        private const val KEY_ZONE_PALETTE = "zone_palette"
         private const val KEY_SELECTED_JSON = "selected_json"
         private const val KEY_SELECTED_DATE = "selected_date"
         private const val KEY_PROGRESS = "progress"

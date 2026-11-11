@@ -340,31 +340,33 @@
             </FrameLayout>
         </LinearLayout>
 
-        <!-- DONE: the whole box is the button -->
+        <!-- Close summary: the whole box is the button (closes it: free ride, no workout) -->
         <FrameLayout
             android:id="@+id/btn_done"
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/bg_done_karoo"
-            android:contentDescription="@string/done">
+            android:contentDescription="@string/close_summary">
 
             <TextView
                 android:id="@+id/th_done_karoo_1"
-                android:fontFamily="ibm-plex-sans-condensed"
+                android:fontFamily="sans-serif-medium"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:includeFontPadding="false"
-                android:text="@string/done"
-                android:textAllCaps="true"
-                android:textColor="@color/karoo_yellow_fg"
-                android:textSize="26sp"
+                android:text="@string/close_summary"
+                android:textAllCaps="false"
+                android:textColor="@color/bg"
+                android:textSize="20sp"
                 android:textStyle="normal" />
         </FrameLayout>
 
-        <!-- The ride is still recording: the record symbol (ring, red dot that blinks) and a short note -->
+        <!-- The ride is still recording: the record symbol (ring, red dot that blinks) and a short note.
+             Gone while the ride is paused (indoors it pauses with the workout's end). -->
         <LinearLayout
+            android:id="@+id/rec_row"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"

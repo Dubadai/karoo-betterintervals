@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indoor Ride Notes</title>
+<style>
+@font-face { font-family: Plex; src: url(__FONT_REG__); font-weight: 400; }
+@font-face { font-family: Plex; src: url(__FONT_MED__); font-weight: 500; }
+@font-face { font-family: Plex; src: url(__FONT_SEMI__); font-weight: 600; }
+@font-face { font-family: Plex; src: url(__FONT_BOLD__); font-weight: 700; }
+@font-face { font-family: Relative; src: url(__RELATIVE__); }
+:root { --bg:#f6f5f2; --fg:#1d1d1b; --muted:#6b6a66; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; } }
+:root[data-theme="dark"] { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system, system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 28px; margin: 0 0 4px; } p { color: var(--muted); max-width: 72ch; }
+.flow { display:flex; flex-wrap:wrap; gap: 18px; } .step { flex: 0 1 240px; max-width: 240px; }
+.step canvas { display:block; max-width:100%; height:auto; } .step h3 { font-size: 15px; margin: 8px 0 2px; }
+</style>
+</head>
+<body>
+<main>
+<h1>Indoor ride notes (2026-11-11)</h1>
+<p>The layout items from the ride notes, drawn on the app's own screens (field gallery).</p>
+<div class="flow">
+  <div class="step"><div id="erg-a"></div><h3>Workout · ⓘ top right, no ERG, no pause</h3></div>
+  <div class="step"><div id="ramp"></div><h3>A ramp: ramp icon, start-end</h3></div>
+  <div class="step"><div id="info"></div><h3>Interval info</h3></div>
+  <div class="step"><div id="lap-ride"></div><h3>Lap tile: RIDE AVG</h3></div>
+  <div class="step"><div id="done-a"></div><h3>Done, ride paused A</h3></div>
+  <div class="step"><div id="done-b"></div><h3>Done, ride paused B</h3></div>
+  <div class="step"><div id="tiles"></div><h3>Settings: right tile</h3></div>
+  <div class="step"><div id="update"></div><h3>Workouts: changed + scale</h3></div>
+</div>
+</main>
+<script>
+/*__KAROO_DEVICE_JS__*/
+const IMGS = "__IMGS__";
+const ICONS = "__ICONS__";
+const FRAME_PNG = '__FRAME__';
+const HASH = new URLSearchParams(location.hash.slice(1));
+const SHOT = HASH.get('shot'), THEME = HASH.get('theme') || 'light';
+const FRAME = +(HASH.get('frame') || 0), FRAMES = +(HASH.get('frames') || 1);
+const W = SHOT ? 1100 : 240;
+const BACKDROP = THEME === 'dark' ? 'linear-gradient(#120E0B,#3F342E)' : 'linear-gradient(#7E9CB4,#F1F4F6)';   // Night / Sky
+/*__KIT_JS__*/
+(async () => {
+  await Promise.all([400, 500, 600, 700].map(w => document.fonts.load(`${w} 20px Plex`))); await document.fonts.load('20px Relative');
+  const I = {}; for (const k of Object.keys(IMGS)) I[k] = await loadImg(IMGS[k]);
+  const dev = await KarooDevice.load({ frame: FRAME_PNG, screen: IMGS.status });
+  const put = (id, draw) => { if (SHOT && id !== SHOT) return;
+    const t = FRAMES > 1 ? FRAME / (FRAMES - 1) : 0;
+    const cv = dev.device(dev.screen({ draw: c => draw(c, t) }), W);
+    if (SHOT) { document.body.innerHTML = ''; document.body.style.cssText = `margin:0;background:${BACKDROP};width:1300px;height:2000px;display:flex;align-items:center;justify-content:center`;
+      cv.style.width = '1100px'; document.body.append(cv); } else document.getElementById(id).append(cv); };
+  const pic = name => (THEME === 'dark' && I[name + '_dark']) || I[name];
+  const REL = px => `${px}px Relative`;   // the Karoo's number font
+
+  // Colours read off the app's own screens, so the drawing matches the theme exactly
+  const px = (img, x, y) => { const cv = document.createElement('canvas'); cv.width = 480; cv.height = 800; const g = cv.getContext('2d');
+    g.drawImage(img, 0, 0, 480, 800); const d = g.getImageData(x, y, 1, 1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; };
+  const BG = px(pic('erg_number'), 240, 150), TILE = px(pic('erg_number'), 30, 570);
+  const INK = THEME === 'dark' ? '#F2F2F2' : '#111111', GREYT = THEME === 'dark' ? '#BCBCBC' : '#636363';
+  const RED = '#E0001B', GREEN = THEME === 'dark' ? '#0DBA75' : '#13A05A';
+  // Copy a piece of a screen to another place (sx, sy, w, h → dx, dy, scale)
+  const cp = (c, img, sx, sy, w, h, dx, dy, k = 1) => c.drawImage(pic(img), sx, sy, w, h, dx, dy, w * k, h * k);
+
+  // ---- The indoor workout screen ----
+  // Top bar: gear left; heart rate and cadence centred, their icons right next to the numbers.
+  // No ERG (on every screen) and no pause button (indoors). B: ⓘ in the top right corner.
+  function topBar(c, { info = false } = {}) {
+    c.fillStyle = BG; c.fillRect(4, 66, 472, 62);
+    cp(c, 'erg_top_two', 8, 74, 50, 50, 8, 74);                          // gear
+    const w = 40 + 4 + 58 + 28 + 32 + 4 + 40, hx = 240 - w / 2;
+    cp(c, 'erg_top_two', 200, 78, 40, 40, hx, 78); cp(c, 'erg_top_two', 244, 78, 58, 40, hx + 44, 78);
+    const cx = hx + 44 + 58 + 28; cp(c, 'erg_top_two', 330, 78, 32, 40, cx, 78); cp(c, 'erg_top_two', 372, 78, 40, 40, cx + 36, 78);
+    if (info) infoIcon(c, 446, 98, 17);
+  }
+  function infoIcon(c, x, y, r) {
+    c.strokeStyle = INK; c.lineWidth = 3.4; c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke();
+    c.fillStyle = INK; c.font = F(700, r * 1.35); c.textAlign = 'center'; c.fillText('i', x, y + r * 0.48); c.textAlign = 'left';
+  }
+  // The watts a bit smaller, the target right under them (◎ 280 W)
+  function wattsAndTarget(c) {
+    c.fillStyle = BG; c.fillRect(4, 128, 472, 248);
+    const k = 0.8, sx = 100, sy = 140, w = 280, h = 222;
+    cp(c, 'erg_number', sx, sy, w, h, 240 - w * k / 2, 134, k);
+    targetLine(c, '280');
+  }
+  function bullseye(c, x, y, r) { c.strokeStyle = GREEN; c.lineWidth = 2.6; [r, r * 0.62].forEach(q => { c.beginPath(); c.arc(x, y, q, 0, 7); c.stroke(); });
+    c.fillStyle = GREEN; c.beginPath(); c.arc(x, y, r * 0.24, 0, 7); c.fill(); }
+  // A ramp's icon: a green wedge rising to the right (like the ramp in the chart)
+  function rampIcon(c, x, y, w, h) { c.fillStyle = GREEN; c.beginPath(); c.moveTo(x, y + h); c.lineTo(x + w, y); c.lineTo(x + w, y + h); c.closePath(); c.fill(); }
+  // ◎ 280 W, or (a ramp) ◢ 141-181 W: small, centred under the watts
+  function targetLine(c, value, ramp = false) {
+    c.fillStyle = BG; c.fillRect(4, 312, 472, 58);
+    c.font = F(500, 36); const nw = c.measureText(value).width;
+    c.font = F(500, 22); const uw = c.measureText('W').width;
+    const iw = ramp ? 30 : 24, total = iw + 10 + nw + 5 + uw, x = 240 - total / 2, base = 352;
+    if (ramp) rampIcon(c, x, base - 25, iw, 24); else bullseye(c, x + 12, base - 13, 12);
+    c.fillStyle = INK; c.font = F(500, 36); c.fillText(value, x + iw + 10, base);
+    c.fillStyle = GREYT; c.font = F(500, 22); c.fillText('W', x + iw + 10 + nw + 5, base);
+  }
+  function intervalInfo(c) {   // ⓘ right after INTERVAL 4 / 10
+    infoIcon(c, 214, 399, 14);
+  }
+  // Right tile: rotates through the metrics picked in Settings (tap): calories here; the dots show where
+  function flame(c, x, y, s, color = INK) {
+    c.strokeStyle = color; c.lineWidth = s * 0.11; c.lineJoin = 'round'; c.beginPath();
+    c.moveTo(x + s * 0.5, y + s * 0.05);
+    c.bezierCurveTo(x + s * 0.95, y + s * 0.45, x + s * 0.92, y + s * 0.95, x + s * 0.5, y + s * 0.95);
+    c.bezierCurveTo(x + s * 0.08, y + s * 0.95, x + s * 0.05, y + s * 0.55, x + s * 0.3, y + s * 0.35);
+    c.bezierCurveTo(x + s * 0.32, y + s * 0.55, x + s * 0.42, y + s * 0.6, x + s * 0.48, y + s * 0.55);
+    c.bezierCurveTo(x + s * 0.4, y + s * 0.35, x + s * 0.42, y + s * 0.2, x + s * 0.5, y + s * 0.05); c.stroke();
+  }
+  function rightTile(c, label, value, iconFn, dots = [3, 1]) {
+    c.fillStyle = TILE; c.fillRect(250, 456, 216, 128);
+    c.fillStyle = INK; c.font = F(500, 26); c.textAlign = 'right'; c.fillText(label, 464, 492);
+    c.font = REL(84); c.fillText(value, 464, 572); c.textAlign = 'left';
+    // No icon: dots down the left edge instead, centred on the tile's height (up to 6: one per
+    // metric in Settings › Right tile)
+    const [n, at] = dots, y0 = 520 - (n - 1) * 13 / 2;
+    for (let i = 0; i < n; i++) { c.fillStyle = i === at ? INK : GREYT; c.globalAlpha = i === at ? 1 : 0.45;
+      c.beginPath(); c.arc(268, y0 + i * 13, 4.5, 0, 7); c.fill(); } c.globalAlpha = 1;
+  }
+  function workout(c, info) {
+    c.drawImage(pic('erg_number'), 0, 0, 480, 800);
+    topBar(c, { info: true }); wattsAndTarget(c);   // ⓘ top right (picked)
+    // NEXT UP without its outline: the card's border painted over in the background
+    c.strokeStyle = BG; c.lineWidth = 8; c.beginPath(); c.roundRect(8, 603, 464, 87, 18); c.stroke();
+    rightTile(c, 'CALORIES', '742', (c, x, y, s) => flame(c, x + 2, y, s));
+  }
+  put('erg-a', c => workout(c, false));
+  put('dots-max', c => { workout(c, false); rightTile(c, 'CALORIES', '742', (c, x, y, s) => flame(c, x + 2, y, s), [6, 1]); });
+  // A ramp: the target under the watts is where the ramp is now, with its arrow and end
+  // (165 W ↗ 181), never a range; NEXT UP writes a ramp as 141 → 181 W.
+  function rampArrow(c, x, y, s, color) {
+    c.strokeStyle = color; c.lineWidth = 4; c.lineCap = 'round'; c.lineJoin = 'round';
+    c.beginPath(); c.moveTo(x, y + s); c.lineTo(x + s, y); c.moveTo(x + s * 0.35, y); c.lineTo(x + s, y); c.lineTo(x + s, y + s * 0.65); c.stroke(); c.lineCap = 'butt';
+  }
+  put('ramp', c => {
+    workout(c, false);
+    targetLine(c, '141-181', true);
+    // NEXT UP: a ramp written as a ramp
+    c.fillStyle = BG; c.fillRect(96, 640, 288, 48);
+    c.fillStyle = INK; c.font = F(500, 30); c.textAlign = 'center'; c.fillText('10:00 · 141 → 181 W', 240, 675); c.textAlign = 'left';
+  });
+
+  // ---- Interval info: tap the interval (or ⓘ); tap anywhere to go back ----
+  // A tile as the app draws them (done screen, TileArt): icon top left, label top right (Plex
+  // Medium caps), the number in Relative right-aligned at the bottom, no unit
+  function tile(c, x, y, w, h, ic, label, value) {
+    c.fillStyle = TILE; c.beginPath(); c.roundRect(x, y, w, h, 16); c.fill();
+    ic(c, x + 12, y + 12, 26);
+    c.fillStyle = INK; c.font = F(500, 23); c.textAlign = 'right'; c.fillText(label, x + w - 12, y + 33);
+    c.font = REL(h < 100 ? 52 : 60); c.fillText(value, x + w - 12, y + h - 10); c.textAlign = 'left';
+  }
+  const kit = name => (c, x, y, s) => icon(c, name, x, y, s, INK);
+  // The whole workout so far (tap ⓘ): its name and where you are, the workout's own numbers as
+  // tiles (no chart). Tap anywhere (×) to go back.
+  put('info', c => {
+    c.drawImage(pic('erg_number'), 0, 0, 480, 800);
+    c.fillStyle = BG; c.fillRect(0, 64, 480, 718);
+    c.fillStyle = INK; c.font = F(600, 32); c.fillText('THRESHOLD 4 × 5 MIN', 22, 114);
+    c.fillStyle = GREYT; c.font = F(500, 23); c.fillText('INTERVAL 4 / 10 · 52:00 IN ALL', 22, 148);
+    // UpAhead's close button (ProfileRenderer.infoBox): a 67 px rounded square (r 12), inset 8 px, a ✕
+    // 5.5 px wide, 15 px from the middle; black with a white ✕, flipped in dark mode so it shows on black
+    const btn = 67, bx = 480 - 8 - btn, by = 64 + 8, mx = bx + btn / 2, my = by + btn / 2, xk = 15;
+    c.fillStyle = THEME === 'dark' ? '#FFFFFF' : '#111111'; c.beginPath(); c.roundRect(bx, by, btn, btn, 12); c.fill();
+    c.strokeStyle = THEME === 'dark' ? '#111111' : '#FFFFFF'; c.lineWidth = 5.5; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(mx - xk, my - xk); c.lineTo(mx + xk, my + xk); c.moveTo(mx + xk, my - xk); c.lineTo(mx - xk, my + xk); c.stroke(); c.lineCap = 'butt';
+    const g = 12, w = (448 - g) / 2, h = 104, y = 172;
+    const fl = (c, x, y, s) => flame(c, x + 2, y, s);
+    [[kit('timer'), 'ELAPSED', '28:27'], [kit('clock'), 'TIME LEFT', '23:33'], [kit('power'), 'AVG POWER', '232'], [kit('power'), 'NP', '251'],
+     [kit('heart'), 'AVG HR', '132'], [kit('cadence'), 'AVG CADENCE', '90'], [fl, 'CALORIES', '412'], [kit('power'), 'MAX', '318'],
+     [kit('zone_name'), 'TSS', '38'], [kit('zone_name'), 'IF', '0.84']]
+      .forEach(([ic, l, v], i) => { tile(c, 16 + (i % 2) * (w + g), y + Math.floor(i / 2) * (h + g), w, h, ic, l, v); });
+  });
+
+  // ---- Lap tile: tap cycles LAP AVG → LAP NP → RIDE AVG ----
+  put('lap-ride', c => {
+    workout(c, false);
+    c.fillStyle = TILE; c.fillRect(14, 456, 220, 128);
+    cp(c, 'erg_number', 18, 464, 50, 32, 18, 464);                        // the lap tile's power icon
+    c.fillStyle = INK; c.font = F(500, 26); c.textAlign = 'right'; c.fillText('RIDE AVG', 230, 492);
+    c.font = REL(84); c.fillText('236', 230, 572); c.textAlign = 'left';
+  });
+
+  // ---- Workout done with the ride paused (indoors): under the Karoo's PAUSE bar, no recording line ----
+  // The Karoo's own PAUSE bar, from a Karoo (same yellow in both themes)
+  const pauseBar = c => c.drawImage(I.paused_done_device, 0, 0, 480, 106, 0, 0, 480, 106);
+  function doneBase(c) { c.drawImage(pic('done'), 0, 0, 480, 800); c.fillStyle = BG; c.fillRect(4, 64, 472, 714); }
+  put('done-a', c => {
+    // A: a smaller check below the bar; everything else as it is, moved down a little
+    doneBase(c);
+    cp(c, 'done', 8, 78, 50, 50, 8, 116);                                 // gear
+    const k = 0.66, cx = 240; cp(c, 'done', 154, 78, 172, 172, cx - 86 * k, 146, k);
+    cp(c, 'done', 4, 262, 472, 452, 4, 300);                              // title, name, tiles, DONE (moved down)
+    pauseBar(c);
+  });
+  // A with the button saying where it goes: the workout comes off, the free-ride screen shows
+  function doneA(c) {
+    doneBase(c);
+    cp(c, 'done', 8, 78, 50, 50, 8, 116);
+    const k = 0.66; cp(c, 'done', 154, 78, 172, 172, 240 - 86 * k, 146, k);
+    cp(c, 'done', 4, 262, 472, 452, 4, 300);
+    pauseBar(c);
+  }
+  function buttonLabel(c, text, size) {
+    const yel = px(pic('done'), 40, 640);
+    c.fillStyle = yel; c.fillRect(40, 662, 400, 76);
+    c.fillStyle = '#111111'; c.font = F(500, size); c.textAlign = 'center'; c.fillText(text, 240, 700 + size * 0.36); c.textAlign = 'left';
+  }
+  put('done-free', c => { doneA(c); buttonLabel(c, 'BACK TO FREE RIDE', 38); });
+  put('done-free-short', c => { doneA(c); buttonLabel(c, 'FREE RIDE', 54); });
+  // Picked: FREE RIDE on a black button (white in dark mode, like the ▷| button), and everything
+  // above the Karoo's own end / resume buttons, which float over the bottom while the ride is paused.
+  const karooPills = c => {
+    const src = I.paused_done_device;
+    [[-60, 683, 160, 100], [380, 683, 160, 100]].forEach(([x, y, w, h]) => {
+      c.save(); c.beginPath(); c.roundRect(x, y, w, h, 50); c.clip(); c.drawImage(src, 0, 0, 480, 800); c.restore(); });
+  };
+  put('done-final', c => {
+    doneBase(c);
+    cp(c, 'done', 8, 78, 50, 50, 8, 116);
+    const k = 0.56; cp(c, 'done', 154, 78, 172, 172, 240 - 86 * k, 118, k);
+    cp(c, 'done', 4, 262, 472, 340, 4, 222);                              // title, name, tiles
+    const bx = 16, by = 568, bw = 448, bh = 98;
+    c.fillStyle = THEME === 'dark' ? '#FFFFFF' : '#111111'; c.beginPath(); c.roundRect(bx, by, bw, bh, 24); c.fill();
+    c.fillStyle = THEME === 'dark' ? '#111111' : '#FFFFFF'; c.font = F(500, 38); c.textAlign = 'center'; c.fillText('Close summary', 240, by + bh / 2 + 13); c.textAlign = 'left';
+    pauseBar(c); karooPills(c);
+  });
+  put('done-b', c => {
+    // B: no big check; a small one in front of WORKOUT COMPLETE; the tiles a bit taller
+    doneBase(c);
+    cp(c, 'done', 8, 78, 50, 50, 8, 116);
+    const k = 0.3, y0 = 200; cp(c, 'done', 154, 78, 172, 172, 30, y0 + 2, k);
+    cp(c, 'done', 30, 264, 420, 52, 92, y0, 0.84);                        // WORKOUT COMPLETE
+    cp(c, 'done', 4, 330, 472, 34, 4, y0 + 70);                           // workout name
+    cp(c, 'done', 4, 376, 472, 225, 4, y0 + 120);                         // tiles
+    cp(c, 'done', 4, 606, 472, 110, 4, y0 + 360);                         // DONE
+    pauseBar(c);
+  });
+
+  // ---- Zone colours: Karoo, Zwift or intervals.icu (Settings) ----
+  // The app's own zone colours today (colors.xml, light / night): every chart pixel near one of them
+  // takes the same zone's colour in the picked palette.
+  const OURS = THEME === 'dark'
+    ? ['#A6A49C', '#4C9BF0', '#5CC46A', '#FFD02E', '#FF9440', '#FF5A5F', '#A97AF2']
+    : ['#8F8D86', '#2F7FD8', '#3FA34D', '#E8B400', '#F07A1A', '#E0383E', '#8B4FD8'];
+  const PALETTES = {
+    karoo: ['#60EEB2', '#00B988', '#FFF500', '#FB8C65', '#FE581F', '#D60404', '#B700A2'],   // the Karoo's own (climb1..7)
+    zwift: ['#7F7F7F', '#338CFF', '#59BF59', '#FFCC3F', '#FF6639', '#FF330C', '#FF330C'],   // 6 zones: Z7 as Z6 (approximate, to check)
+    icu:   ['#009E80', '#009E00', '#FFCB0E', '#FF7F0E', '#DD0447', '#6633CC', '#504861'],   // intervals.icu defaults (Z2 confirmed by its API)
+  };
+  const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  function recolour(c, pal, y0 = 700, y1 = 782) {
+    const d = c.getImageData(4, y0, 472, y1 - y0), from = OURS.map(rgb), to = PALETTES[pal].map(rgb);
+    for (let i = 0; i < d.data.length; i += 4) {
+      const p = [d.data[i], d.data[i + 1], d.data[i + 2]];
+      let best = -1, bd = 1e9;
+      from.forEach((f, k) => { const dd = (f[0] - p[0]) ** 2 + (f[1] - p[1]) ** 2 + (f[2] - p[2]) ** 2; if (dd < bd) { bd = dd; best = k; } });
+      if (bd < 900) [d.data[i], d.data[i + 1], d.data[i + 2]] = to[best];
+    }
+    c.putImageData(d, 4, y0);   // inside the field: its grey border stays
+  }
+  // A ramp fades from its start zone's colour to its end zone's, left to right (warm-up Z1 → Z2,
+  // cool-down Z2 → Z1 in this workout). Only the bar's own pixels (not the background) change.
+  function rampFade(c, pal, x0, x1, zA, zB, y0 = 700, y1 = 782) {
+    const d = c.getImageData(x0, y0, x1 - x0, y1 - y0), [a, b] = [rgb(PALETTES[pal][zA - 1]), rgb(PALETTES[pal][zB - 1])];
+    const solid = PALETTES[pal].map(rgb);
+    for (let y = 0; y < d.height; y++) for (let x = 0; x < d.width; x++) {
+      const i = (y * d.width + x) * 4, p = [d.data[i], d.data[i + 1], d.data[i + 2]];
+      if (!solid.some(q => (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2 + (q[2] - p[2]) ** 2 < 900)) continue;
+      const t = x / (d.width - 1); [0, 1, 2].forEach(k => d.data[i + k] = Math.round(a[k] + (b[k] - a[k]) * t));
+    }
+    c.putImageData(d, x0, y0);
+  }
+  ['karoo', 'zwift', 'icu'].forEach(pal => put('zones-' + pal, c => {
+    workout(c, false); recolour(c, pal);
+    rampFade(c, pal, 4, 92, 1, 2); rampFade(c, pal, 386, 476, 2, 1);
+  }));
+  // Settings › Zone colours: three choice cards, each with its seven zones
+  function paletteCards(sel) { const names = [['Karoo', 'karoo'], ['Zwift', 'zwift'], ['intervals.icu', 'icu']];
+    const ch = 116, gap = 22; return { h: names.length * (ch + gap) + 10, draw(c, y) {
+    names.forEach(([t, k], i) => { const cy = y + i * (ch + gap) + 8;
+      if (i === sel) { c.strokeStyle = C.blue; c.lineWidth = 3 * D; c.beginPath(); c.roundRect(X0 - 6, cy - 6, XW + 12, ch + 12, 26); c.stroke(); }
+      c.fillStyle = C.track; c.beginPath(); c.roundRect(X0, cy, XW, ch, 22); c.fill();
+      c.fillStyle = C.text; c.font = F(i === sel ? 600 : 500, 16 * D); c.fillText(t, X0 + 24, cy + 46);
+      PALETTES[k].forEach((col, z) => { c.fillStyle = col; c.beginPath(); c.roundRect(X0 + 24 + z * 46, cy + 66, 40, 28, 6); c.fill(); });
+      const rx = XR - 46, ry = cy + 40; c.lineWidth = 2 * D; c.strokeStyle = i === sel ? C.blue : '#BCBCBC';
+      c.beginPath(); c.arc(rx, ry, 18, 0, 7); c.stroke(); if (i === sel) { c.fillStyle = C.blue; c.beginPath(); c.arc(rx, ry, 9, 0, 7); c.fill(); } });
+  } }; }
+  put('zones-settings', c => page(c, { title: 'BetterIntervals', form: layout([
+    heading('colours', 'Zone colours'), intro('The colours of the workout chart and its zones.'), paletteCards(0), space(20),
+  ]), scrollTo: 0 }));
+
+  // ---- Settings: the right tile's metrics (light only) ----
+  DRAWN.flame = (ctx, x, y, s) => flame(ctx, x + 4, y + 2, s - 6, C.text);
+  function greyRow(ic, title, why) { return { h: 112, draw(c, y) { c.globalAlpha = 0.45; anyIcon(c, ic, X0, y + 24, ICON);
+    c.fillStyle = C.text; c.font = F(400, 18 * D); c.fillText(title, X0 + ICON + GAP, y + 54); c.globalAlpha = 1;
+    c.fillStyle = C.help; c.font = F(400, 13 * D); c.fillText(why, X0 + ICON + GAP, y + 90); } }; }
+  const tilesForm = () => layout([
+      heading('tiles', 'Right tile'),
+      intro('Tap the right tile to switch between the ones that are on.'),
+      switchRow('target', 'Target', true), switchRow('flame', 'Calories', true), switchRow('speed', 'Speed', false),
+      switchRow('lap', 'Lap NP', false),
+      switchRow('heart', 'Heart rate', false), switchRow('cadence', 'Cadence', false), space(20),
+    ]);
+  put('tiles', c => page(c, { title: 'BetterIntervals', form: tilesForm(), scrollTo: 0 }));
+  put('tiles-end', c => page(c, { title: 'BetterIntervals', form: tilesForm(), scrollTo: 'end' }));
+
+  // ---- Workouts page: the running workout changed on intervals.icu; scaling shows the interval's new target ----
+  function warnCard(lines) { const h = 40 + lines.length * 34 + 16; return { h: h + 20, draw(c, y) {
+    c.fillStyle = C.tagBg; c.beginPath(); c.roundRect(X0, y, XW, h, 22); c.fill();
+    icon(c, 'update', X0 + 18, y + 22, 34, '#1B2D2D');                    // dark on the amber fill (both themes)
+    c.fillStyle = '#1B2D2D'; c.font = F(600, 14.5 * D); c.fillText(lines[0], X0 + 64, y + 48);
+    c.font = F(400, 13 * D); lines.slice(1).forEach((l, i) => c.fillText(l, X0 + 64, y + 92 + i * 34)); } }; }
+  // A checkbox row (unchecked): neither button restarts the workout unless this is ticked
+  function checkRow(text, on) { return { h: 88, draw(c, y) {
+    const s = 34, bx = X0 + 2, by = y + 22;
+    c.lineWidth = 3.4; c.strokeStyle = on ? C.blue : C.help; c.beginPath(); c.roundRect(bx, by, s, s, 8); c.stroke();
+    if (on) { c.fillStyle = C.blue; c.fill(); }
+    c.fillStyle = C.text; c.font = F(400, 13.5 * D); c.fillText(text, bx + s + 16, by + 26); } }; }
+  function stepper(pct) { return { h: 104, draw(c, y) {
+    c.fillStyle = C.track; c.beginPath(); c.roundRect(X0, y + 10, XW, 86, 52); c.fill();
+    [[X0 + 12, '−'], [XR - 12 - 90, '+']].forEach(([x, s]) => { c.fillStyle = C.sel; c.beginPath(); c.roundRect(x, y + 21, 90, 64, 38); c.fill();
+      c.fillStyle = C.selText; c.font = F(500, 44); c.textAlign = 'center'; c.fillText(s, x + 45, y + 67); });
+    c.fillStyle = C.text; c.font = F(400, 20 * D); c.fillText(pct + '%', 240, y + 66); c.textAlign = 'left'; } }; }
+  function nowLine(was, now) { return { h: 132, draw(c, y) {
+    // A small card: the label on top, the change under it (old grey, arrow, new bold)
+    c.fillStyle = C.track; c.beginPath(); c.roundRect(X0, y, XW, 116, 26); c.fill();
+    c.fillStyle = C.text; c.font = F(500, 12.5 * D); c.fillText('Current interval', X0 + 24, y + 40);
+    let x = X0 + 24;
+    c.fillStyle = C.text; c.font = F(500, 19 * D); c.fillText(was + ' W', x, y + 93); x += c.measureText(was + ' W').width + 16;
+    c.strokeStyle = C.help; c.lineWidth = 3.4; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); c.moveTo(x, y + 80); c.lineTo(x + 26, y + 80); c.moveTo(x + 17, y + 71); c.lineTo(x + 26, y + 80); c.lineTo(x + 17, y + 89); c.stroke(); c.lineCap = 'butt';
+    x += 42; c.fillStyle = C.blue; c.font = F(600, 19 * D); c.fillText(now + ' W', x, y + 93); } }; }
+  const updateForm = () => layout([
+      warnCard(['Changed on intervals.icu', 'New watt targets.']),
+      button('tonal', 'Keep current workout'), button('yellow', 'Use new targets'), checkRow('Restart workout with new targets', false), divider,
+      heading('power', 'Scale workout'), intro('Makes the workout harder or easier: its power targets in % of the plan.'),
+      nowLine('280', '294'), stepper(105), space(16),
+    ]);
+  const bar = c => { c.fillStyle = C.bg; c.fillRect(90, 80, 300, 50);                        // the bar says Workouts here
+    c.fillStyle = C.text; c.font = F(500, 34); c.textAlign = 'center'; c.fillText('Workouts', 240, 117); c.textAlign = 'left'; };
+  put('update', c => { page(c, { title: '', form: updateForm(), scrollTo: 0 }); bar(c); });
+  put('update-end', c => { page(c, { title: '', form: updateForm(), scrollTo: 'end' }); bar(c); });
+})();
+</script>
+</body>
+</html>

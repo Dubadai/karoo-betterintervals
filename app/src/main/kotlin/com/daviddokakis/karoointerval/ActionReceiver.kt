@@ -20,6 +20,8 @@ class ActionReceiver : BroadcastReceiver() {
             ACTION_DISMISS_MOVE_CANCELLED -> session.dismissMoveCancelled()
             ACTION_TOGGLE_TARGET -> session.toggleTargetView()
             ACTION_TOGGLE_LAP_NP -> session.toggleLapNp()
+            ACTION_CYCLE_RIGHT -> session.cycleRightTile()
+            ACTION_TOGGLE_INFO -> session.toggleInfo()
             ACTION_TOGGLE_LAP_HR -> session.cycleFreeSecond()
             ACTION_CYCLE_FREE_POWER -> session.cycleFreePower()
             ACTION_TOGGLE_WATTS_COLOR -> session.toggleWattsColor()
@@ -47,5 +49,7 @@ class ActionReceiver : BroadcastReceiver() {
         const val ACTION_START = "com.daviddokakis.karoointerval.START"
         const val ACTION_START_OVER = "com.daviddokakis.karoointerval.START_OVER"
         const val ACTION_DONE = "com.daviddokakis.karoointerval.DONE"
+        const val ACTION_CYCLE_RIGHT = "com.daviddokakis.karoointerval.CYCLE_RIGHT"
+        const val ACTION_TOGGLE_INFO = "com.daviddokakis.karoointerval.TOGGLE_INFO"
     }
 }

@@ -70,6 +70,9 @@ class WorkoutSession(
     private var workoutHrSamples = 0
     private var workoutCadSum = 0L
     private var workoutCadSamples = 0
+    private var workoutMaxPower = 0
+    /** The ride's calories when the workout started (its own calories are what's added since). */
+    private var caloriesAtStart: Int? = null
 
     private fun workoutRunning(st: ScreenState = _state.value) =
         recording && st.plan != null && !st.finished && !st.workoutPaused && !st.notStarted
@@ -83,7 +86,9 @@ class WorkoutSession(
         workoutHrSamples = 0
         workoutCadSum = 0
         workoutCadSamples = 0
-        _state.update { it.copy(summary = null) }
+        workoutMaxPower = 0
+        caloriesAtStart = _state.value.calories
+        _state.update { it.copy(summary = null, live = null) }
     }
 
     private fun summary() = WorkoutSummary(
@@ -92,6 +97,8 @@ class WorkoutSession(
         np = workoutNp.value,
         avgHr = if (workoutHrSamples > 0) (workoutHrSum / workoutHrSamples).toInt() else null,
         avgCadence = if (workoutCadSamples > 0) (workoutCadSum / workoutCadSamples).toInt() else null,
+        maxPower = workoutMaxPower.takeIf { it > 0 },
+        calories = _state.value.calories?.let { now -> (now - (caloriesAtStart ?: now)).coerceAtLeast(0) },
     )
     private var countdownJob: Job? = null
     /** The ending countdown's last number shown (or beeped), so each second beeps once. */
@@ -110,6 +117,8 @@ class WorkoutSession(
     private var basePlan: WorkoutPlan? = null
     /** A changed version of the running workout from a sync mid-ride: loads when the ride ends. */
     private var heldPlan: WorkoutPlan? = null
+    /** Keep current workout was picked for [heldPlan]: don't ask again this ride. */
+    private var heldDismissed = false
     /** The Karoo ride started with the start countdown (START with no ride, or the Karoo's own start indoors). */
     private var rideStartsWithWorkout = false
 
@@ -190,6 +199,7 @@ class WorkoutSession(
         scope.launch {
             karoo.consumerFlow<RideState>().collect { ride ->
                 val wasIdle = rideIdle
+                val wasPaused = _state.value.paused
                 recording = ride is RideState.Recording
                 rideIdle = ride is RideState.Idle
                 _state.update { it.copy(paused = ride is RideState.Paused, autoPaused = (ride as? RideState.Paused)?.auto == true, rideIdle = rideIdle) }
@@ -197,6 +207,12 @@ class WorkoutSession(
                 // workout waiting on its start screen begins it (the usual 5 s countdown). Not when
                 // START already did (its countdown runs), nor for a workout loaded mid-ride.
                 val st = _state.value
+                // The Karoo's play button on the workout summary (the ride paused at the workout's
+                // end): the summary closes and the ride goes on in free ride, no workout selected.
+                if (wasPaused && recording && st.finished && st.plan != null) {
+                    Timber.i("Ride resumed on the summary: closing it")
+                    closeWorkout()
+                }
                 if (wasIdle && recording && st.indoor && st.plan != null && st.notStarted && countdownJob?.isActive != true) {
                     Timber.i("Karoo ride started indoors: the workout starts with it")
                     rideStartsWithWorkout = true
@@ -206,6 +222,8 @@ class WorkoutSession(
                 // next time. Progress is only kept while a ride is recording or paused.
                 if (ride is RideState.Idle) {
                     resetToStart()
+                    heldDismissed = false
+                    _state.update { it.copy(planUpdateWaiting = false, infoOpen = false) }
                     heldPlan?.let { newer ->
                         heldPlan = null
                         Timber.i("Ride over: loading the changed version of ${newer.name}")
@@ -239,6 +257,7 @@ class WorkoutSession(
                 _state.update {
                     it.copy(
                         profileFtp = profile.ftp.takeIf { ftp -> ftp > 0 },
+                        imperial = profile.preferredUnit.distance == UserProfile.PreferredUnit.UnitType.IMPERIAL,
                         hrZones = profile.heartRateZones.map { z -> z.min..z.max },
                     )
                 }
@@ -261,6 +280,11 @@ class WorkoutSession(
         collectInt(DataType.Type.AVERAGE_POWER) { v -> _state.update { it.copy(rideAvgPower = v) } }
         collectInt(DataType.Type.AVERAGE_HR) { v -> _state.update { it.copy(rideAvgHr = v) } }
         collectInt(DataType.Type.AVERAGE_CADENCE) { v -> _state.update { it.copy(rideAvgCadence = v) } }
+        // The right tile's other metrics (Settings › Right tile)
+        collectInt(DataType.Type.CALORIES) { v -> _state.update { it.copy(calories = v) } }
+        scope.launch {
+            karoo.streamDataFlow(DataType.Type.SPEED).collect { s -> _state.update { it.copy(speedMs = s.single()) } }
+        }
         scope.launch {
             store.plan.collect { plan ->
                 // The running workout changed on intervals.icu (a sync on the Workouts page mid-ride):
@@ -269,9 +293,12 @@ class WorkoutSession(
                 if (plan != null && st.plan?.id == plan.id && !rideIdle && !st.notStarted) {
                     Timber.i("Workout ${plan.name} changed on intervals.icu: the running version carries on until the ride ends")
                     heldPlan = plan
+                    if (!heldDismissed) _state.update { it.copy(planUpdateWaiting = true) }
                     return@collect
                 }
                 heldPlan = null
+                heldDismissed = false
+                _state.update { it.copy(planUpdateWaiting = false) }
                 basePlan = plan
                 loadPlan(plan?.scaled(store.scalePct.value), reselected = plansSeen++ > 0)
             }
@@ -293,7 +320,9 @@ class WorkoutSession(
         scope.launch { store.secondField.collect { f -> _state.update { it.copy(secondField = f) } } }
         scope.launch { store.topRow.collect { r -> _state.update { it.copy(topRow = r) } } }
         scope.launch { store.topRowRight.collect { r -> _state.update { it.copy(topRowRight = r) } } }
-        _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapShowsNp = store.lapShowsNp, freePower = store.freePower, freeSecond = store.freeSecond, hrTargetLthr = store.hrTargetLthr) }
+        scope.launch { store.zonePalette.collect { z -> _state.update { it.copy(zonePalette = z) } } }
+        scope.launch { store.rightItems.collect { r -> _state.update { it.copy(rightItems = r, rightIndex = store.rightIndex.coerceIn(0, ((r?.size ?: 1) - 1).coerceAtLeast(0))) } } }
+        _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, lapPower = store.lapPower, freePower = store.freePower, freeSecond = store.freeSecond, hrTargetLthr = store.hrTargetLthr) }
     }
 
     fun stop() {
@@ -451,12 +480,73 @@ class WorkoutSession(
         }
     }
 
-    /** Tap on the lap tile: switch between the lap average and lap NP. */
+    /** Tap on the lap tile: the lap's average → the lap's NP → the ride's average → back. */
     fun toggleLapNp() {
         scope.launch {
-            val np = !_state.value.lapShowsNp
-            store.lapShowsNp = np
-            _state.update { it.copy(lapShowsNp = np) }
+            val next = _state.value.lapPower.next()
+            store.lapPower = next
+            _state.update { it.copy(lapPower = next) }
+        }
+    }
+
+    /** Tap on the right tile: the next metric switched on in Settings › Right tile. */
+    fun cycleRightTile() {
+        scope.launch {
+            val items = _state.value.rightItems ?: return@launch
+            if (items.size < 2) return@launch
+            val next = (_state.value.rightIndex + 1) % items.size
+            store.rightIndex = next
+            _state.update { it.copy(rightIndex = next) }
+        }
+    }
+
+    /** ⓘ on the workout screen: the whole workout so far as tiles; a tap anywhere on it closes it. */
+    fun toggleInfo() {
+        scope.launch {
+            val open = !_state.value.infoOpen
+            _state.update { it.copy(infoOpen = open, live = if (open) summary() else it.live) }
+        }
+    }
+
+    /** The running workout changed on intervals.icu: keep riding the version that's running. */
+    fun keepCurrentPlan() {
+        scope.launch {
+            Timber.i("Workout changed on intervals.icu: keeping the running version")
+            heldDismissed = true
+            _state.update { it.copy(planUpdateWaiting = false) }
+        }
+    }
+
+    /**
+     * The running workout changed on intervals.icu: ride the new version. From where you are (the
+     * interval, the lap and the workout's numbers carry on), or with [restart] from the first
+     * interval after the start countdown.
+     */
+    fun useNewPlan(restart: Boolean) {
+        scope.launch {
+            val newer = heldPlan ?: return@launch
+            heldPlan = null
+            heldDismissed = false
+            basePlan = newer
+            val scaled = newer.scaled(store.scalePct.value)
+            if (restart) {
+                Timber.i("Workout changed on intervals.icu: restarting with the new version")
+                cancelCountdown()
+                clearSelection()
+                resetLap()
+                resetWorkoutStats()
+                elapsedInStepMs = 0
+                store.clearProgress()
+                _state.update { it.copy(plan = scaled, stepIndex = 0, elapsedInStepSec = 0, notStarted = true, resumeFromSec = null, finished = false, planUpdateWaiting = false, infoOpen = false) }
+                startCountdown(0)
+            } else {
+                Timber.i("Workout changed on intervals.icu: new targets from here on")
+                _state.update { st ->
+                    val index = st.stepIndex.coerceAtMost(scaled.steps.lastIndex)
+                    st.copy(plan = scaled, stepIndex = index, planUpdateWaiting = false)
+                }
+                saveProgress()
+            }
         }
     }
 
@@ -688,6 +778,8 @@ class WorkoutSession(
             val step = st.currentStep ?: continue
             if (!recording || st.finished || st.workoutPaused || st.notStarted) continue
             workoutMs += dt
+            // The ⓘ view's numbers, once a second while it's open
+            if (st.infoOpen && (workoutMs / 1000) != ((workoutMs - dt) / 1000)) _state.update { it.copy(live = summary()) }
 
             elapsedInStepMs += dt
             val remainingMs = step.durationSec * 1000L - elapsedInStepMs
@@ -700,7 +792,7 @@ class WorkoutSession(
                 lastEnding = ending
                 if (ending == COUNTDOWN_SECONDS) Timber.i("Countdown to ${if (st.hasNext) "step ${st.stepIndex + 2}" else "the end"} (interval ending)")
                 if (st.selectTarget == null) {
-                    _state.update { it.copy(countdown = ending, jumpTarget = if (it.hasNext) it.stepIndex + 1 else null) }
+                    _state.update { it.copy(countdown = ending, jumpTarget = if (it.hasNext) it.stepIndex + 1 else null, infoOpen = false) }   // a countdown closes ⓘ
                     // With the screen showing, it beeps when the number appears; otherwise beep here.
                     if (viewsActive.get() == 0) beep(TICK_TONE)
                 } else {
@@ -740,7 +832,7 @@ class WorkoutSession(
         countdownJob?.cancel()
         countdownJob = scope.launch {
             for (n in COUNTDOWN_SECONDS downTo 1) {
-                _state.update { it.copy(countdown = n, jumpTarget = target) }
+                _state.update { it.copy(countdown = n, jumpTarget = target, infoOpen = false) }
                 // With the screen showing, it beeps when the number appears; otherwise beep here.
                 if (viewsActive.get() == 0) beep(TICK_TONE)
                 delay(1000)
@@ -808,6 +900,7 @@ class WorkoutSession(
             workoutPowerSum += watts
             workoutPowerSamples++
             workoutNp.add(now(), watts)
+            workoutMaxPower = maxOf(workoutMaxPower, watts.roundToInt())
         }
         _state.update {
             it.copy(

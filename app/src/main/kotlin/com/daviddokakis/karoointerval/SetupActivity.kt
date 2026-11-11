@@ -81,7 +81,9 @@ class SetupActivity : AppearanceActivity() {
         // The ERG card follows the trainer live (connecting → ready, off for this ride).
         IntervalExtension.session?.let { session ->
             scope.launch {
-                session.state.map { it.erg to it.ergOffThisRide }.distinctUntilChanged().collect { render() }
+                // ...and the workout-changed card and the scale card's current interval
+                session.state.map { listOf(it.erg, it.ergOffThisRide, it.planUpdateWaiting, it.stepIndex, it.notStarted, it.finished, it.plan?.scalePct) }
+                    .distinctUntilChanged().collect { render() }
             }
         }
         week = store.cachedWeek()
@@ -279,6 +281,7 @@ class SetupActivity : AppearanceActivity() {
                 }.apply { layoutParams = LinearLayout.LayoutParams(dp(96), dp(48)) },
             ).apply { setPadding(0, dp(8), 0, 0) },
         )
+        planChangedCard()?.let { content.addView(it) }
         ergCard()?.let { content.addView(it) }
         syncLine()?.let { content.addView(it) }
 
@@ -289,6 +292,7 @@ class SetupActivity : AppearanceActivity() {
         if (current != null && !current.hrOnly) {
             content.addView(settingsHeading(R.drawable.ic_settings_power, getString(R.string.scale_workout)))
             content.addView(settingsIntro(getString(R.string.scale_help)))
+            currentIntervalCard()?.let { content.addView(it) }
             content.addView(scaleControl(pct))
             content.addView(settingsDivider())
         }
@@ -501,12 +505,96 @@ class SetupActivity : AppearanceActivity() {
         addView(step(R.drawable.ic_plus, R.string.cd_scale_up, +1))
     }
 
+    /**
+     * The running workout changed on intervals.icu (docs/design/indoor-ride-notes): an orange card,
+     * then Keep current workout / Use new targets. Neither restarts the workout; the box under them
+     * (unticked) makes Use new targets start over from the first interval.
+     */
+    private fun planChangedCard(): View? {
+        val session = IntervalExtension.session ?: return null
+        if (!session.state.value.planUpdateWaiting) return null
+        val ink = getColor(R.color.settings_title)   // dark on the light amber, light on the dark one
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(12), dp(14), dp(14))
+            background = rounded(R.color.settings_warn_bg, 14)
+            // The icon next to the title; the line under it starts with the title
+            addView(
+                row(
+                    settingsIcon(R.drawable.ic_settings_update, 22).apply { setColorFilter(ink) },
+                    text(getString(R.string.plan_changed_title), 16f, bold = true).apply {
+                        setTextColor(ink)
+                        layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { marginStart = dp(10) }
+                    },
+                ),
+            )
+            addView(
+                text(getString(R.string.plan_changed_text), 13f).apply {
+                    setTextColor(ink)
+                    layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { marginStart = dp(32); topMargin = dp(2) }
+                },
+            )
+        }
+        var restart = false
+        val box = android.widget.CheckBox(this).apply {
+            text = getString(R.string.plan_restart)
+            textSize = 15f
+            setTextColor(getColor(R.color.settings_title))
+            buttonTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.settings_select_blue))
+            isChecked = false
+            setOnCheckedChangeListener { _, on -> restart = on }
+            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(4) }
+        }
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(12) }
+            addView(card)
+            // Back to ride stays the page's one yellow button: both choices are tonal
+            addView(settingsButton(SettingsButton.ADD, getString(R.string.plan_keep)) { session.keepCurrentPlan() }.apply {
+                layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(48)).apply { topMargin = dp(12) }
+            })
+            addView(settingsButton(SettingsButton.ADD, getString(R.string.plan_use_new)) { session.useNewPlan(restart) }.apply {
+                layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(48)).apply { topMargin = dp(8) }
+            })
+            addView(box)
+        }
+    }
+
+    /**
+     * Above Scale workout's % while a workout runs: what the current interval's target is now, from
+     * its target at 100 % (the same size, the new one in the choice cards' blue).
+     */
+    private fun currentIntervalCard(): View? {
+        val st = IntervalExtension.session?.state?.value ?: return null
+        if (st.notStarted || st.finished) return null
+        val step = st.currentStep?.takeIf { !it.hr } ?: return null
+        val pct = st.plan?.scalePct ?: 100
+        val now = step.targetAt(st.elapsedInStepSec)
+        val was = kotlin.math.round(now * 100.0 / pct).toInt()
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(10), dp(14), dp(12))
+            background = rounded(R.color.segment_track, 14)
+            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { bottomMargin = dp(10) }
+            addView(text(getString(R.string.current_interval), 13f).apply { setTextColor(getColor(R.color.settings_title)) })
+            val line = android.text.SpannableStringBuilder()
+            line.append("$was W")
+            if (pct != 100) {
+                line.append("  →  ")
+                val at = line.length
+                line.append("$now W")
+                line.setSpan(android.text.style.ForegroundColorSpan(getColor(R.color.settings_select_blue)), at, line.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+            addView(text("", 20f, bold = true).apply { text = line; setTextColor(getColor(R.color.settings_title)); setPadding(0, dp(4), 0, 0) })
+        }
+    }
+
     private fun thumbnail(plan: WorkoutPlan): ImageView {
         val w = resources.displayMetrics.widthPixels - dp(48)
         val h = dp(48)
         return ImageView(this).apply {
             // The rider's own heart rate zones, so heart-rate steps have the ride screen's colours
-            setImageBitmap(ChartRenderer(this@SetupActivity).render(ScreenState(plan = plan, hrZones = store.hrZones), w, h, 1f, ChartRenderer.Style.CARD))
+            setImageBitmap(ChartRenderer(this@SetupActivity).render(ScreenState(plan = plan, hrZones = store.hrZones, zonePalette = store.zonePalette.value), w, h, 1f, ChartRenderer.Style.CARD))
             scaleType = ImageView.ScaleType.FIT_XY
             contentDescription = getString(R.string.cd_chart)
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, h)

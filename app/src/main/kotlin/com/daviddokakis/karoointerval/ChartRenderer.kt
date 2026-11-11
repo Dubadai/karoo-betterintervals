@@ -39,6 +39,8 @@ class ChartRenderer(private val context: Context) {
         if (plan.steps.isEmpty() || plan.totalSec <= 0) return bmp
 
         val d = context.resources.displayMetrics.density * scale
+        val palette = state.zonePalette
+        val night = (context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
         // The step a jump lands on and its ▼: the text colour, which no zone uses (Karoo zone
         // colours include blue and purple, the old jump colours).
         val landColor = R.color.text
@@ -128,10 +130,24 @@ class ChartRenderer(private val context: Context) {
                 lineTo(x1, bottom)
                 close()
             }
-            val bar = if (step.hr) Zones.BarStyle(Zones.hrBarColor(step.avgWatts, state.hrZones, lthr), null) else Zones.barStyle(step.avgWatts, ftp)
+            // Power steps in Settings › Zone colours' palette; a ramp fades from its start zone's colour
+            // to its end zone's (docs/design/indoor-ride-notes). Heart-rate steps keep the Karoo's
+            // heart rate zone colours.
+            val zA = if (step.hr) null else Zones.zoneOf(if (step.isRamp) step.startWatts else step.avgWatts, ftp)
+            val zB = if (step.hr) null else Zones.zoneOf(if (step.isRamp) step.endWatts else step.avgWatts, ftp)
+            val fillA = when {
+                step.hr -> color(Zones.hrBarColor(step.avgWatts, state.hrZones, lthr))
+                zA != null -> palette.fill(zA, night)
+                else -> color(R.color.done)
+            }
+            val fillB = if (zB != null) palette.fill(zB, night) else fillA
+            val edgeA = zA?.let { palette.edge(it, night) }
+            val edgeB = zB?.let { palette.edge(it, night) } ?: edgeA
             // Every step in its zone colour (finished ones too); the jump target solid black/white.
             val alpha = 255
-            fill.color = color(if (isTarget) landColor else bar.fill)
+            fill.shader = null
+            fill.color = if (isTarget) color(landColor) else fillA
+            if (!isTarget && fillA != fillB) fill.shader = android.graphics.LinearGradient(x0, 0f, x1, 0f, fillA, fillB, android.graphics.Shader.TileMode.CLAMP)
             // Current step: its 2dp outline goes on the bar's edge, and the fill moves in to leave
             // a 1dp gap of page colour between them, so the zone colour and outline both read
             // (design: docs/design/karoo-zone-colours/, outline gap A). Too narrow: fill as usual.
@@ -149,7 +165,8 @@ class ChartRenderer(private val context: Context) {
                 path
             }
             canvas.drawPath(fillPath, fill)
-            bar.edge?.let { edge ->
+            fill.shader = null
+            (if (isTarget) null else edgeA)?.let { edge ->
                 // Karoo draws easy bars with a bright outline, just inside the bar.
                 val inset = edgePaint.strokeWidth / 2
                 val edgePath = Path().apply {
@@ -158,9 +175,11 @@ class ChartRenderer(private val context: Context) {
                     lineTo(x1 - inset, ys.second + inset)
                     lineTo(x1 - inset, bottom)
                 }
-                edgePaint.color = color(edge)
+                edgePaint.shader = if (edgeB != null && edgeB != edge) android.graphics.LinearGradient(x0, 0f, x1, 0f, edge, edgeB, android.graphics.Shader.TileMode.CLAMP) else null
+                edgePaint.color = edge
                 edgePaint.alpha = alpha
                 canvas.drawPath(edgePath, edgePaint)
+                edgePaint.shader = null
             }
             if (!card && i == state.stepIndex) canvas.drawPath(path, outline)
             if (isTarget) {
