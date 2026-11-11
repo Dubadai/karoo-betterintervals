@@ -17,6 +17,7 @@ class IntervalExtension : KarooExtension(EXTENSION_ID, "1") {
 
     private lateinit var karoo: KarooSystemService
     private lateinit var workout: WorkoutSession
+    private lateinit var erg: ErgController
     private var syncJob: Job? = null
     private val updateScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -33,6 +34,7 @@ class IntervalExtension : KarooExtension(EXTENSION_ID, "1") {
         session = workout
         karoo.connect { connected -> Timber.i("Karoo system connected: $connected") }
         workout.start()
+        erg = ErgController(this, karoo, workout, store).also { it.start() }
 
         // Not riding: tell the rider when a newer release is on GitHub (see UpdateCheck).
         UpdateCheck(this, karoo, appName = "BetterIntervals").start(updateScope)
@@ -58,6 +60,7 @@ class IntervalExtension : KarooExtension(EXTENSION_ID, "1") {
     override fun onDestroy() {
         syncJob?.cancel()
         updateScope.cancel()
+        erg.stop()
         workout.stop()
         session = null
         karoo.disconnect()

@@ -308,7 +308,7 @@
                 android:text="@string/last_lap_label"
                 android:textAllCaps="true"
                 android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
+                android:textSize="12.5sp" />
 
             <!-- Fits between the Karoo's back and next buttons (150dp), shrinking if needed. Pulled up
                  (-0.7dp), since the box has room above the text: 20 px from the label, as designed -->

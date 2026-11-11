@@ -39,6 +39,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import io.hammerhead.karooext.models.SavedDevices
 import kotlinx.coroutines.withContext
 
 /**
@@ -52,6 +55,7 @@ class SetupActivity : AppearanceActivity() {
     private lateinit var content: LinearLayout
     /** API key at the last sync, to re-sync when it changes on the Account page. */
     private var syncedKey: String? = null
+    private var trainerName: String? = null
     private var loading = false
     private var error: String? = null
     /** Shown immediately from the last sync, then replaced when a sync succeeds. */
@@ -66,7 +70,20 @@ class SetupActivity : AppearanceActivity() {
         super.onCreate(savedInstanceState)
         store = PlanStore.get(this)
         karoo = KarooSystemService(this)
-        karoo.connect()
+        // The trainer paired on the Karoo, named in the ERG card.
+        karoo.connect { connected ->
+            if (!connected) return@connect
+            karoo.addConsumer<SavedDevices> { e ->
+                val name = e.devices.firstOrNull { it.enabled && "TYPE_TRAINER_ID" in it.supportedDataTypes }?.name
+                if (name != trainerName) { trainerName = name; runOnUiThread { render() } }
+            }
+        }
+        // The ERG card follows the trainer live (connecting → ready, off for this ride).
+        IntervalExtension.session?.let { session ->
+            scope.launch {
+                session.state.map { it.erg to it.ergOffThisRide }.distinctUntilChanged().collect { render() }
+            }
+        }
         week = store.cachedWeek()
 
         content = LinearLayout(this).apply {
@@ -94,6 +111,49 @@ class SetupActivity : AppearanceActivity() {
         super.onRestart()
         // Back from the Account page with a new key: sync with it.
         if (store.hasCredentials && store.apiKey != syncedKey) load() else render()
+    }
+
+    /**
+     * The ERG card (docs/design/indoor-erg/trainer-card, A): under Back to ride while ERG is on for
+     * an indoor ride. ERG on or off for this ride, and how the trainer is. The rest of the trainer
+     * settings are in Settings › Trainer (indoors).
+     */
+    private fun ergCard(): View? {
+        val session = IntervalExtension.session ?: return null
+        val st = session.state.value
+        val erg = st.erg ?: return null
+        val name = trainerName ?: getString(R.string.erg_card_trainer)
+        val text = when (erg) {
+            ErgStatus.READY -> getString(R.string.erg_card_ready, name)
+            ErgStatus.HOLDING -> getString(R.string.erg_card_on, name)
+            ErgStatus.FREE -> getString(R.string.erg_card_free, name)
+            ErgStatus.CONNECTING -> getString(R.string.erg_card_connecting)
+            ErgStatus.LOST -> getString(R.string.erg_card_lost)
+            ErgStatus.OFF -> getString(R.string.erg_card_off)
+        }
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            // Even room inside: the switch row brings its own 48 dp height, so less on top.
+            setPadding(dp(14), dp(4), dp(14), dp(14))
+            background = GradientDrawable().apply {
+                cornerRadius = dp(14).toFloat()
+                // ERG on: a clear green; off for this ride: grey.
+                setColor(getColor(if (st.ergOffThisRide) R.color.erg_wait_bg else R.color.erg_card_on))
+            }
+            addView(
+                settingsSwitchRow(R.drawable.ic_settings_target, getString(R.string.erg_card_title), !st.ergOffThisRide) { _ ->
+                    session.toggleErg()
+                },
+            )
+            addView(settingsHelp(text).apply { setPadding(0, 0, 0, 0) })
+        }
+        // "Indoor ride" just above the card, on the left.
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(10) }
+            addView(settingsSubLabel(getString(R.string.erg_card_label)).apply { setPadding(0, 0, 0, dp(6)) })
+            addView(card)
+        }
     }
 
     private fun openSettings() {
@@ -217,6 +277,7 @@ class SetupActivity : AppearanceActivity() {
                 }.apply { layoutParams = LinearLayout.LayoutParams(dp(96), dp(48)) },
             ).apply { setPadding(0, dp(8), 0, 0) },
         )
+        ergCard()?.let { content.addView(it) }
         syncLine()?.let { content.addView(it) }
 
         // Scale workout (only with a workout loaded): its power targets in % of the plan, 1% a tap,
@@ -225,8 +286,8 @@ class SetupActivity : AppearanceActivity() {
         val pct = store.scalePct.value
         if (current != null && !current.hrOnly) {
             content.addView(settingsHeading(R.drawable.ic_settings_power, getString(R.string.scale_workout)))
+            content.addView(settingsIntro(getString(R.string.scale_help)))
             content.addView(scaleControl(pct))
-            content.addView(settingsHelp(getString(R.string.scale_help)))
             content.addView(settingsDivider())
         }
 
@@ -320,7 +381,7 @@ class SetupActivity : AppearanceActivity() {
             synced?.let { addView(small(it, R.color.settings_help)) }
             if (problem != null) {
                 if (synced != null) addView(small("  ·  ", R.color.settings_help))
-                addView(small(problem, R.color.segment_selected, bold = true))
+                addView(small(problem, R.color.settings_warn, bold = true))
             }
             if (wifiOff) {
                 addView(View(context), LinearLayout.LayoutParams(0, 0, 1f))

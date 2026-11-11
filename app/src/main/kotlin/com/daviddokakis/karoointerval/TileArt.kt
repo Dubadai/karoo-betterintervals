@@ -129,7 +129,8 @@ object TopRowArt {
 
     private var c0: Canvas? = null
 
-    fun draw(context: Context, items: List<Item>, sizePx: Float, h: Int, ink: Int, landing: String? = null): Bitmap {
+    /** [iconGap]: the room between an icon and its value, as a share of [sizePx] (default: the Karoo's heart gap, 0.3). */
+    fun draw(context: Context, items: List<Item>, sizePx: Float, h: Int, ink: Int, landing: String? = null, iconGap: Float? = null): Bitmap {
         val text = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
             typeface = KarooType.value; letterSpacing = 0f; textSize = sizePx; color = ink
             style = android.graphics.Paint.Style.FILL_AND_STROKE; strokeWidth = sizePx * 0.028f
@@ -144,7 +145,7 @@ object TopRowArt {
             for (word in t.split(' ')) { c0?.drawText(word, xx, y, text); xx += text.measureText(word) + wordGap }
         }
         val iw = KarooType.heartBox(sizePx)
-        val gap = KarooType.heartGap(sizePx)
+        val gap = iconGap?.let { it * sizePx } ?: KarooType.heartGap(sizePx)
         val between = sizePx * 0.9f
         val landW = landing?.let { gap + arrow.measureText("→\u2009") + small.measureText(it) } ?: 0f
         val widths = items.mapIndexed { i, it -> iw + gap + measure(it.text) + (if (i == 0) landW else 0f) }

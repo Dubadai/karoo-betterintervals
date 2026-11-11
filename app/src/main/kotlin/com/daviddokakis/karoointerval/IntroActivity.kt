@@ -214,6 +214,7 @@ class IntroActivity : AppearanceActivity() {
     private fun look() {
         title(R.string.intro_look_title)
         content.addView(settingsHeading(R.drawable.ic_settings_appearance, getString(R.string.appearance)).apply { setPadding(0, dp(2), 0, dp(8)) })
+        content.addView(settingsIntro(getString(R.string.appearance_help)))
         content.addView(
             settingsSegmented(
                 appearanceOptions(),
@@ -225,7 +226,6 @@ class IntroActivity : AppearanceActivity() {
                 }
             },
         )
-        content.addView(settingsHelp(getString(R.string.appearance_help)).apply { setPadding(0, dp(6), 0, dp(6)) })
     }
 
     // 3 How to add the field to a ride profile, with the Karoo's own screens

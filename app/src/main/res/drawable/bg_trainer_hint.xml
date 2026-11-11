@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The trainer hint's box (field_ready_karoo.xml): the kit's warning background, rounded -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/settings_warn_bg" />
+    <corners android:radius="8dp" />
+</shape>

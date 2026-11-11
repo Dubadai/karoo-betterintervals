@@ -85,6 +85,7 @@
                 android:progressDrawable="@drawable/progress_start_karoo" />
 
             <LinearLayout
+                android:id="@+id/start_content"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
@@ -138,6 +139,15 @@
                     android:textSize="13sp"
                     android:visibility="gone" />
             </LinearLayout>
+            <!-- Indoors before the ride: a real Karoo, its start button flashing (IndoorStartArt) -->
+            <ImageView
+                android:id="@+id/start_indoor"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:scaleType="fitXY"
+                android:visibility="gone" />
+
         </FrameLayout>
 
         <!-- START OVER, under CONTINUE (only when a workout is selected again mid-ride) -->
@@ -161,6 +171,75 @@
                 android:textColor="@color/text"
                 android:textSize="16sp" />
         </FrameLayout>
+
+        <!-- Outdoor profile with a trainer sending power, before the ride: pick an indoor profile
+             (docs/design/indoor-erg/trainer-hint). The kit's warning orange, 24 px. -->
+        <LinearLayout
+            android:id="@+id/trainer_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_trainer_hint"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="7dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/trainer_hint_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="5dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_indoor_trainer" />
+
+            <TextView
+                android:id="@+id/trainer_hint_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif"
+                android:includeFontPadding="false"
+                android:lineSpacingExtra="2dp"
+                android:maxLines="3"
+                android:text="@string/trainer_hint"
+                android:textColor="@color/settings_warn"
+                android:textSize="12.8sp" />
+        </LinearLayout>
+
+        <!-- Indoors, before the workout starts: the trainer icon and INDOOR SESSION, grey, 24 px
+             (the smallest text on the Karoo), above the workout's name -->
+        <LinearLayout
+            android:id="@+id/indoor_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/indoor_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="5dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_indoor_trainer" />
+
+            <TextView
+                android:id="@+id/indoor_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:text="@string/indoor_session"
+                android:textAllCaps="true"
+                android:textColor="@color/settings_help"
+                android:textSize="12.8sp" />
+        </LinearLayout>
 
         <!-- The workout's name and total time, baseline-aligned like the interval row -->
         <LinearLayout
@@ -276,7 +355,7 @@
                         android:includeFontPadding="false"
                         android:maxLines="1"
                         android:textColor="@color/text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="12.5sp" />
 
                     <TextView
                         android:id="@+id/next_value"
@@ -376,7 +455,7 @@
                         android:text="@string/jumping_to"
                         android:textAllCaps="true"
                         android:textColor="@color/karoo_purple_sub"
-                        android:textSize="11sp" />
+                        android:textSize="12.5sp" />
 
                     <TextView
                         android:id="@+id/countdown_value"

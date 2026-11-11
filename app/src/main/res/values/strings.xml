@@ -62,12 +62,43 @@
     <string name="appearance_dark">Dark</string>
     <string name="appearance_light">Light</string>
     <string name="appearance_auto">Auto</string>
-    <string name="appearance_help">Auto follows the Karoo\'s In-Ride Appearance. Dark and Light apply to the workout screen and these pages.</string>
+    <string name="appearance_help">The colours of the workout screen and these pages. Auto follows the Karoo\'s In-Ride Appearance.</string>
     <string name="tiles">Tiles</string>
     <string name="tiles_tonal">Tonal</string>
     <string name="tiles_outline">Outline</string>
     <string name="tiles_help">How Lap avg, Target and Heart rate sit on the workout screen: a grey fill, or a thin border like Next up.</string>
     <string name="power_smoothing">Power</string>
+    <!-- Indoor ERG (docs/design/indoor-erg) -->
+    <string name="erg_heading">Trainer (indoors)</string>
+    <string name="erg_on">ERG on indoor rides</string>
+    <string name="erg_trainer_found">%1$s · %2$s</string>
+    <string name="erg_no_trainer">No trainer paired. Add it in the Karoo\'s Sensors.</string>
+    <string name="erg_no_permission">Allow Nearby devices so the app can reach the trainer.</string>
+    <string name="erg_when_paused">When paused</string>
+    <string name="erg_pct_ftp">%1$d %% FTP</string>
+    <string name="erg_help">The trainer follows the workout on an indoor ride profile. Set the Karoo\'s trainer card to Read-Only so only this app sets ERG.</string>
+    <string name="cd_erg">ERG: tap to switch it on or off for this ride</string>
+    <string name="erg_card_title">ERG</string>
+    <string name="erg_card_label">Indoor ride</string>
+    <string name="erg_card_ready">%1$s · ERG READY</string>
+    <string name="erg_card_on">%1$s · ERG on</string>
+    <string name="erg_card_free">%1$s · free on this heart-rate step</string>
+    <string name="erg_card_connecting">Connecting to the trainer…</string>
+    <string name="erg_card_lost">Can\'t reach the trainer. Trying again…</string>
+    <string name="erg_card_off">Free ride</string>
+    <string name="erg_card_trainer">Trainer</string>
+    <string name="start_indoor_title">PRESS START\nTO BEGIN</string>
+    <string name="start_indoor_sub">The Karoo\'s start / stop button starts and pauses the indoor workout.</string>
+    <string name="indoor_session">Indoor session</string>
+    <string name="trainer_hint">Trainer connected: pick an indoor profile to use ERG.</string>
+    <string name="match_pm">Match PM</string>
+    <string name="match_pm_help">Makes your power meter (PM) show the target: ERG keeps checking it and corrects the trainer live, at every wattage and as it warms up. Off: the trainer holds the target by its own watts.</string>
+    <string name="match_pm_new">Starts on your next ERG ride. Put your power meter above the trainer in the Karoo\'s Sensors.</string>
+    <string name="match_pm_from_trainer">Last ride the Karoo\'s power came from the trainer. Put your power meter above it in the Karoo\'s Sensors.</string>
+    <string name="match_pm_last_named">Last ride with %1$s, trainer vs PM: %2$s.</string>
+    <string name="match_pm_last">Last ride, trainer vs PM: %1$s.</string>
+    <string name="match_pm_cold">Cold start %1$s %%, warm after %2$d min.</string>
+    <string name="erg_paused">Paused · ERG %1$d W</string>
     <string name="power_smoothing_help">The big watts: instant, or averaged over 3, 5 or 10 seconds. 3 s is steady and still quick.</string>
     <string name="smoothing_instant">Instant</string>
     <string name="smoothing_3s">3 s</string>
@@ -79,7 +110,7 @@
     <string name="cadence_short">CAD</string>
     <string name="lap_cadence">Lap cad</string>
     <string name="cadence_smoothing">Cadence</string>
-    <string name="cadence_smoothing_help">Instant, or averaged over 3, 5 or 10 seconds.</string>
+    <string name="cadence_smoothing_help">The cadence: instant, or averaged over 3, 5 or 10 seconds.</string>
     <string name="rpm_value">%1$d rpm</string>
     <string name="example_description">Example of the workout screen with these settings: interval 4 of 10 at 280 watts.</string>
     <string name="start_workout">Start workout</string>
@@ -124,7 +155,7 @@
     <string name="current_workout">Current workout</string>
     <!-- Workouts page, while a workout is loaded: its power targets in % (1% a tap) -->
     <string name="scale_workout">Scale workout</string>
-    <string name="scale_help" formatted="false">Power targets in % of the plan.</string>
+    <string name="scale_help" formatted="false">Makes the workout harder or easier: its power targets in % of the plan.</string>
     <string name="scale_pct">%1$d%%</string>
     <string name="cd_scale_down">Easier: 1% less</string>
     <string name="cd_scale_up">Harder: 1% more</string>

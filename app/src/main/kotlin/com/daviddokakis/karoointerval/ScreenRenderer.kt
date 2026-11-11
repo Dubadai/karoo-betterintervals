@@ -129,6 +129,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     private val startIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_START, 15) }
     private val startOverIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_START_OVER, 27) }
     private val doneIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_DONE, 16) }
+    private val ergToggleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_ERG, 28) }
     private val settingsIntent: PendingIntent by lazy {
         PendingIntent.getActivity(
             context,
@@ -147,7 +148,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (s.finished) return renderDone(s, plan)
         // The Gauge watts mode has its own layout; the other four share the number one. Both in the
         // Karoo's own style (fonts, labels, icons, yellow buttons).
-        val gaugeMode = s.wattsMode == WattsMode.GAUGE
+        // ERG drives the trainer: no gauge, the plain big number with the ERG pill above it (the
+        // watts follow the target by themselves; the gauge is for riding free).
+        val gaugeMode = s.wattsMode == WattsMode.GAUGE && !s.ergDrives
         val layout = if (gaugeMode) R.layout.field_interval_gauge_karoo else R.layout.field_interval_karoo
         val v = RemoteViews(context.packageName, layout)
         applyAppearance(v, layout)
@@ -181,7 +184,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // target range shows: plain, coloured number, coloured background behind the top of the
         // screen, both, or the gauge.
         val range = rangeState(s)
-        val wattsColor = if (s.wattsMode.colorsText && range != null) {
+        val wattsColor = if (s.wattsMode.colorsText && !s.ergDrives && range != null) {
             when (range) {
                 RangeState.UNDER -> R.color.watts_under
                 RangeState.IN -> R.color.watts_in_range
@@ -205,7 +208,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             v.setTextColor(R.id.watts, color(wattsColor))
             bigEmpty(v, R.id.watts, R.id.watts_empty, mainSensor(s), config.viewSize.first.toFloat(), 0f + config.viewSize.second)
         }
-        val upperBg = if (s.wattsMode.colorsBackground && range != null) {
+        val upperBg = if (s.wattsMode.colorsBackground && !s.ergDrives && range != null) {
             when (range) {
                 RangeState.UNDER -> R.drawable.bg_range_under
                 RangeState.IN -> R.drawable.bg_range_in
@@ -225,14 +228,17 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // Green icons turn black (the text colour) on the range tint, so they show.
         val iconColor = color(if (onTint) R.color.text else R.color.karoo_green)
         listOf(R.id.icon_timer, R.id.icon_lap, R.id.icon_bolt).forEach { v.setInt(it, "setColorFilter", iconColor) }
-        v.setOnClickPendingIntent(if (gaugeMode) R.id.gauge else R.id.watts, wattsColorIntent)
+        // With ERG the watts' look is fixed (plain): a tap there changes nothing.
+        if (!s.ergDrives) v.setOnClickPendingIntent(if (gaugeMode) R.id.gauge else R.id.watts, wattsColorIntent)
 
         // Top row: one or two values, each with its icon, drawn like BigWatts' heart-rate line
         listOf(R.id.top1_icon, R.id.top1, R.id.top2_icon, R.id.top2, R.id.target_next_top).forEach { v.setViewVisibility(it, View.GONE) }
-        val topItems = tops.map {
+        val topItems = listOfNotNull(ergItem(s)) + tops.map {
             TopRowArt.Item(topIcon(s, it, onTint), itemValue(s, it, inTile = false, gaugeMode = gaugeMode), heart = it == TopRow.HEART_RATE && !s.hrStep)
         }
-        val topLanding = s.landStep?.takeIf { tops.first() == TopRow.TARGET }?.targetAt(0)?.toString()
+        // Tap the top row with ERG on to switch it off (or back on) for this ride.
+        if (s.erg != null) v.setOnClickPendingIntent(R.id.top_block, ergToggleIntent)
+        val topLanding = s.landStep?.takeIf { tops.first() == TopRow.TARGET && s.erg == null }?.targetAt(0)?.toString()
         v.setImageViewBitmap(R.id.top_img, TopRowArt.draw(res, topItems, TOP_ROW_PX * density / 1.875f * scale, (40 * density).roundToInt(), color(R.color.text), topLanding))
         v.setContentDescription(R.id.top_img, topItems.joinToString(", ") { it.text })
 
@@ -286,6 +292,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setViewVisibility(
             R.id.btn_pause,
             when {
+                s.indoor -> View.GONE   // indoors the Karoo's start / pause button pauses the workout
                 resumeShown -> View.GONE
                 barOnTop -> View.INVISIBLE
                 else -> View.VISIBLE
@@ -323,6 +330,10 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
                     },
                 ),
             )
+            // Paused by you with ERG on: the box says what the trainer holds meanwhile.
+            if (!ridePaused && s.erg == ErgStatus.HOLDING && s.ergWatts != null) {
+                v.setTextViewText(R.id.paused_text, context.getString(R.string.erg_paused, s.ergWatts))
+            }
             // Blink the pause icon: flip on every redraw (Karoo redraws a field about once a second).
             blinkOn = !blinkOn
             v.setInt(R.id.paused_icon, "setImageAlpha", if (blinkOn) 255 else 70)
@@ -534,15 +545,44 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
 
         v.setTextViewText(R.id.watts, s.powerShown?.toString() ?: "--")
         bigEmpty(v, R.id.watts, R.id.watts_empty, s.powerSensor, config.viewSize.first.toFloat(), 0f + config.viewSize.second)
+        // Outdoor profile with a trainer, before the ride: the orange hint (docs/design/indoor-erg/trainer-hint)
+        val trainerHint = !s.indoor && s.trainerOutdoor && s.rideIdle && s.countdown == null && s.resumeFromSec == null
+        // Every start screen (indoor and outdoor): the watts sit in the top row until the countdown.
+        val wattsUp = s.countdown == null && s.resumeFromSec == null
+        if (wattsUp) {
+            v.setViewVisibility(R.id.watts, View.INVISIBLE)
+            v.setViewVisibility(R.id.watts_empty, View.GONE)
+        }
         // The top row as on the workout screen (Settings › Top row), drawn like BigWatts' heart-rate line
         val left = s.topRow ?: if (s.showsCadence) TopRow.CADENCE else TopRow.HEART_RATE
         val tops = listOfNotNull(left, s.topRowRight?.takeIf { it != left })
         v.setViewVisibility(R.id.hr_icon, View.GONE)
         v.setViewVisibility(R.id.hr, View.GONE)
-        val topItems = tops.map {
+        // Indoors before the ride the watts join the top row (bolt and number, like ERG and the heart
+        // rate) and the yellow box takes the big number's room (docs/design/indoor-erg/indoor-start).
+        // The trainer hint does the same: the watts go up, the box and the hint get the room.
+        val wattsItem = if (wattsUp) TopRowArt.Item(TileArt.Icon(R.drawable.ic_bolt_filled, color(R.color.karoo_success_green)), s.powerShown?.toString() ?: "--") else null
+        // ERG first, as on the workout screen: "● ERG READY" once the trainer is connected.
+        val topItems = listOfNotNull(ergItem(s), wattsItem) + tops.map {
             TopRowArt.Item(topIcon(s, it, onTint = false), itemValue(s, it, inTile = false, gaugeMode = true), heart = it == TopRow.HEART_RATE && !s.hrStep)
         }
-        v.setImageViewBitmap(R.id.top_img, TopRowArt.draw(res, topItems, TOP_ROW_PX * density / 1.875f * scale, (40 * density).roundToInt(), color(R.color.text)))
+        // With the watts in it (indoor start) the row must fit between the gear and the edge: it may
+        // shrink, never below the smallest text (24 px on the Karoo), else ERG READY becomes ERG.
+        val rowH = (40 * density).roundToInt()
+        val k = density / 1.875f
+        val avail = config.viewSize.first - 2 * 62 * k
+        var rowSize = TOP_ROW_PX * k * scale
+        var row = TopRowArt.draw(res, topItems, rowSize, rowH, color(R.color.text), iconGap = if (wattsItem != null) INDOOR_ICON_GAP else null)
+        if (wattsItem != null) {
+            while (row.width > avail && rowSize > 24 * k) { rowSize -= k; row = TopRowArt.draw(res, topItems, rowSize, rowH, color(R.color.text), iconGap = if (wattsItem != null) INDOOR_ICON_GAP else null) }
+            if (row.width > avail) {
+                val shortItems = topItems.map { if (it.text == "ERG READY") TopRowArt.Item(it.icon, "ERG", it.heart) else it }
+                rowSize = TOP_ROW_PX * k * scale
+                row = TopRowArt.draw(res, shortItems, rowSize, rowH, color(R.color.text), iconGap = INDOOR_ICON_GAP)
+                while (row.width > avail && rowSize > 24 * k) { rowSize -= k; row = TopRowArt.draw(res, shortItems, rowSize, rowH, color(R.color.text), iconGap = INDOOR_ICON_GAP) }
+            }
+        }
+        v.setImageViewBitmap(R.id.top_img, row)
         v.setContentDescription(R.id.top_img, topItems.joinToString(", ") { it.text })
         v.setViewVisibility(R.id.btn_pause, View.GONE)     // nothing runs yet
         v.setViewVisibility(R.id.btn_resume, View.GONE)
@@ -550,6 +590,17 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setOnClickPendingIntent(R.id.btn_start, startIntent)
         gearBelowKarooBar(v, R.id.btn_settings, s)
 
+        // Indoors, until the workout starts: INDOOR SESSION with the trainer icon above the name
+        v.setViewVisibility(R.id.indoor_label, if (s.indoor) View.VISIBLE else View.GONE)
+        v.setInt(R.id.indoor_icon, "setColorFilter", color(R.color.settings_help))
+        v.setViewVisibility(R.id.trainer_hint, if (trainerHint) View.VISIBLE else View.GONE)
+        if (trainerHint) {
+            v.setInt(R.id.trainer_hint_icon, "setColorFilter", color(R.color.settings_warn))
+            v.setTextColor(R.id.trainer_hint_text, color(R.color.settings_warn))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                v.setColorStateList(R.id.trainer_hint, "setBackgroundTintList", android.content.res.ColorStateList.valueOf(color(R.color.settings_warn_bg)))
+            }
+        }
         v.setTextViewText(R.id.ready_name, plan.name)
         v.setTextViewText(R.id.ready_total, formatClock(plan.totalSec))
 
@@ -571,7 +622,22 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setViewVisibility(R.id.btn_start_over, if (s.resumeFromSec != null) View.VISIBLE else View.GONE)
         v.setOnClickPendingIntent(R.id.btn_start_over, startOverIntent)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            v.setViewLayoutHeight(R.id.btn_start, if (s.resumeFromSec != null) 60f else 96f, TypedValue.COMPLEX_UNIT_DIP)
+            // Indoors before the ride the box is taller (its line at 24 px); the big watts give way.
+            val indoorBox = s.indoor && s.rideIdle && countdown == null && s.resumeFromSec == null
+            v.setViewLayoutHeight(R.id.btn_start, when { s.resumeFromSec != null -> 60f; indoorBox -> indoorBoxDp(); trainerHint -> indoorBoxDp() - HINT_BOX_DP; countdown == null -> indoorBoxDp() + if (s.indoor) 0f else LABEL_DP; else -> 96f }, TypedValue.COMPLEX_UNIT_DIP)
+        }
+        // Indoors before the ride: the Karoo's own start button starts it all, so the box shows it
+        // (a real Karoo, its start button flashing). A tap on the box still starts the ride.
+        val indoorStart = s.indoor && s.rideIdle && countdown == null && resume == null
+        v.setViewVisibility(R.id.start_content, if (indoorStart) View.INVISIBLE else View.VISIBLE)
+        v.setViewVisibility(R.id.start_indoor, if (indoorStart) View.VISIBLE else View.GONE)
+        if (indoorStart) {
+            val w = (config.viewSize.first - 16 * density).roundToInt().coerceAtLeast(1)
+            val h = (indoorBoxDp() * density).roundToInt()
+            v.setImageViewBitmap(R.id.start_indoor, IndoorStartArt.draw(context, w, h, 12 * density, density / 1.875f, s.startFlash))
+            v.setContentDescription(R.id.btn_start, context.getString(R.string.start_indoor_title).replace('\n', ' '))
+        } else {
+            v.setContentDescription(R.id.btn_start, context.getString(R.string.start_workout))
         }
         v.setViewVisibility(R.id.start_icon, if (countdown != null || resume != null) View.GONE else View.VISIBLE)
         v.setViewVisibility(R.id.start_count, if (countdown != null) View.VISIBLE else View.GONE)
@@ -847,6 +913,24 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         return out
     }
 
+    /**
+     * The ERG mark first in the top row (docs/design/indoor-erg/erg-top-row): a dot and "ERG", no
+     * background. Green dot: the trainer follows the workout; grey: connecting, free or off for this
+     * ride; amber: the trainer is lost. Null when ERG is off in Settings or the ride isn't indoors.
+     */
+    private fun ergItem(s: ScreenState): TopRowArt.Item? {
+        val erg = s.erg ?: return null
+        val (dot, word) = when (erg) {
+            ErgStatus.HOLDING -> R.color.karoo_success_green to "ERG"
+            ErgStatus.READY -> R.color.karoo_success_green to "ERG READY"
+            ErgStatus.FREE -> R.color.erg_wait_fg to "ERG"
+            ErgStatus.CONNECTING -> R.color.erg_wait_fg to "ERG …"
+            ErgStatus.LOST -> R.color.erg_warn_fg to "ERG ✕"
+            ErgStatus.OFF -> R.color.erg_wait_fg to "ERG off"
+        }
+        return TopRowArt.Item(TileArt.Icon(R.drawable.ic_erg_dot, color(dot)), word)
+    }
+
     /** Screens without an interval row: the gear moves down out from under the Karoo's top strip. */
     private fun gearBelowKarooBar(v: RemoteViews, id: Int, s: ScreenState) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
@@ -893,6 +977,20 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     private fun mainSensor(s: ScreenState) = if (s.hrStep) s.hrSensor else s.powerSensor
 
     /** The big number's empty state: the Karoo's words where the number goes, or the number. */
+    /**
+     * The indoor START box's height: it takes the big watts' room (only the top row stays above it),
+     * so it follows the field's height (a route makes the field shorter); never below its own minimum.
+     */
+    /** The trainer hint's room (two lines at 24 px, its padding and margin), taken from the taller box. */
+    private val HINT_BOX_DP = 30f
+    /** INDOOR SESSION's room (outdoors there's none, so the box gets it). */
+    private val LABEL_DP = 28f
+
+    private fun indoorBoxDp(): Float {
+        val fieldDp = config.viewSize.second / density
+        return (IndoorStartArt.HEIGHT_DP + (fieldDp - FULL_FIELD_DP) + INDOOR_BOX_EXTRA_DP).coerceIn(IndoorStartArt.HEIGHT_DP, IndoorStartArt.HEIGHT_DP + INDOOR_BOX_EXTRA_DP)
+    }
+
     private fun bigEmpty(v: RemoteViews, number: Int, image: Int, sensor: SensorState, w: Float, h: Float) {
         val text = sensor.emptyText
         v.setViewVisibility(number, if (text == null) View.VISIBLE else View.INVISIBLE)
@@ -1072,6 +1170,12 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     }
 
     companion object {
+        /** A full-page field on the Karoo 3 (721 px) in dp. */
+        private const val FULL_FIELD_DP = 721f / 1.875f
+        /** On a full page the indoor START box grows by this into the big watts' room. */
+        private const val INDOOR_BOX_EXTRA_DP = 46f
+        /** Indoor start's top row (three items): icons closer to their values than the usual 0.3. */
+        private const val INDOOR_ICON_GAP = 0.14f
         /** The Karoo's PAUSE / "Searching GPS…" strip over a field's top, about 40 px on a Karoo 3. */
         private const val KAROO_BAR_DP = 24f
         /** The Karoo's seven HR zone colours (hr_colors.xml), picked per zone count by hrZoneDrawable. */

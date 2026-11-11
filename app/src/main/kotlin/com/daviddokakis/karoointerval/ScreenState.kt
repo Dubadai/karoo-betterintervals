@@ -107,8 +107,25 @@ data class ScreenState(
     val hrZones: List<IntRange> = emptyList(),
     /** FTP from the Karoo rider profile, used when the plan has none. */
     val profileFtp: Int? = null,
-) {
+    /** Indoor ERG: the pill next to the gear, or null when ERG is off or the ride isn't indoors. */
+    val erg: ErgStatus? = null,
+    /** The watts the trainer holds now, while [erg] is [ErgStatus.HOLDING]. */
+    val ergWatts: Int? = null,
+    /** ERG turned off from the screen (tap the pill) for this ride: ride free, with the gauge. */
+    val ergOffThisRide: Boolean = false,
+    /** The Karoo's ride profile is marked indoor: the Karoo's start / pause button runs the workout. */
+    val indoor: Boolean = false,
+    /** No ride yet (the Karoo isn't recording or paused). */
+    val rideIdle: Boolean = false,
+    /** Indoor start box: the start button's green flash, on or off (flips once a second). */
+    val startFlash: Boolean = false,
+    /** A trainer sends the Karoo's power on an outdoor profile: before the ride, a hint to pick an indoor one. */
+    val trainerOutdoor: Boolean = false,
+)
+ {
     val workoutLoaded: Boolean get() = plan != null
+    /** ERG drives the trainer (or is getting there): the plain big number with the big pill, no gauge. */
+    val ergDrives: Boolean get() = erg != null && erg != ErgStatus.OFF
     val stepCount: Int get() = plan?.steps?.size ?: 0
     val currentStep: PlanStep? get() = plan?.steps?.getOrNull(stepIndex)
     val nextStep: PlanStep? get() = plan?.steps?.getOrNull(stepIndex + 1)
@@ -276,3 +293,19 @@ internal fun startStepAfter(index: Int, delta: Int, count: Int): Int =
 
 internal fun endingCountdown(remainingMs: Long, seconds: Int = 5): Int? =
     ((remainingMs + 999) / 1000).toInt().takeIf { remainingMs > 0 && it in 1..seconds }
+
+/** The ERG pill (docs/design/indoor-erg): what the trainer is doing. */
+enum class ErgStatus {
+    /** ● ERG, green: the trainer follows the workout. */
+    HOLDING,
+    /** ● ERG READY, green: before START, the trainer is connected and ERG takes over at START. */
+    READY,
+    /** ERG, grey: connected, not holding a target (a heart-rate step). */
+    FREE,
+    /** ERG …, grey: looking for or connecting to the trainer. */
+    CONNECTING,
+    /** ERG ✕, amber: the trainer is lost or refused control. */
+    LOST,
+    /** "ERG off", small and grey by the gear: turned off for this ride, tap to turn back on. */
+    OFF,
+}
