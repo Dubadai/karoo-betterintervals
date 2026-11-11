@@ -324,6 +324,35 @@ Still to test: who wins with the Karoo in ERG over ANT+, and whether the KICKR t
 "target power changed" over FTMS (needs the trainer paired on the Karoo); holding a target and the
 feel of ramps and the soft start (needs a rider); a trainer power cut and reconnect.
 
+### The Karoo and our app on the same trainer (2026-11-11)
+
+Trainer paired on the Karoo again over ANT+ ("Trainer 28436"; FE-C `28436-17-5` and power
+`28436-11-5`). Our app held 150 W over Bluetooth while the rider changed the Karoo's trainer card:
+ERG, +, Resistance, +, Read-Only. From the Karoo's own log (its FE-C page 71 command status):
+
+| Karoo card | Karoo sent (ANT+ FE-C) |
+| --- | --- |
+| ERG | Target power 120 W (seq 1) |
+| + | Target power 125 W (seq 2) |
+| Resistance | Basic resistance 10 % (seq 3) |
+| + | Basic resistance 15 % (seq 4) |
+| Read-Only | nothing |
+
+1. **The Karoo sends once per change, never again on its own.** Four taps, four commands, the
+   same sequence number repeated in between. Read-Only sends nothing.
+2. **Our app never hears about it.** No FTMS machine-status notification at all (no "target power
+   changed", no "control permission lost") for any of the Karoo's four commands. So the trainer
+   can't tell us that the Karoo is driving it.
+3. **We keep control.** After the Karoo's commands, our next target (140 W) was accepted with
+   `SUCCESS`. Both sides are "last command wins".
+4. The Karoo only logs page 71 for a few seconds after its own commands; it didn't log our 140 W.
+
+**What this means for the design:** the "Karoo is controlling the trainer" notice can't come from
+the trainer. Because the Karoo sends only on a change, our app wins within a second if it resends
+its target regularly (keep-alive every ~2 s instead of 10 s). A tap on the Karoo's card then gives
+at most a ~2 s blip. Left to decide: drop the notice and keep the Read-Only hint in Settings, or
+keep a notice driven by power-vs-target (needs a rider to tune).
+
 ## Mockups, round 1
 
 **Decided:** ERG pill goes in the **top row, next to the gear (A)**, on both the classic and the
