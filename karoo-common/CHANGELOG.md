@@ -1,5 +1,13 @@
 # karoo-common changelog
 
+## 1.8.3 (2026-11-11)
+
+- `settingsInput(…, prefix = "live/")`: fixed start text, grey and not editable, inside the box; the
+  rider types only what follows (PartnerETA's live-link code: the Karoo can't paste). Without a
+  prefix nothing changes. Mock kit: `input(label, value, { prefix })`.
+- `settingsInput(…, intro = "…")`: what to type, between the label and the box, like `settingsIntro`
+  (help first applies to inputs too). Without it nothing changes.
+
 ## 1.8.2 (2026-11-11)
 
 - A divider right under a switch row keeps 12 dp above itself, so the last switch of a list doesn't

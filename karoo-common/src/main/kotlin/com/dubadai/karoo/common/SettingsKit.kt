@@ -375,28 +375,58 @@ fun Context.settingsButton(kind: SettingsButton, value: String, onClick: () -> U
 
 /** A labelled text field (name, link, key). */
 /** [configure]: anything else on the field itself (IME action, a text watcher, keeping a reference). */
+/**
+ * [prefix] (kit 1.8.3, PartnerETA's live-link code): fixed start text shown grey inside the box, not
+ * editable and not part of the value; the rider types only what follows (the Karoo can't paste).
+ * Without it the box is a plain field, as before. [intro] (1.8.3): what to type, between the label and
+ * the box, styled like [settingsIntro] (our help-first rule applies to inputs too).
+ */
 fun Context.settingsInput(
     labelText: String,
     value: String,
     hint: String = "",
     inputType: Int = android.text.InputType.TYPE_CLASS_TEXT,
+    prefix: String = "",
+    intro: String = "",
     configure: EditText.() -> Unit = {},
 ) =
     LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         addView(label(labelText, 14f, R.color.settings_help, 500).apply { setPadding(0, px(12), 0, px(6)) })
-        addView(
-            EditText(context).apply {
-                isSingleLine = true
-                this.inputType = inputType
-                setText(value)
-                this.hint = hint
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
-                setTextColor(getColor(R.color.settings_title))
-                setHintTextColor(getColor(R.color.settings_help))
+        // [intro]: what to type, between the label and the box (the help-first rule, like settingsIntro)
+        if (intro.isNotEmpty()) addView(settingsIntro(intro))
+        val field = EditText(context).apply {
+            isSingleLine = true
+            this.inputType = inputType
+            setText(value)
+            this.hint = hint
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+            setTextColor(getColor(R.color.settings_title))
+            setHintTextColor(getColor(R.color.settings_help))
+            setBackgroundResource(R.drawable.bg_settings_input)
+            setPadding(px(12), px(10), px(12), px(10))
+            configure()
+        }
+        if (prefix.isEmpty()) addView(field, LinearLayout.LayoutParams(MATCH_PARENT, px(46)))
+        else addView(
+            // The box is the row: grey fixed start, then the field, same size, no gap between them
+            LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
                 setBackgroundResource(R.drawable.bg_settings_input)
-                setPadding(px(12), px(10), px(12), px(10))
-                configure()
+                setPadding(px(12), 0, px(12), 0)
+                isClickable = true
+                setOnClickListener { field.requestFocus() }
+                addView(TextView(context).apply {
+                    text = prefix
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+                    setTextColor(getColor(R.color.settings_help))
+                    importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+                })
+                field.background = null
+                field.setPadding(0, px(10), 0, px(10))
+                if (field.contentDescription == null) field.contentDescription = "$labelText, $prefix"
+                addView(field, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
             },
             LinearLayout.LayoutParams(MATCH_PARENT, px(46)),
         )
