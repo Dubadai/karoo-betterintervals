@@ -48,6 +48,8 @@ data class ScreenState(
     val planUpdateWaiting: Boolean = false,
     /** Settings › Zone colours. */
     val zonePalette: ZonePalette = ZonePalette.KAROO,
+    /** Extra contrast for the graph's colours against the page (0.15 = +15 %; the Karoo's screen is pale). */
+    val zoneContrast: Float = ZonePalette.CONTRAST,
     /** Free ride: the HR tile shows the lap's average heart rate (tap to toggle, remembered). */
     /** Free ride's tiles: which value each shows (tap to go on). */
     val freePower: FreePower = FreePower.LAP_AVG,
@@ -286,14 +288,14 @@ enum class ZonePalette(private val light: IntArray, private val dark: IntArray, 
     /** Zwift's: six zones, so Z7 shares Z6's red (its usual grey, blue, green, yellow, orange, red). */
     ZWIFT(ZWIFT_ZONES, ZWIFT_ZONES),
     /**
-     * intervals.icu's, read off its workout charts (light and dark, 2026-11-11): its six hues for
-     * Z2…Z7 and a grey for Z1 (our pick), so all seven zones differ.
+     * intervals.icu's, read off its workout charts (light and dark, 2026-11-11): its six hues on
+     * Z1…Z6 as it draws them, and a dark grey for Z7 (it shows only six), so all seven differ.
      */
     INTERVALS(
-        rgb(0xCFCFCF, 0x8FC4B6, 0x8FC380, 0xFAE191, 0xF7BA86, 0xE38395, 0xB6A3E6),
-        rgb(0x5C5C5C, 0x458376, 0x458234, 0xBFA34B, 0xBC773C, 0xA6374E, 0x5D41A5),
-        rgb(0xA8A8A8, 0x5CAD98, 0x5CAC43, 0xF9D660, 0xF49D4E, 0xD84B64, 0x7A58D1),
-        rgb(0x8A8A8A, 0x52A590, 0x52A438, 0xF2CE57, 0xE28F48, 0xD0415A, 0x714FC9),
+        rgb(0x8FC4B6, 0x8FC380, 0xFAE191, 0xF7BA86, 0xE38395, 0xB6A3E6, 0x8C8C8C),
+        rgb(0x458376, 0x458234, 0xBFA34B, 0xBC773C, 0xA6374E, 0x5D41A5, 0x4A4A4A),
+        rgb(0x5CAD98, 0x5CAC43, 0xF9D660, 0xF49D4E, 0xD84B64, 0x7A58D1, 0x5E5E5E),
+        rgb(0x52A590, 0x52A438, 0xF2CE57, 0xE28F48, 0xD0415A, 0x714FC9, 0x6E6E6E),
     );
 
     /** Zone [zone] (1–7)'s fill. */
@@ -301,6 +303,23 @@ enum class ZonePalette(private val light: IntArray, private val dark: IntArray, 
 
     /** Zone [zone]'s outline, or null when the palette draws none. */
     fun edge(zone: Int, night: Boolean): Int? = (if (night) edgeDark else edgeLight)?.get((zone - 1).coerceIn(0, 6))
+
+    companion object {
+        /**
+         * The graph's extra contrast: +15 % (our pick from a preview, 2026-11-11, docs/design/chart-contrast),
+         * since the Karoo's screen shows colours lighter than they're drawn.
+         */
+        const val CONTRAST = 0.15f
+
+        /** [c] with more contrast against the page: more saturated, darker on white, brighter on black. */
+        fun boosted(c: Int, night: Boolean, amount: Float = CONTRAST): Int {
+            if (amount == 0f) return c
+            val hsv = FloatArray(3); android.graphics.Color.colorToHSV(c, hsv)
+            hsv[1] = (hsv[1] * (1 + amount * 1.5f)).coerceAtMost(1f)
+            hsv[2] = if (night) (hsv[2] * (1 + amount * 0.6f)).coerceAtMost(1f) else hsv[2] * (1 - amount * 0.8f)
+            return android.graphics.Color.HSVToColor(android.graphics.Color.alpha(c), hsv)
+        }
+    }
 }
 
 private fun rgb(vararg c: Int) = IntArray(c.size) { 0xFF000000.toInt() or c[it] }

@@ -31,3 +31,4 @@ and screenshots from the Karoo 3 (`device/`). Newest work first.
 
 `_wrap.py` turns a sketch snippet into a standalone HTML page.
 - `indoor-ride-notes/`: the notes from the 2026-11-11 indoor ride: top bar, ⓘ view, right tile, ramps, done screen, workout updates, zone colours (built on ride-fixes).
+- `chart-contrast/`: +0 / +10 / +15 % contrast on the graph's colours; +15 % picked.

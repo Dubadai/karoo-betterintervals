@@ -39,8 +39,10 @@ class ChartRenderer(private val context: Context) {
         if (plan.steps.isEmpty() || plan.totalSec <= 0) return bmp
 
         val d = context.resources.displayMetrics.density * scale
-        val palette = state.zonePalette
         val night = (context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val palette = state.zonePalette
+        // The graph's colours with extra contrast against the page (+15 %: the Karoo's screen is pale)
+        fun contrast(c: Int): Int = ZonePalette.boosted(c, night, state.zoneContrast)
         // The step a jump lands on and its ▼: the text colour, which no zone uses (Karoo zone
         // colours include blue and purple, the old jump colours).
         val landColor = R.color.text
@@ -136,13 +138,13 @@ class ChartRenderer(private val context: Context) {
             val zA = if (step.hr) null else Zones.zoneOf(if (step.isRamp) step.startWatts else step.avgWatts, ftp)
             val zB = if (step.hr) null else Zones.zoneOf(if (step.isRamp) step.endWatts else step.avgWatts, ftp)
             val fillA = when {
-                step.hr -> color(Zones.hrBarColor(step.avgWatts, state.hrZones, lthr))
-                zA != null -> palette.fill(zA, night)
+                step.hr -> contrast(color(Zones.hrBarColor(step.avgWatts, state.hrZones, lthr)))
+                zA != null -> contrast(palette.fill(zA, night))
                 else -> color(R.color.done)
             }
-            val fillB = if (zB != null) palette.fill(zB, night) else fillA
-            val edgeA = zA?.let { palette.edge(it, night) }
-            val edgeB = zB?.let { palette.edge(it, night) } ?: edgeA
+            val fillB = if (zB != null) contrast(palette.fill(zB, night)) else fillA
+            val edgeA = zA?.let { palette.edge(it, night)?.let(::contrast) }
+            val edgeB = zB?.let { palette.edge(it, night)?.let(::contrast) } ?: edgeA
             // Every step in its zone colour (finished ones too); the jump target solid black/white.
             val alpha = 255
             fill.shader = null

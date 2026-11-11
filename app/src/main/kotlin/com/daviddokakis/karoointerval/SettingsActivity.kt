@@ -314,8 +314,9 @@ class SettingsActivity : AppearanceActivity() {
                 android.view.View(context).apply {
                     background = android.graphics.drawable.GradientDrawable().apply {
                         cornerRadius = 3 * d
-                        setColor(p.fill(z, night))
-                        p.edge(z, night)?.let { setStroke((1.5f * d).toInt().coerceAtLeast(1), it) }
+                        // As the graph draws them (+15 % contrast)
+                        setColor(ZonePalette.boosted(p.fill(z, night), night))
+                        p.edge(z, night)?.let { setStroke((1.5f * d).toInt().coerceAtLeast(1), ZonePalette.boosted(it, night)) }
                     }
                 },
                 android.widget.LinearLayout.LayoutParams((21 * d).toInt(), (15 * d).toInt()).apply { marginEnd = (4 * d).toInt() },
