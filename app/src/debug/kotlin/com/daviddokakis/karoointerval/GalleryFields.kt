@@ -34,7 +34,7 @@ object GalleryFields {
         // Indoor ERG: the pill right of the gear (docs/design/indoor-erg)
         "erg-gauge", "erg-number", "erg-connecting", "erg-lost", "erg-free", "erg-paused", "erg-top-two", "erg-gauge-route", "erg-off", "erg-off-top-two", "erg-start-connecting", "erg-start-ready", "erg-start-ready-b", "indoor-start", "indoor-start-dim", "trainer-hint", "start-outdoor", "indoor-gauge",
         // Indoor ride notes (docs/design/indoor-ride-notes): ⓘ view, right tile rotation, ramp, ride avg, done paused, zone colours
-        "info", "right-calories", "right-six", "ramp-number", "lap-ride", "done-paused", "zones-zwift", "zones-intervals", "indoor-number", "slot-defaults", "slot-custom", "slot-speed", "slot-nothing",
+        "info", "right-calories", "right-six", "ramp-number", "lap-ride", "done-paused", "zones-zwift", "zones-intervals", "indoor-number", "slot-defaults", "slot-custom", "slot-speed", "slot-nothing", "none-one-tile", "none-top-under", "none-all", "none-tiles-gauge",
     ) + SEQ.indices.flatMap { i -> listOf("seq-gauge-%02d", "seq-both-%02d", "seq-background-%02d").map { it.format(i) } }
     val sizes: List<String>? = listOf("full")   // BetterIntervals is always a full-page field
 
@@ -145,6 +145,11 @@ object GalleryFields {
             )
             "slot-speed" -> k.copy(indoor = true, underWatts = TopRow.SPEED, rightItems = listOf(TileItem.SPEED), speedMs = 8.7, topRowRight = TopRow.CALORIES, calories = 742)
             "slot-nothing" -> k.copy(underWatts = null)
+            // None (docs/design/empty-spots): one tile wide; top and under None; everything None
+            "none-one-tile" -> k.copy(indoor = true, rightItems = emptyList())
+            "none-top-under" -> k.copy(indoor = true, topRowNone = true, underWatts = null)
+            "none-all" -> k.copy(indoor = true, topRowNone = true, underWatts = null, leftItems = emptyList(), rightItems = emptyList())
+            "none-tiles-gauge" -> k.copy(wattsMode = WattsMode.GAUGE, leftItems = emptyList())
             "outline" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, tileOutline = true)
             "cadence" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, secondField = SecondField.CADENCE)
             // A workout with heart-rate targets only (as intervals.icu sends one: % of max HR, resolved to bpm)

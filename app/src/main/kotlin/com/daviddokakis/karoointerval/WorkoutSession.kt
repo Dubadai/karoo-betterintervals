@@ -321,8 +321,9 @@ class WorkoutSession(
         scope.launch { store.topRow.collect { r -> _state.update { it.copy(topRow = r) } } }
         scope.launch { store.topRowRight.collect { r -> _state.update { it.copy(topRowRight = r) } } }
         scope.launch { store.zonePalette.collect { z -> _state.update { it.copy(zonePalette = z) } } }
-        scope.launch { store.leftItems.collect { l -> _state.update { it.copy(leftItems = l, leftIndex = store.leftIndex.coerceIn(0, l.lastIndex)) } } }
-        scope.launch { store.rightItems.collect { r -> _state.update { it.copy(rightItems = r, rightIndex = store.rightIndex.coerceIn(0, r.lastIndex)) } } }
+        scope.launch { store.leftItems.collect { l -> _state.update { it.copy(leftItems = l, leftIndex = store.leftIndex.coerceIn(0, l.lastIndex.coerceAtLeast(0))) } } }
+        scope.launch { store.rightItems.collect { r -> _state.update { it.copy(rightItems = r, rightIndex = store.rightIndex.coerceIn(0, r.lastIndex.coerceAtLeast(0))) } } }
+        scope.launch { store.topRowNone.collect { n -> _state.update { it.copy(topRowNone = n) } } }
         scope.launch { store.underWatts.collect { u -> _state.update { it.copy(underWatts = u) } } }
         _state.update { it.copy(wattsMode = store.wattsMode, targetShowsRange = store.targetShowsRange, freePower = store.freePower, freeSecond = store.freeSecond, hrTargetLthr = store.hrTargetLthr) }
     }

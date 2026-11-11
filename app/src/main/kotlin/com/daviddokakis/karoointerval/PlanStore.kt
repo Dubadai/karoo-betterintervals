@@ -66,6 +66,16 @@ class PlanStore private constructor(context: Context) {
 
     private val _topRowRight = MutableStateFlow(prefs.getString(KEY_TOP_ROW_2, null)?.let { n -> TopRow.entries.firstOrNull { it.name == n } })
 
+    private val _topRowNone = MutableStateFlow(prefs.getBoolean(KEY_TOP_ROW_NONE, false))
+
+    /** Settings › Workout screen › Top row › None: no values at the top (the gear and ⓘ stay). */
+    val topRowNone: StateFlow<Boolean> = _topRowNone
+
+    fun setTopRowNone(value: Boolean) {
+        prefs.edit().putBoolean(KEY_TOP_ROW_NONE, value).apply()
+        _topRowNone.value = value
+    }
+
     /** Settings › Top row › Two: the second value at the top (null: one value). */
     val topRowRight: StateFlow<TopRow?> = _topRowRight
 
@@ -105,7 +115,8 @@ class PlanStore private constructor(context: Context) {
         set(value) = prefs.edit().putString(KEY_HR_ZONES, value.joinToString(",") { "${it.first}-${it.last}" }).apply()
 
     private fun tileItems(key: String, default: TileItem): List<TileItem> =
-        prefs.getString(key, null)?.split(",")?.mapNotNull { n -> TileItem.entries.firstOrNull { it.name == n } }?.takeIf { it.isNotEmpty() } ?: listOf(default)
+        // Saved empty: None (no tile)
+        prefs.getString(key, null)?.split(",")?.filter { it.isNotEmpty() }?.mapNotNull { n -> TileItem.entries.firstOrNull { it.name == n } } ?: listOf(default)
 
     private val _leftItems = MutableStateFlow(tileItems(KEY_LEFT_ITEMS, TileItem.LAP_AVG))
 
@@ -113,7 +124,7 @@ class PlanStore private constructor(context: Context) {
     val leftItems: StateFlow<List<TileItem>> = _leftItems
 
     fun setLeftItems(value: List<TileItem>) {
-        val ordered = TileItem.entries.filter { it in value }.ifEmpty { return }
+        val ordered = TileItem.entries.filter { it in value }
         prefs.edit().putString(KEY_LEFT_ITEMS, ordered.joinToString(",") { it.name }).apply()
         _leftItems.value = ordered
     }
@@ -129,7 +140,7 @@ class PlanStore private constructor(context: Context) {
     val rightItems: StateFlow<List<TileItem>> = _rightItems
 
     fun setRightItems(value: List<TileItem>) {
-        val ordered = TileItem.entries.filter { it in value }.ifEmpty { return }
+        val ordered = TileItem.entries.filter { it in value }
         prefs.edit().putString(KEY_RIGHT_ITEMS, ordered.joinToString(",") { it.name }).apply()
         _rightItems.value = ordered
     }
@@ -430,6 +441,7 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_FREE_POWER = "free_power"
         private const val KEY_TOP_ROW = "top_row"
         private const val KEY_TOP_ROW_2 = "top_row_2"
+        private const val KEY_TOP_ROW_NONE = "top_row_none"
         private const val KEY_HR_LTHR = "hr_target_lthr"
         private const val KEY_SCALE = "scale_pct"
         private const val KEY_HR_ZONES = "hr_zones"

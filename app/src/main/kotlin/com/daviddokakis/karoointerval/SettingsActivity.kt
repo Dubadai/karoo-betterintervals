@@ -133,11 +133,11 @@ class SettingsActivity : AppearanceActivity() {
         form.addView(settingsHeading(R.drawable.ic_settings_layout, getString(R.string.workout_screen)))
         form.addView(settingsIntro(getString(R.string.workout_screen_help)))
         val top = store.topRow.value ?: if (store.secondField.value == SecondField.CADENCE) TopRow.CADENCE else TopRow.HEART_RATE
-        val topNames = listOfNotNull(top, store.topRowRight.value?.takeIf { it != top }).joinToString(", ") { topName(it) }
-        val tileNames = { items: List<TileItem> -> items.joinToString(", ") { getString(SpotSettingsActivity.tileRow(it).second) } }
+        val topNames = if (store.topRowNone.value) getString(R.string.none) else listOfNotNull(top, store.topRowRight.value?.takeIf { it != top }).joinToString(", ") { topName(it) }
+        val tileNames = { items: List<TileItem> -> items.joinToString(", ") { getString(SpotSettingsActivity.tileRow(it).second) }.ifEmpty { getString(R.string.none) } }
         listOf(
             Triple(R.drawable.ic_settings_top_row, SpotSettingsActivity.Spot.TOP_ROW, topNames),
-            Triple(R.drawable.ic_settings_under, SpotSettingsActivity.Spot.UNDER_WATTS, store.underWatts.value?.let { topName(it) } ?: getString(R.string.nothing)),
+            Triple(R.drawable.ic_settings_under, SpotSettingsActivity.Spot.UNDER_WATTS, store.underWatts.value?.let { topName(it) } ?: getString(R.string.none)),
             Triple(R.drawable.ic_settings_left_tile, SpotSettingsActivity.Spot.LEFT_TILE, tileNames(store.leftItems.value)),
             Triple(R.drawable.ic_settings_right_tile, SpotSettingsActivity.Spot.RIGHT_TILE, tileNames(store.rightItems.value)),
         ).forEach { (icon, spot, status) ->

@@ -164,16 +164,17 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // Settings › Workout screen (docs/design/more-control): one or two values at the top, a line
         // under the watts, and two tiles that each go through the metrics switched on (tap).
         val left = s.topRow ?: if (s.showsCadence) TopRow.CADENCE else TopRow.HEART_RATE
-        val tops = listOfNotNull(left, s.topRowRight?.takeIf { it != left })
-        val leftItems = s.leftItems.ifEmpty { listOf(TileItem.LAP_AVG) }
-        val rightItems = s.rightItems.ifEmpty { listOf(TileItem.CADENCE) }
-        val leftItem = leftItems[s.leftIndex.coerceIn(0, leftItems.lastIndex)]
-        val rightItem = rightItems[s.rightIndex.coerceIn(0, rightItems.lastIndex)]
-        val leftShow = tileShow(s, leftItem, gaugeMode)
-        val rightShow = tileShow(s, rightItem, gaugeMode)
+        // None (docs/design/empty-spots): no values at the top; a tile with nothing on is left out
+        val tops = if (s.topRowNone) emptyList() else listOfNotNull(left, s.topRowRight?.takeIf { it != left })
+        val leftItems = s.leftItems
+        val rightItems = s.rightItems
+        val leftShow = leftItems.getOrNull(s.leftIndex.coerceIn(0, leftItems.lastIndex.coerceAtLeast(0)))?.let { tileShow(s, it, gaugeMode) }
+        val rightShow = rightItems.getOrNull(s.rightIndex.coerceIn(0, rightItems.lastIndex.coerceAtLeast(0)))?.let { tileShow(s, it, gaugeMode) }
         // The cell values' texts, so a Karoo-style cell can shrink a value that's too wide.
-        lapText = leftShow.value
-        targetText = rightShow.value
+        lapText = leftShow?.value ?: ""
+        targetText = rightShow?.value ?: ""
+        // The watts grow into the room a None leaves (nothing under them, or no tiles)
+        val wattsId = if (!gaugeMode && (s.underWatts == null || (leftShow == null && rightShow == null))) R.id.watts_big else R.id.watts
         applyTextSizes(v, gaugeMode)
 
         v.setViewVisibility(R.id.content, View.VISIBLE)
@@ -206,9 +207,16 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
                 )
             }
         } else {
-            v.setTextViewText(R.id.watts, s.mainValue?.toString() ?: "--")
-            v.setTextColor(R.id.watts, color(wattsColor))
-            bigEmpty(v, R.id.watts, R.id.watts_empty, mainSensor(s), config.viewSize.first.toFloat(), 0f + config.viewSize.second)
+            val text = s.mainValue?.toString() ?: "--"
+            v.setViewVisibility(if (wattsId == R.id.watts) R.id.watts_big else R.id.watts, View.GONE)
+            if (wattsId == R.id.watts) {
+                v.setTextViewText(R.id.watts, text)
+                v.setTextColor(R.id.watts, color(wattsColor))
+            } else {
+                v.setImageViewBitmap(R.id.watts_big, digitsBitmap(text, color(wattsColor)))
+                v.setContentDescription(R.id.watts_big, text)
+            }
+            bigEmpty(v, wattsId, R.id.watts_empty, mainSensor(s), config.viewSize.first.toFloat(), 0f + config.viewSize.second)
         }
         val upperBg = if (s.wattsMode.colorsBackground && range != null) {
             when (range) {
@@ -231,7 +239,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // Green icons turn black (the text colour) on the range tint, so they show.
         val iconColor = color(if (onTint) R.color.text else R.color.karoo_green)
         listOf(R.id.icon_timer, R.id.icon_lap, R.id.icon_bolt).forEach { v.setInt(it, "setColorFilter", iconColor) }
-        v.setOnClickPendingIntent(if (gaugeMode) R.id.gauge else R.id.watts, wattsColorIntent)
+        v.setOnClickPendingIntent(if (gaugeMode) R.id.gauge else wattsId, wattsColorIntent)
 
         // Top row: one or two values, each with its icon, drawn like BigWatts' heart-rate line
         listOf(R.id.top1_icon, R.id.top1, R.id.top2_icon, R.id.top2, R.id.target_next_top).forEach { v.setViewVisibility(it, View.GONE) }
@@ -241,16 +249,25 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         }
         // No tap on the top row: it switched ERG off by accident mid-ride (2026-11-11). ERG for
         // this ride is switched on the Workouts page.
-        val topLanding = s.landStep?.takeIf { tops.first() == TopRow.TARGET && s.erg == null }?.targetAt(0)?.toString()
-        v.setImageViewBitmap(R.id.top_img, TopRowArt.draw(res, topItems, TOP_ROW_PX * density / 1.875f * scale, (40 * density).roundToInt(), color(R.color.text), topLanding, iconGap = TOP_ICON_GAP))
-        v.setContentDescription(R.id.top_img, topItems.joinToString(", ") { it.text })
+        val topLanding = s.landStep?.takeIf { tops.firstOrNull() == TopRow.TARGET && s.erg == null }?.targetAt(0)?.toString()
+        v.setViewVisibility(R.id.top_img, if (topItems.isEmpty()) View.INVISIBLE else View.VISIBLE)
+        if (topItems.isNotEmpty()) {
+            v.setImageViewBitmap(R.id.top_img, TopRowArt.draw(res, topItems, TOP_ROW_PX * density / 1.875f * scale, (40 * density).roundToInt(), color(R.color.text), topLanding, iconGap = TOP_ICON_GAP))
+            v.setContentDescription(R.id.top_img, topItems.joinToString(", ") { it.text })
+        }
 
         // Both tiles drawn 1:1 like the Karoo's own fields (75dp: a native 140 px tile). Two or more
         // metrics: no icon, dots down the left edge say which one this is; a tap goes to the next.
         // One Target: a tap shows the target or its range (power), bpm or % of LTHR (heart rate).
         val ink = color(R.color.text)
-        val landing = s.landStep?.takeIf { tops.first() != TopRow.TARGET }?.targetAt(0)?.toString()
-        fun tile(container: Int, img: Int, hide: List<Int>, items: List<TileItem>, index: Int, show: TileShow, cycle: PendingIntent) {
+        val landing = s.landStep?.takeIf { tops.firstOrNull() != TopRow.TARGET }?.targetAt(0)?.toString()
+        // One tile left: it takes the whole width; none: no tile row
+        val tileRow = if (leftShow == null && rightShow == null) View.GONE else View.VISIBLE
+        v.setViewVisibility(R.id.tiles_row, tileRow)
+        val tileW = if (leftShow == null || rightShow == null) config.viewSize.first - 6 * density else halfTileW
+        fun tile(container: Int, img: Int, hide: List<Int>, items: List<TileItem>, index: Int, show: TileShow?, cycle: PendingIntent) {
+            v.setViewVisibility(container, if (show == null) View.GONE else View.VISIBLE)
+            if (show == null) return
             v.setTextViewText(hide[2], show.label)
             v.setOnClickPendingIntent(
                 container,
@@ -261,7 +278,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
                 },
             )
             tileArt(
-                v, img, hide, halfTileW, 75 * density,
+                v, img, hide, tileW, 75 * density,
                 if (items.size >= 2) emptyList() else show.icons,
                 show.label, show.value, ink,
                 landing = landing?.takeIf { show.item == TileItem.TARGET },
@@ -360,7 +377,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (s.countdown != null && (jump != null || s.finishing)) {
             v.setViewVisibility(R.id.next_box, View.GONE)
             v.setViewVisibility(R.id.countdown_box, View.VISIBLE)
-            v.setViewVisibility(R.id.tiles_row, View.VISIBLE)
+            v.setViewVisibility(R.id.tiles_row, tileRow)
             v.setViewVisibility(R.id.confirm_row, View.GONE)
             v.setViewVisibility(R.id.move_cancelled, View.GONE)
             v.setTextViewText(R.id.countdown, s.countdown.toString())
@@ -418,7 +435,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
                 v.setTextViewText(R.id.confirm_text, context.getString(R.string.confirm_move))
             }
             v.setViewVisibility(R.id.move_cancelled, if (showCancelled) View.VISIBLE else View.GONE)
-            v.setViewVisibility(R.id.tiles_row, if (showConfirm || showCancelled) View.GONE else View.VISIBLE)
+            v.setViewVisibility(R.id.tiles_row, if (showConfirm || showCancelled) View.GONE else tileRow)
             // Buttons keep their space when hidden, so the text stays centred. While choosing,
             // both stay available so you can tap back and forth.
             v.setViewVisibility(R.id.btn_skip, if (s.hasNext || choosing != null) View.VISIBLE else View.INVISIBLE)
@@ -999,6 +1016,21 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     /** The sensor behind the big number: heart rate on a heart-rate step, else power. */
     private fun mainSensor(s: ScreenState) = if (s.hrStep) s.hrSensor else s.powerSensor
 
+    /**
+     * The big watts as a picture cut to the digits' own height (Relative's cap height, 0.7 em: its
+     * digits sit on the baseline), so the ImageView's fitCenter makes them as big as the room allows.
+     */
+    private fun digitsBitmap(text: String, ink: Int): android.graphics.Bitmap {
+        val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            typeface = KarooType.value; letterSpacing = -0.04f; textSize = 300f; color = ink
+        }
+        val cap = 0.7f * p.textSize
+        val pad = 4f
+        val bmp = android.graphics.Bitmap.createBitmap((p.measureText(text) + 2 * pad).roundToInt(), (cap + 2 * pad).roundToInt(), android.graphics.Bitmap.Config.ARGB_8888)
+        android.graphics.Canvas(bmp).drawText(text, pad, pad + cap, p)
+        return bmp
+    }
+
     /** The big number's empty state: the Karoo's words where the number goes, or the number. */
     /**
      * The indoor START box's height: it takes the big watts' room (only the top row stays above it),
@@ -1036,7 +1068,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             item == TopRow.CALORIES -> TileArt.Glyph(FLAME, color(R.color.text))
             item == TopRow.SPEED -> TileArt.Glyph(KarooType.Glyph.SPEED, color(R.color.text))
             s.hrStep -> TileArt.Glyph(KarooType.Glyph.BOLT, color(R.color.text))
-            else -> TileArt.Glyph.RED_HEART
+            else -> TileArt.Glyph(KarooType.Glyph.HEART, color(R.color.text))
         }
     }
 
@@ -1060,13 +1092,13 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         return when {
             // A heart-rate step: the lap tile's power shows the lap's average heart rate
             s.hrStep && (item == TileItem.LAP_AVG || item == TileItem.LAP_NP) ->
-                TileShow(item, context.getString(R.string.lap_avg), s.lapHrAvg?.toString() ?: "--", listOf(lapGlyph, TileArt.Glyph.RED_HEART), s.hrSensor.emptyText)
+                TileShow(item, context.getString(R.string.lap_avg), s.lapHrAvg?.toString() ?: "--", listOf(lapGlyph, TileArt.Glyph(KarooType.Glyph.HEART, ink)), s.hrSensor.emptyText)
             item == TileItem.LAP_AVG -> power(R.string.lap_avg, s.lapAvg, listOf(lapGlyph, bolt))
             item == TileItem.LAP_NP -> power(R.string.np, s.lapNp, listOf(lapGlyph, bolt))
             item == TileItem.RIDE_AVG -> power(R.string.ride_avg, s.rideAvgPower, listOf(bolt))
             else -> {
                 val t = top!!
-                val icons = listOfNotNull(itemIcon(s, t), if (s.hrStep && t == TopRow.TARGET) TileArt.Glyph.RED_HEART else null)
+                val icons = listOfNotNull(itemIcon(s, t), if (s.hrStep && t == TopRow.TARGET) TileArt.Glyph(KarooType.Glyph.HEART, ink) else null)
                 TileShow(item, itemLabel(s, t), itemValue(s, t, inTile = true, gaugeMode = gaugeMode), icons, itemSensor(s, t)?.emptyText)
             }
         }

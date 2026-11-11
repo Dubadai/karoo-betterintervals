@@ -35,3 +35,4 @@ and screenshots from the Karoo 3 (`device/`). Newest work first.
 - `more-control/`: every spot on the workout screen set in Settings (top row, under the watts, left and right tiles), bigger gear and ⓘ tap areas (mock).
 - `workout-details/`: a details page for each workout, Select workout at the top right (mock).
 - `intervals-z7/`: options for the intervals.icu palette's Z7 instead of grey (preview).
+- `empty-spots/`: None for every spot; what's left grows (mock).

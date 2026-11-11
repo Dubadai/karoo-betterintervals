@@ -7,6 +7,8 @@ the left one shows **Lap avg** and the right one **Cadence**.
 Each tile can show **Lap avg**, **Lap NP**, **Ride avg**, **Target**, **Heart rate**, **Cadence**,
 **Calories** and **Speed**. With two or more switched on, tap the tile to go to the next one: dots
 down its left edge say which one it shows. The Karoo remembers where you were between rides.
+Switch everything off on a tile to leave it out: the other tile gets the whole width, and with
+both off the watts get the room.
 
 <img src="images/tiles-lap-np-range.png" width="240" alt="Lap NP 289 and Target range 273–287">
 
