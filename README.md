@@ -19,9 +19,12 @@ you can jump forward **and back** between intervals.
   and ends on a **Workout complete** screen with its time, average power, NP and heart rate.
 - **Big power** (instant or 3 / 5 / 10 s): starts on the **power gauge**; tap the watts for a plain,
   coloured number, coloured background or both. Blue is below the range, green in it, red above it.
-- **Interval, time left and progress bar,** with lap average and target (tap Lap avg for Lap NP,
-  tap Target for the range) and heart rate. **Settings › Top row** puts heart rate, cadence or the
-  target at the top.
+- **Interval, time left and progress bar,** the target right under the watts, heart rate at the top,
+  and two tiles (Lap avg and Cadence). **Settings › Workout screen** sets every spot: the top row,
+  the line under the watts, and what each tile goes through when you tap it (lap or ride power,
+  Lap NP, target, heart rate, cadence, calories, speed).
+- **Workout details** on the Workouts page: the picture, time, TSS, IF, NP, calories, the coach's
+  notes, time in zones and every interval, then **Select workout**.
 - **Next up with ⏮ / ⏭:** a jump starts a 5-second countdown with beeps, so you can get ready.
 - **The whole workout as a chart** in zone colours with a "now" marker; tap it to zoom in.
 - **Pause** stops the interval timer (for traffic, say) while the ride keeps recording. One lap per

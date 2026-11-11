@@ -1036,7 +1036,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             item == TopRow.CALORIES -> TileArt.Glyph(FLAME, color(R.color.text))
             item == TopRow.SPEED -> TileArt.Glyph(KarooType.Glyph.SPEED, color(R.color.text))
             s.hrStep -> TileArt.Glyph(KarooType.Glyph.BOLT, color(R.color.text))
-            else -> TileArt.Glyph.RED_HEART
+            else -> TileArt.Glyph(KarooType.Glyph.HEART, color(R.color.text))
         }
     }
 
@@ -1060,13 +1060,13 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         return when {
             // A heart-rate step: the lap tile's power shows the lap's average heart rate
             s.hrStep && (item == TileItem.LAP_AVG || item == TileItem.LAP_NP) ->
-                TileShow(item, context.getString(R.string.lap_avg), s.lapHrAvg?.toString() ?: "--", listOf(lapGlyph, TileArt.Glyph.RED_HEART), s.hrSensor.emptyText)
+                TileShow(item, context.getString(R.string.lap_avg), s.lapHrAvg?.toString() ?: "--", listOf(lapGlyph, TileArt.Glyph(KarooType.Glyph.HEART, ink)), s.hrSensor.emptyText)
             item == TileItem.LAP_AVG -> power(R.string.lap_avg, s.lapAvg, listOf(lapGlyph, bolt))
             item == TileItem.LAP_NP -> power(R.string.np, s.lapNp, listOf(lapGlyph, bolt))
             item == TileItem.RIDE_AVG -> power(R.string.ride_avg, s.rideAvgPower, listOf(bolt))
             else -> {
                 val t = top!!
-                val icons = listOfNotNull(itemIcon(s, t), if (s.hrStep && t == TopRow.TARGET) TileArt.Glyph.RED_HEART else null)
+                val icons = listOfNotNull(itemIcon(s, t), if (s.hrStep && t == TopRow.TARGET) TileArt.Glyph(KarooType.Glyph.HEART, ink) else null)
                 TileShow(item, itemLabel(s, t), itemValue(s, t, inTile = true, gaugeMode = gaugeMode), icons, itemSensor(s, t)?.emptyText)
             }
         }
