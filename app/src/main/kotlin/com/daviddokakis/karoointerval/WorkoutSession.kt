@@ -108,6 +108,10 @@ class WorkoutSession(
     private var started = false
     /** The workout as loaded (100 %); the state's plan is it at Workouts › Scale workout. */
     private var basePlan: WorkoutPlan? = null
+    /** A changed version of the running workout from a sync mid-ride: loads when the ride ends. */
+    private var heldPlan: WorkoutPlan? = null
+    /** The Karoo ride started with the start countdown (START with no ride, or the Karoo's own start indoors). */
+    private var rideStartsWithWorkout = false
 
     /** Interval screens currently showing. While one is, it plays the countdown beeps (see [onCountdownShown]). */
     private val viewsActive = java.util.concurrent.atomic.AtomicInteger(0)
@@ -195,11 +199,20 @@ class WorkoutSession(
                 val st = _state.value
                 if (wasIdle && recording && st.indoor && st.plan != null && st.notStarted && countdownJob?.isActive != true) {
                     Timber.i("Karoo ride started indoors: the workout starts with it")
+                    rideStartsWithWorkout = true
                     startCountdown(st.stepIndex)
                 }
                 // No ride (not started, finished or discarded): start the workout from the top
                 // next time. Progress is only kept while a ride is recording or paused.
-                if (ride is RideState.Idle) resetToStart()
+                if (ride is RideState.Idle) {
+                    resetToStart()
+                    heldPlan?.let { newer ->
+                        heldPlan = null
+                        Timber.i("Ride over: loading the changed version of ${newer.name}")
+                        basePlan = newer
+                        loadPlan(newer.scaled(store.scalePct.value))
+                    }
+                }
             }
         }
         scope.launch {
@@ -250,6 +263,15 @@ class WorkoutSession(
         collectInt(DataType.Type.AVERAGE_CADENCE) { v -> _state.update { it.copy(rideAvgCadence = v) } }
         scope.launch {
             store.plan.collect { plan ->
+                // The running workout changed on intervals.icu (a sync on the Workouts page mid-ride):
+                // keep riding the version that's running; the new one loads when the ride ends.
+                val st = _state.value
+                if (plan != null && st.plan?.id == plan.id && !rideIdle && !st.notStarted) {
+                    Timber.i("Workout ${plan.name} changed on intervals.icu: the running version carries on until the ride ends")
+                    heldPlan = plan
+                    return@collect
+                }
+                heldPlan = null
                 basePlan = plan
                 loadPlan(plan?.scaled(store.scalePct.value), reselected = plansSeen++ > 0)
             }
@@ -531,6 +553,7 @@ class WorkoutSession(
             // One press starts both: no ride yet, so START also starts the Karoo's ride, as its
             // bottom-right button (the ▶ on the ride screen) would. Only with no ride at all: on a
             // recording or paused ride that button would pause or resume it instead.
+            rideStartsWithWorkout = rideIdle
             if (rideIdle) {
                 Timber.i("Starting the Karoo ride with the workout")
                 karoo.dispatch(PerformHardwareAction.BottomRightPress)
@@ -563,7 +586,10 @@ class WorkoutSession(
         _state.update {
             it.copy(notStarted = false, stepIndex = index, elapsedInStepSec = resume, lapAvg = null, countdown = null, jumpTarget = null, resumeFromSec = null)
         }
-        if (recording) karoo.dispatch(MarkLap) // the first interval gets its own lap
+        // The first interval gets its own lap, except when the ride started with this countdown:
+        // then the countdown's 5 s would be a lap of their own (they count in the first interval's).
+        if (recording && !rideStartsWithWorkout) karoo.dispatch(MarkLap)
+        rideStartsWithWorkout = false
         karoo.dispatch(PlayBeepPattern(START_TUNE))
         saveProgress()
     }
@@ -817,7 +843,7 @@ class WorkoutSession(
         private const val SELECT_TIMEOUT_MS = 10_000L
         /** How long "Move cancelled" shows. */
         private const val MOVE_CANCELLED_MS = 3_000L
-        private const val TICK_MS = 250L
+        private const val TICK_MS = 100L
         private const val SAVE_EVERY_MS = 15_000L
 
         private val TICK_TONE = PlayBeepPattern.Tone(frequency = 2000, durationMs = 100)

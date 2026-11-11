@@ -129,7 +129,6 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     private val startIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_START, 15) }
     private val startOverIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_START_OVER, 27) }
     private val doneIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_DONE, 16) }
-    private val ergToggleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_ERG, 28) }
     private val settingsIntent: PendingIntent by lazy {
         PendingIntent.getActivity(
             context,
@@ -148,9 +147,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (s.finished) return renderDone(s, plan)
         // The Gauge watts mode has its own layout; the other four share the number one. Both in the
         // Karoo's own style (fonts, labels, icons, yellow buttons).
-        // ERG drives the trainer: no gauge, the plain big number with the ERG pill above it (the
-        // watts follow the target by themselves; the gauge is for riding free).
-        val gaugeMode = s.wattsMode == WattsMode.GAUGE && !s.ergDrives
+        // With ERG too: tapping the watts cycles the five looks (some ride free with the workout
+        // and want the gauge).
+        val gaugeMode = s.wattsMode == WattsMode.GAUGE
         val layout = if (gaugeMode) R.layout.field_interval_gauge_karoo else R.layout.field_interval_karoo
         val v = RemoteViews(context.packageName, layout)
         applyAppearance(v, layout)
@@ -184,7 +183,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // target range shows: plain, coloured number, coloured background behind the top of the
         // screen, both, or the gauge.
         val range = rangeState(s)
-        val wattsColor = if (s.wattsMode.colorsText && !s.ergDrives && range != null) {
+        val wattsColor = if (s.wattsMode.colorsText && range != null) {
             when (range) {
                 RangeState.UNDER -> R.color.watts_under
                 RangeState.IN -> R.color.watts_in_range
@@ -208,7 +207,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             v.setTextColor(R.id.watts, color(wattsColor))
             bigEmpty(v, R.id.watts, R.id.watts_empty, mainSensor(s), config.viewSize.first.toFloat(), 0f + config.viewSize.second)
         }
-        val upperBg = if (s.wattsMode.colorsBackground && !s.ergDrives && range != null) {
+        val upperBg = if (s.wattsMode.colorsBackground && range != null) {
             when (range) {
                 RangeState.UNDER -> R.drawable.bg_range_under
                 RangeState.IN -> R.drawable.bg_range_in
@@ -228,16 +227,15 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // Green icons turn black (the text colour) on the range tint, so they show.
         val iconColor = color(if (onTint) R.color.text else R.color.karoo_green)
         listOf(R.id.icon_timer, R.id.icon_lap, R.id.icon_bolt).forEach { v.setInt(it, "setColorFilter", iconColor) }
-        // With ERG the watts' look is fixed (plain): a tap there changes nothing.
-        if (!s.ergDrives) v.setOnClickPendingIntent(if (gaugeMode) R.id.gauge else R.id.watts, wattsColorIntent)
+        v.setOnClickPendingIntent(if (gaugeMode) R.id.gauge else R.id.watts, wattsColorIntent)
 
         // Top row: one or two values, each with its icon, drawn like BigWatts' heart-rate line
         listOf(R.id.top1_icon, R.id.top1, R.id.top2_icon, R.id.top2, R.id.target_next_top).forEach { v.setViewVisibility(it, View.GONE) }
         val topItems = listOfNotNull(ergItem(s)) + tops.map {
             TopRowArt.Item(topIcon(s, it, onTint), itemValue(s, it, inTile = false, gaugeMode = gaugeMode), heart = it == TopRow.HEART_RATE && !s.hrStep)
         }
-        // Tap the top row with ERG on to switch it off (or back on) for this ride.
-        if (s.erg != null) v.setOnClickPendingIntent(R.id.top_block, ergToggleIntent)
+        // No tap on the top row: it switched ERG off by accident mid-ride (2026-11-11). ERG for
+        // this ride is switched on the Workouts page.
         val topLanding = s.landStep?.takeIf { tops.first() == TopRow.TARGET && s.erg == null }?.targetAt(0)?.toString()
         v.setImageViewBitmap(R.id.top_img, TopRowArt.draw(res, topItems, TOP_ROW_PX * density / 1.875f * scale, (40 * density).roundToInt(), color(R.color.text), topLanding))
         v.setContentDescription(R.id.top_img, topItems.joinToString(", ") { it.text })
@@ -871,7 +869,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
                 val text = if (pct.first != pct.second) "${pct.first}$dash${pct.second}" else "${pct.first}"
                 if (inTile) text else "$text%"
             } else {
-                val showRange = band != null && band.first != band.last && (!inTile || gaugeMode || s.hrStep || s.targetShowsRange)
+                // A fixed-watts interval shows its watts (what ERG holds), never the zone around it
+                val fixed = step != null && !step.hr && !step.isRange && !step.isRamp
+                val showRange = !fixed && band != null && band.first != band.last && (!inTile || gaugeMode || s.hrStep || s.targetShowsRange)
                 if (showRange && band != null) "${band.first}$dash${band.last}" else s.target?.toString() ?: "--"
             }
         }

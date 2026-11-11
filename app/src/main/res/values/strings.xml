@@ -77,7 +77,6 @@
     <string name="erg_when_paused">When paused</string>
     <string name="erg_pct_ftp">%1$d %% FTP</string>
     <string name="erg_help">The trainer follows the workout on an indoor ride profile. Set the Karoo\'s trainer card to Read-Only so only this app sets ERG.</string>
-    <string name="cd_erg">ERG: tap to switch it on or off for this ride</string>
     <string name="erg_card_title">ERG</string>
     <string name="erg_card_label">Indoor ride</string>
     <string name="erg_card_ready">%1$s · ERG READY</string>
