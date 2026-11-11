@@ -45,6 +45,12 @@ class ErgTrainer(context: Context) {
 
     private val _link = MutableStateFlow(ErgLink.OFF)
     val link: StateFlow<ErgLink> = _link
+    /** The trainer's own watts (FTMS Indoor Bike Data) and when they came, for Match PM. */
+    @Volatile var watts: Int? = null
+        private set
+    @Volatile var wattsAtMs = 0L
+        private set
+
     /** Why the link is [ErgLink.LOST], for the log and Settings. */
     @Volatile var problem: String? = null
         private set
@@ -171,7 +177,7 @@ class ErgTrainer(context: Context) {
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
             main.post {
                 val svc = g.getService(FTMS) ?: return@post lost("no FTMS on this trainer")
-                for (u in listOf(CONTROL_POINT, STATUS)) {
+                for (u in listOf(CONTROL_POINT, STATUS, INDOOR_BIKE_DATA)) {
                     val c = svc.getCharacteristic(u) ?: continue
                     enqueue { gg ->
                         gg.setCharacteristicNotification(c, true)
@@ -196,6 +202,7 @@ class ErgTrainer(context: Context) {
             val v = c.value ?: return
             main.post {
                 when (c.uuid) {
+                    INDOOR_BIKE_DATA -> parsePower(v)?.let { watts = it; wattsAtMs = System.currentTimeMillis() }
                     CONTROL_POINT -> onResponse(v.getOrNull(1)?.toInt() ?: -1, v.getOrNull(2)?.toInt() ?: -1)
                     STATUS -> if ((v.getOrNull(0)?.toInt() ?: 0) and 0xFF == 0xFF) {
                         Timber.w("ERG: trainer says control was lost")
@@ -266,11 +273,12 @@ class ErgTrainer(context: Context) {
         }
     }
 
-    private companion object {
+    companion object {
         fun uuid16(v: Int): UUID = UUID.fromString(String.format("%08x-0000-1000-8000-00805f9b34fb", v))
         val FTMS = uuid16(0x1826)
         val CONTROL_POINT = uuid16(0x2AD9)
         val STATUS = uuid16(0x2ADA)
+        val INDOOR_BIKE_DATA = uuid16(0x2AD2)
         val CCCD = uuid16(0x2902)
         const val OP_REQUEST_CONTROL: Byte = 0x00
         const val OP_RESET: Byte = 0x01
@@ -280,6 +288,26 @@ class ErgTrainer(context: Context) {
         const val SCAN_MS = 20_000L
         const val RETRY_MIN_MS = 3_000L
         const val RETRY_MAX_MS = 30_000L
+
+        /**
+         * Instantaneous power from an FTMS Indoor Bike Data notification: flags (uint16), then the
+         * fields the flags announce in order, power (sint16) after speed, average speed, cadence,
+         * average cadence, distance and resistance.
+         */
+        fun parsePower(v: ByteArray): Int? {
+            if (v.size < 2) return null
+            val flags = (v[0].toInt() and 0xFF) or ((v[1].toInt() and 0xFF) shl 8)
+            if (flags and (1 shl 6) == 0) return null
+            var i = 2
+            if (flags and 1 == 0) i += 2          // instantaneous speed ("more data" bit clear)
+            if (flags and (1 shl 1) != 0) i += 2  // average speed
+            if (flags and (1 shl 2) != 0) i += 2  // instantaneous cadence
+            if (flags and (1 shl 3) != 0) i += 2  // average cadence
+            if (flags and (1 shl 4) != 0) i += 3  // total distance
+            if (flags and (1 shl 5) != 0) i += 2  // resistance level
+            if (v.size < i + 2) return null
+            return ((v[i].toInt() and 0xFF) or (v[i + 1].toInt() shl 8)).toShort().toInt()
+        }
 
         /** The address found for an ANT+ trainer, so a reconnect skips the scan. */
         @Volatile var knownAddress: String? = null

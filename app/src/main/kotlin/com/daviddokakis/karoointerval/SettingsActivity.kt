@@ -199,6 +199,31 @@ class SettingsActivity : AppearanceActivity() {
                     render()
                 },
             )
+            // Match PM (docs/design/indoor-erg/powermatch)
+            val match = store.matchPm.value
+            form.addView(
+                settingsSwitchRow(R.drawable.ic_settings_power, getString(R.string.match_pm), match) { on ->
+                    store.setMatchPm(on)
+                    render()
+                }.apply {
+                    // Air between the When paused buttons and this row, as in the mock.
+                    layoutParams = android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                    ).apply { topMargin = (10 * resources.displayMetrics.density).toInt() }
+                },
+            )
+            if (match) {
+                val last = store.pmLastRide.value
+                val sum = last?.summary
+                when {
+                    last == null || (!last.fromTrainer && sum == null) ->
+                        form.addView(settingsInfoRow(R.drawable.ic_settings_info, getString(R.string.match_pm_new)))
+                    last.fromTrainer ->
+                        form.addView(settingsInfoRow(R.drawable.ic_settings_info, getString(R.string.match_pm_from_trainer), SettingsTone.WARN))
+                    else -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, matchSummary(last.pmName, sum!!), SettingsTone.OK))
+                }
+            }
+            form.addView(settingsHelp(getString(if (match) R.string.match_pm_help_on else R.string.match_pm_help_off)))
         }
         section(R.string.erg_help)
 
@@ -222,6 +247,14 @@ class SettingsActivity : AppearanceActivity() {
             extra = listOf(intro),
             updateHelp = getString(R.string.update_notices_help),
         ) { render() }
+    }
+
+    /** "Last ride with Power 12027, trainer vs PM: 150 W +5 %, 250 W +3 %. Cold start +7 %, warm after 12 min." */
+    private fun matchSummary(pm: String?, s: PmSummary): String {
+        val bands = s.bands.joinToString(", ") { (w, p) -> "$w W ${if (p >= 0) "+" else "\u2212"}${kotlin.math.abs(p)} %" }
+        val head = if (pm != null) getString(R.string.match_pm_last_named, pm, bands) else getString(R.string.match_pm_last, bands)
+        val cold = s.coldPct; val warm = s.warmMin
+        return if (cold != null && warm != null) head + " " + getString(R.string.match_pm_cold, if (cold >= 0) "+$cold" else "\u2212${-cold}", warm) else head
     }
 
     private fun section(help: Int) {

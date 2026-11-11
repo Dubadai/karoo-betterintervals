@@ -78,6 +78,14 @@
     <string name="erg_pct_ftp">%1$d %% FTP</string>
     <string name="erg_help">On an indoor ride profile, the trainer follows the workout. Set the Karoo\'s trainer card to Read-Only so only this app sets ERG.</string>
     <string name="cd_erg">ERG: tap to switch it on or off for this ride</string>
+    <string name="match_pm">Match PM</string>
+    <string name="match_pm_help_off">Off: the trainer holds the target by its own watts. On: ERG keeps checking your power meter (PM) and corrects the trainer live, at every wattage and as it warms up.</string>
+    <string name="match_pm_help_on">ERG keeps checking your power meter and corrects the trainer live, at every wattage and as it warms up.</string>
+    <string name="match_pm_new">Starts on your next ERG ride. Put your power meter above the trainer in the Karoo\'s Sensors.</string>
+    <string name="match_pm_from_trainer">Last ride the Karoo\'s power came from the trainer. Put your power meter above it in the Karoo\'s Sensors.</string>
+    <string name="match_pm_last_named">Last ride with %1$s, trainer vs PM: %2$s.</string>
+    <string name="match_pm_last">Last ride, trainer vs PM: %1$s.</string>
+    <string name="match_pm_cold">Cold start %1$s %%, warm after %2$d min.</string>
     <string name="erg_paused">Paused · ERG %1$d W</string>
     <string name="power_smoothing_help">The big watts: instant, or averaged over 3, 5 or 10 seconds. 3 s is steady and still quick.</string>
     <string name="smoothing_instant">Instant</string>

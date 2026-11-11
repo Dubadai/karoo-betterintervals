@@ -3,6 +3,8 @@ package com.daviddokakis.karoointerval
 import android.content.Context
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.ActiveRideProfile
+import io.hammerhead.karooext.models.DataType
+import io.hammerhead.karooext.models.StreamState
 import io.hammerhead.karooext.models.RideState
 import io.hammerhead.karooext.models.SavedDevices
 import kotlinx.coroutines.CoroutineScope
@@ -36,11 +38,28 @@ class ErgController(
     private val indoor = MutableStateFlow(false)
     private val recording = MutableStateFlow(false)
     private val match = MutableStateFlow<ErgTrainer.Match?>(null)
+    private var devices: SavedDevices? = null
+
+    // Match PM (docs/design/indoor-erg/powermatch): the Karoo's power, where it comes from, and the
+    // matcher for this ride (made when recording starts, saved when it ends).
+    @Volatile private var pmWatts: Int? = null
+    @Volatile private var pmAtMs = 0L
+    @Volatile private var pmSource: String? = null
+    private var matcher: PmMatcher? = null
+    private var pmName: String? = null
+    private var pmIsTrainer = false
+    private var loggedSource: String? = null
 
     fun start() {
         scope.launch { karoo.consumerFlow<ActiveRideProfile>().collect { indoor.value = it.profile.indoor } }
-        scope.launch { karoo.consumerFlow<RideState>().collect { recording.value = it !is RideState.Idle } }
-        scope.launch { karoo.consumerFlow<SavedDevices>().collect { match.value = trainerIn(it) } }
+        scope.launch { karoo.consumerFlow<RideState>().collect { onRecording(it !is RideState.Idle) } }
+        scope.launch { karoo.consumerFlow<SavedDevices>().collect { devices = it; match.value = trainerIn(it) } }
+        scope.launch {
+            karoo.streamDataFlow(DataType.Type.POWER).collect { s ->
+                val p = (s as? StreamState.Streaming)?.dataPoint ?: return@collect
+                pmWatts = p.singleValue?.toInt(); pmAtMs = System.currentTimeMillis(); pmSource = p.sourceId
+            }
+        }
         scope.launch {
             while (isActive) {
                 tick()
@@ -64,9 +83,10 @@ class ErgController(
             ErgInputs(indoor.value, !st.ergOffThisRide, recording.value, st, store.ergRecoveryPct.value),
             System.currentTimeMillis() / 1000,
         )
-        if (pacer.due(cmd, System.currentTimeMillis())) {
-            when (cmd) {
-                is ErgCommand.Target -> trainer.setTarget(cmd.watts)
+        val send = if (cmd is ErgCommand.Target) ErgCommand.Target(matched(cmd.watts, st, m)) else cmd
+        if (pacer.due(send, System.currentTimeMillis())) {
+            when (send) {
+                is ErgCommand.Target -> trainer.setTarget(send.watts)
                 ErgCommand.Release -> trainer.release()
             }
         }
@@ -78,12 +98,57 @@ class ErgController(
         workout.setErg(status, (cmd as? ErgCommand.Target)?.watts)
     }
 
+    /** Match PM: the watts to send for the planner's [target]; the target as is when it's off. */
+    private fun matched(target: Int, st: ScreenState, m: ErgTrainer.Match): Int {
+        val mm = matcher ?: return target
+        if (!store.matchPm.value) return target
+        val now = System.currentTimeMillis()
+        val source = pmSource
+        if (source != loggedSource) { loggedSource = source; Timber.i("Match PM: Karoo power from %s", source) }
+        pmIsTrainer = source != null && isTrainer(source, m)
+        if (pmIsTrainer) return target
+        if (source != null) devices?.devices?.firstOrNull { it.id == source }?.name?.let { pmName = it }
+        val steady = !st.paused && !st.workoutPaused && !st.finished && st.currentStep?.isRamp != true
+        val trainerW = trainer.watts?.takeIf { now - trainer.wattsAtMs < FRESH_MS }
+        val pm = pmWatts?.takeIf { now - pmAtMs < FRESH_MS }
+        return mm.next(target, steady, st.stepIndex, trainerW, pm, now / 1000)
+    }
+
+    private fun onRecording(on: Boolean) {
+        if (on == recording.value) return
+        recording.value = on
+        if (on) {
+            matcher = PmMatcher(PmMatcher.decode(store.pmBands))
+            pmIsTrainer = false; pmName = null
+        } else saveMatch()
+    }
+
+    /** End of a ride: the band table for the next one, and what it saw for Settings. */
+    private fun saveMatch() {
+        val mm = matcher ?: return
+        matcher = null
+        if (!store.matchPm.value) return
+        if (pmIsTrainer) { store.setPmLastRide(PmLastRide(fromTrainer = true)); return }
+        val summary = mm.summary() ?: return
+        store.pmBands = PmMatcher.encode(mm.bands())
+        store.setPmLastRide(PmLastRide(pmName = pmName, summary = summary))
+        Timber.i("Match PM: saved %s", summary)
+    }
+
     fun stop() {
+        saveMatch()
         trainer.stop()
         scope.cancel()
     }
 
     companion object {
+        private const val FRESH_MS = 3_000L
+
+        /** The Karoo's power comes from the trainer itself: an ANT+ id with its device number, or its address. */
+        fun isTrainer(source: String, m: ErgTrainer.Match): Boolean =
+            (m.antNumber != null && source.startsWith("${m.antNumber}-")) ||
+                (m.address != null && source.equals(m.address, ignoreCase = true))
+
         /**
          * The trainer paired on the Karoo: an enabled sensor with trainer data. Bluetooth: its
          * address. ANT+: the device number (the id's first part, "28436-17-5").

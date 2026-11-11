@@ -162,6 +162,31 @@ class PlanStore private constructor(context: Context) {
         _ergOn.value = on
     }
 
+    private val _matchPm = MutableStateFlow(prefs.getBoolean(KEY_MATCH_PM, false))
+
+    /** Settings › Trainer › Match PM: ERG makes the bike's power meter show the target. */
+    val matchPm: StateFlow<Boolean> = _matchPm
+
+    fun setMatchPm(on: Boolean) {
+        prefs.edit().putBoolean(KEY_MATCH_PM, on).apply()
+        _matchPm.value = on
+    }
+
+    /** Match PM's band table (trainer / PM per 50 W band), kept between rides. */
+    var pmBands: String?
+        get() = prefs.getString(KEY_PM_BANDS, null)
+        set(value) = prefs.edit().putString(KEY_PM_BANDS, value).apply()
+
+    private val _pmLastRide = MutableStateFlow(PmLastRide.decode(prefs.getString(KEY_PM_LAST, null)))
+
+    /** What Match PM saw on the last ride, for Settings; null before the first. */
+    val pmLastRide: StateFlow<PmLastRide?> = _pmLastRide
+
+    fun setPmLastRide(r: PmLastRide) {
+        prefs.edit().putString(KEY_PM_LAST, r.encode()).apply()
+        _pmLastRide.value = r
+    }
+
     private val _ergRecoveryPct = MutableStateFlow(prefs.getInt(KEY_ERG_RECOVERY, ErgPlanner.RECOVERY_PCT))
 
     /** Settings › Trainer › When paused: the trainer's target while paused or done, in % of FTP. */
@@ -343,6 +368,9 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_TILE_OUTLINE = "tile_outline"
         private const val KEY_ERG_ON = "erg_on"
         private const val KEY_ERG_RECOVERY = "erg_recovery_pct"
+        private const val KEY_MATCH_PM = "match_pm"
+        private const val KEY_PM_BANDS = "match_pm_bands"
+        private const val KEY_PM_LAST = "match_pm_last"
         private const val KEY_POWER_SMOOTHING = "power_smoothing"
         private const val KEY_SECOND_FIELD = "second_field"
         private const val KEY_CADENCE_SMOOTHING = "cadence_smoothing"
