@@ -233,10 +233,12 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
 
         // Top row: one or two values, each with its icon, drawn like BigWatts' heart-rate line
         listOf(R.id.top1_icon, R.id.top1, R.id.top2_icon, R.id.top2, R.id.target_next_top).forEach { v.setViewVisibility(it, View.GONE) }
-        val topItems = tops.map {
+        val topItems = listOfNotNull(ergItem(s)) + tops.map {
             TopRowArt.Item(topIcon(s, it, onTint), itemValue(s, it, inTile = false, gaugeMode = gaugeMode), heart = it == TopRow.HEART_RATE && !s.hrStep)
         }
-        val topLanding = s.landStep?.takeIf { tops.first() == TopRow.TARGET }?.targetAt(0)?.toString()
+        // Tap the top row with ERG on to switch it off (or back on) for this ride.
+        if (s.erg != null) v.setOnClickPendingIntent(R.id.top_block, ergToggleIntent)
+        val topLanding = s.landStep?.takeIf { tops.first() == TopRow.TARGET && s.erg == null }?.targetAt(0)?.toString()
         v.setImageViewBitmap(R.id.top_img, TopRowArt.draw(res, topItems, TOP_ROW_PX * density / 1.875f * scale, (40 * density).roundToInt(), color(R.color.text), topLanding))
         v.setContentDescription(R.id.top_img, topItems.joinToString(", ") { it.text })
 
@@ -303,7 +305,6 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setViewVisibility(R.id.btn_settings_paused, if (ridePaused) View.VISIBLE else View.GONE)
         v.setViewVisibility(R.id.btn_settings, if (ridePaused) View.INVISIBLE else View.VISIBLE)
         gearBelowKarooBar(v, R.id.btn_settings, s)
-        showErgPill(v, s)
         // Tonal: the text colour at 55%, so a range tint shows through (a translucent tint colour
         // alone comes out solid on the Karoo).
         v.setInt(R.id.btn_pause_icon, "setColorFilter", color(R.color.text))
@@ -856,44 +857,21 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         return out
     }
 
-    private fun ergPill(erg: ErgStatus, size: Float): android.graphics.Bitmap {
-        val (bg, fg) = when (erg) {
-            ErgStatus.HOLDING -> R.color.erg_on_bg to R.color.erg_on_fg
-            ErgStatus.FREE, ErgStatus.CONNECTING, ErgStatus.OFF -> R.color.erg_wait_bg to R.color.erg_wait_fg
-            ErgStatus.LOST -> R.color.erg_warn_bg to R.color.erg_warn_fg
-        }
-        return ErgPillArt.draw(erg, color(bg), color(fg), density / 1.875f * scale * size)
-    }
-
     /**
-     * The ERG pill (docs/design/indoor-erg/erg-screen). ERG on: big, above the plain watts, which move
-     * down to make room. Turned off for this ride: small and grey right of the gear, over the gauge.
-     * Either way a tap switches ERG for this ride.
+     * The ERG mark first in the top row (docs/design/indoor-erg/erg-top-row): a dot and "ERG", no
+     * background. Green dot: the trainer follows the workout; grey: connecting, free or off for this
+     * ride; amber: the trainer is lost. Null when ERG is off in Settings or the ride isn't indoors.
      */
-    private fun showErgPill(v: RemoteViews, s: ScreenState) {
-        val erg = s.erg
-        val top = (WATTS_TOP_DP * density).roundToInt()
-        v.setViewVisibility(R.id.erg_pill_top, View.GONE)
-        v.setViewPadding(R.id.top_block, 0, 0, 0, 0)
-        if (s.ergDrives && erg != null) {
-            val pill = ergPill(erg, BIG_PILL)
-            v.setImageViewBitmap(R.id.erg_pill, pill)
-            v.setViewVisibility(R.id.erg_pill, View.VISIBLE)
-            v.setOnClickPendingIntent(R.id.erg_pill, ergToggleIntent)
-            v.setViewPadding(R.id.watts, 0, top + pill.height + (4 * density).roundToInt(), 0, 0)
-            return
+    private fun ergItem(s: ScreenState): TopRowArt.Item? {
+        val erg = s.erg ?: return null
+        val (dot, word) = when (erg) {
+            ErgStatus.HOLDING -> R.color.karoo_green to "ERG"
+            ErgStatus.FREE -> R.color.erg_wait_fg to "ERG"
+            ErgStatus.CONNECTING -> R.color.erg_wait_fg to "ERG …"
+            ErgStatus.LOST -> R.color.erg_warn_fg to "ERG ✕"
+            ErgStatus.OFF -> R.color.erg_wait_fg to "ERG off"
         }
-        if (!s.ergDrives && s.wattsMode != WattsMode.GAUGE) {
-            v.setViewVisibility(R.id.erg_pill, View.GONE)
-            v.setViewPadding(R.id.watts, 0, top, 0, 0)
-        }
-        if (erg != ErgStatus.OFF || s.karooBarOnTop) return
-        val pill = ergPill(erg, 1f)
-        v.setImageViewBitmap(R.id.erg_pill_top, pill)
-        v.setViewVisibility(R.id.erg_pill_top, View.VISIBLE)
-        v.setOnClickPendingIntent(R.id.erg_pill_top, ergToggleIntent)
-        // Two values at the top reach the pill: the centred top row moves right by half its width.
-        if (s.topRowRight != null && s.topRowRight != s.topRow) v.setViewPadding(R.id.top_block, pill.width + (24 * density).roundToInt(), 0, 0, 0)
+        return TopRowArt.Item(TileArt.Icon(R.drawable.ic_erg_dot, color(dot)), word)
     }
 
     /** Screens without an interval row: the gear moves down out from under the Karoo's top strip. */
@@ -1123,10 +1101,6 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     companion object {
         /** The Karoo's PAUSE / "Searching GPS…" strip over a field's top, about 40 px on a Karoo 3. */
         private const val KAROO_BAR_DP = 24f
-        /** The plain watts' top padding (layout: 24dp), more with the ERG pill above them. */
-        private const val WATTS_TOP_DP = 24f
-        /** The ERG pill above the watts, against the small one by the gear. */
-        private const val BIG_PILL = 1.5f
         /** The Karoo's seven HR zone colours (hr_colors.xml), picked per zone count by hrZoneDrawable. */
         private val HR_ZONE_COLORS = listOf(
             R.color.karoo_hr_c1, R.color.karoo_hr_c2, R.color.karoo_hr_c3, R.color.karoo_hr_c4,
