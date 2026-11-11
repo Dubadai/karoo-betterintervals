@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recording icon</title>
+<style>
+  @font-face { font-family: PlexCond; src: url(__FONT_COND__); font-weight: 500; }
+  :root { color-scheme: dark; }
+  body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
+  h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
+  h2 { font-size:16px; font-weight:500; margin:22px 0 4px; text-align:center; }
+  p.d { color:#A9A6A0; margin:0 auto 18px; max-width:780px; text-align:center; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:24px; margin-bottom:12px; }
+  .dev { display:grid; justify-items:center; gap:8px; }
+  .cap { color:#A9A6A0; font-size:13px; max-width:380px; text-align:center; }
+  .zoom { display:flex; justify-content:center; gap:24px; margin-bottom:30px; }
+  .zoom canvas { width:380px; border-radius:8px; }
+</style>
+</head>
+<body>
+<h1>"Ride is still recording": which icon</h1>
+<p class="d">Under DONE on the Workout complete screen. A: a recording dot (the record symbol). B: the Karoo's own ride icon from its status bar (top left while a ride runs), in red. C: the bike now on main, for comparison. Close-ups under each pair.</p>
+<div id="rows"></div>
+<script>/*__KAROO_DEVICE_JS__*/</script>
+<script>
+const FRAME = "__FRAME__";
+const B = /*__BASE__*/;
+const fontsReady = document.fonts.load('500 24px PlexCond');
+const img = src => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
+const RED = { light: '#E53935', dark: '#FF5A52' };
+// Each icon drawn in a 24-unit box
+const ICONS = {
+  // record: a filled dot inside a ring
+  record(ctx, col) { ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(12, 12, 9, 0, 2 * Math.PI); ctx.stroke(); ctx.beginPath(); ctx.arc(12, 12, 5, 0, 2 * Math.PI); ctx.fill(); },
+  // the Karoo's ride icon: two open rings and a quarter wedge, open at the top right
+  karoo(ctx, col) { ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineCap = 'butt';
+    ctx.lineWidth = 2.4; ctx.beginPath(); ctx.arc(11, 13, 8.2, 0, 1.5 * Math.PI); ctx.stroke();
+    ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(11, 13, 3.8, 0.05 * Math.PI, 1.45 * Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(13.2, 10.8); ctx.lineTo(13.2, 1.6); ctx.arc(13.2, 10.8, 9.2, -0.5 * Math.PI, 0); ctx.closePath(); ctx.fill(); },
+  bike(ctx, col) { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.stroke(new Path2D('M2,16.5a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0z M15,16.5a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0z M5.5,16.5L9,9.5H16L18.5,16.5 M9,9.5L12,16.5L16,9.5 M7.5,6.5H10.5 M9,6.5L9,9.5 M14.5,6H17L16,9.5')); },
+};
+// Redraw the note under DONE with [kind]
+function note(shot, theme, kind) {
+  return ctx => {
+    ctx.drawImage(shot, 0, 0);
+    const c = document.createElement('canvas'); c.width = 480; c.height = 800; const g = c.getContext('2d'); g.drawImage(shot, 0, 0);
+    const d = g.getImageData(0, 0, 480, 800).data;
+    // the note's row: the red bike's pixels below DONE
+    let y0 = -1;
+    for (let y = 600; y < 800 && y0 < 0; y++) for (let x = 40; x < 240; x++) { const k = (y * 480 + x) * 4; if (d[k] > 180 && d[k + 1] < 110 && d[k + 2] < 110) { y0 = y; break; } }
+    let ink = null, best = theme === 'light' ? 999 : -1;
+    for (let y = y0; y < y0 + 24; y++) for (let x = 230; x < 420; x++) { const k = (y * 480 + x) * 4, l = d[k] + d[k + 1] + d[k + 2];
+      if (theme === 'light' ? l < best : l > best) { best = l; ink = `rgb(${d[k]},${d[k + 1]},${d[k + 2]})`; } }
+    const kb = ((y0 - 12) * 480 + 20) * 4, bg = `rgb(${d[kb]},${d[kb + 1]},${d[kb + 2]})`;
+    const mid = y0 + 12;
+    ctx.fillStyle = bg; ctx.fillRect(10, mid - 18, 460, 36);
+    const F = '500 24px PlexCond', text = 'RIDE IS STILL RECORDING';
+    ctx.font = F; const tw = ctx.measureText(text).width, iw = 26, gap = 8;
+    const x = 240 - (iw + gap + tw) / 2;
+    ctx.save(); ctx.translate(x, mid - iw / 2 - 1); ctx.scale(iw / 24, iw / 24); ICONS[kind](ctx, RED[theme]); ctx.restore();
+    ctx.fillStyle = ink; ctx.fillText(text, x + iw + gap, mid + 8.5);
+  };
+}
+(async () => {
+  await fontsReady;
+  const I = {}; for (const [k, v] of Object.entries(B)) I[k] = await img(v);
+  const root = document.getElementById('rows');
+  for (const [kind, title] of [['record', 'A: recording dot'], ['karoo', 'B: the Karoo’s ride icon'], ['bike', 'C: the bike (as built)']]) {
+    const h = document.createElement('h2'); h.textContent = title; root.append(h);
+    const row = document.createElement('div'); row.className = 'devices';
+    const zoom = document.createElement('div'); zoom.className = 'zoom';
+    for (const t of ['light', 'dark']) {
+      const dev = await KarooDevice.load({ frame: FRAME, screen: B['done-' + t] });
+      const scr = dev.screen({ draw: note(I['done-' + t], t, kind), scale: 2 });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 380));
+      const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = `${title} (${t})`; el.append(cap);
+      row.append(el);
+      const z = document.createElement('canvas'); z.width = 760; z.height = 127; z.getContext('2d').drawImage(scr, 0, 1420, 960, 160, 0, 0, 760, 127); zoom.append(z);
+    }
+    root.append(row, zoom);
+  }
+})();
+</script>
+</body>
+</html>

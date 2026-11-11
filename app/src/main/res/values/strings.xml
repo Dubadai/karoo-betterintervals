@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DDB BetterIntervals</string>
+    <string name="extension_name">DDB BetterIntervals</string>
+    <string name="field_name">Workout screen</string>
+    <string name="field_description">Full-page screen for structured workouts: watts, target, time left and the whole workout.</string>
+    <string name="action_skip">Next interval</string>
+    <string name="action_previous">Previous interval</string>
+    <string name="action_pause">Pause or resume workout (ride keeps recording)</string>
+
+    <string name="workout_complete">Workout complete</string>
+    <string name="paused">Paused</string>
+    <string name="interval_of">Interval %1$d / %2$d</string>
+    <string name="next_label">Next · Interval %1$d / %2$d</string>
+    <string name="next_last">Last interval</string>
+    <string name="lap_avg">Lap avg</string>
+    <string name="np">Lap NP</string>
+    <string name="target">Target</string>
+    <string name="left">%1$s left</string>
+    <string name="lands_at">Lands at %1$s</string>
+    <string name="step_summary">%1$s · %2$d W</string>
+    <string name="step_summary_ramp">%1$s · %2$d-%3$d W</string>
+    <!-- A heart-rate step in Next up: bpm, or % of LTHR (tap the Target tile) -->
+    <string name="step_summary_bpm">%1$s · %2$d bpm</string>
+    <string name="step_summary_bpm_range">%1$s · %2$d-%3$d bpm</string>
+    <string name="step_summary_lthr">%1$s · %2$d%% LTHR</string>
+    <string name="step_summary_lthr_range">%1$s · %2$d-%3$d%% LTHR</string>
+    <!-- …written as % of max HR (intervals.icu "85% HR") -->
+    <string name="step_summary_hrpct">%1$s · %2$d%% HR</string>
+    <string name="step_summary_hrpct_range">%1$s · %2$d-%3$d%% HR</string>
+    <!-- The Target tile's label on a heart-rate step with % of LTHR on -->
+    <string name="lthr_label" formatted="false">% LTHR</string>
+    <string name="hr_pct_label" formatted="false">% HR</string>
+    <!-- Where heart rate would show on a heart-rate step: the power instead -->
+    <string name="power_label">Power</string>
+    <string name="cd_power">Power</string>
+    <string name="cd_heart_rate">Heart rate</string>
+    <string name="hr">HR</string>
+    <string name="jumping_to">Jumping to</string>
+    <string name="power_name_instant">Power</string>
+    <string name="power_name_3s">3s power</string>
+    <string name="power_name_5s">5s power</string>
+    <string name="power_name_10s">10s power</string>
+    <string name="current_lap_time">Current lap time</string>
+    <string name="last_lap_label">Last lap</string>
+    <string name="last_lap_value">%1$s · %2$d W</string>
+    <string name="lap_hr">Lap HR</string>
+    <string name="ride_avg">Ride avg</string>
+    <string name="ride_hr">Ride HR</string>
+    <string name="ride_cadence">Ride cad</string>
+    <string name="top_row">Top row</string>
+    <string name="top_row_help">What the top of the workout screen shows: one value or two side by side. Lap avg and Target are always on screen; whatever isn\'t at the top shows in the tile next to Lap avg.</string>
+    <string name="top_row_one">One</string>
+    <string name="top_row_two">Two</string>
+    <string name="top_row_left">Left</string>
+    <string name="top_row_right">Right</string>
+    <string name="bpm_value">%1$d bpm</string>
+    <string name="settings_title">Settings</string>
+    <!-- The big title on the Settings page (the Karoo lists the app as app_name) -->
+    <string name="app_title">BetterIntervals</string>
+    <string name="appearance">Appearance</string>
+    <string name="appearance_dark">Dark</string>
+    <string name="appearance_light">Light</string>
+    <string name="appearance_auto">Auto</string>
+    <string name="appearance_help">Auto follows the Karoo\'s In-Ride Appearance. Dark and Light apply to the workout screen and these pages.</string>
+    <string name="tiles">Tiles</string>
+    <string name="tiles_tonal">Tonal</string>
+    <string name="tiles_outline">Outline</string>
+    <string name="tiles_help">How Lap avg, Target and Heart rate sit on the workout screen: a grey fill, or a thin border like Next up.</string>
+    <string name="power_smoothing">Power</string>
+    <string name="power_smoothing_help">The big watts: instant, or averaged over 3, 5 or 10 seconds. 3 s is steady and still quick.</string>
+    <string name="smoothing_instant">Instant</string>
+    <string name="smoothing_3s">3 s</string>
+    <string name="smoothing_5s">5 s</string>
+    <string name="smoothing_10s">10 s</string>
+    <string name="second_field">Heart rate or cadence</string>
+    <string name="second_field_help">What shows next to the watts and in the HR tile.</string>
+    <string name="cadence">Cadence</string>
+    <string name="cadence_short">CAD</string>
+    <string name="lap_cadence">Lap cad</string>
+    <string name="cadence_smoothing">Cadence</string>
+    <string name="cadence_smoothing_help">Instant, or averaged over 3, 5 or 10 seconds.</string>
+    <string name="rpm_value">%1$d rpm</string>
+    <string name="example_description">Example of the workout screen with these settings: interval 4 of 10 at 280 watts.</string>
+    <string name="start_workout">Start workout</string>
+    <string name="first_up">First up</string>
+    <string name="tap_to_cancel">Tap to cancel</string>
+    <string name="done">Done</string>
+    <string name="ride_still_recording">Ride is still recording</string>
+    <string name="time">Time</string>
+    <string name="avg_power">Avg power</string>
+    <string name="done_np">NP</string>
+    <string name="avg_hr">Avg HR</string>
+    <string name="avg_cadence">Avg cad</string>
+    <string name="starting_with">Starting with</string>
+    <string name="start_at">Start at %1$d / %2$d</string>
+    <string name="off">Off</string>
+    <string name="on">On</string>
+    <string name="intervals_account">intervals.icu account</string>
+    <string name="connected">Connected</string>
+    <string name="not_connected">Not connected</string>
+    <string name="cd_gauge">Power gauge: watts against the target range. Tap to change how the range is coloured.</string>
+    <string name="cd_chart">Workout profile</string>
+    <string name="cd_settings">Workouts and settings</string>
+    <string name="cd_pause">Pause workout</string>
+    <string name="cd_resume">Resume workout</string>
+    <string name="cd_previous">Previous interval</string>
+    <string name="cd_skip">Skip to next interval</string>
+    <string name="setup_help">Enter your intervals.icu API key (intervals.icu → Settings → Developer settings). Athlete ID 0 means your own account.</string>
+    <string name="setup_athlete">Athlete ID</string>
+    <string name="setup_api_key">API key</string>
+    <string name="setup_loading">Loading…</string>
+    <string name="setup_error">Couldn\'t load workouts</string>
+    <string name="sync_wrong_key">intervals.icu didn\'t accept the API key or athlete ID</string>
+    <string name="sync_server_error">intervals.icu had a problem (error %1$d). Try Sync again later.</string>
+    <string name="workouts_title">Workouts</string>
+    <string name="today">Today</string>
+    <string name="account">Account</string>
+    <string name="account_title">Account</string>
+    <string name="save">Save</string>
+    <string name="cd_back">Back</string>
+    <string name="connect_intervals">Connect intervals.icu</string>
+    <string name="save_and_load">Save and load workouts</string>
+    <string name="current_workout">Current workout</string>
+    <!-- Workouts page, while a workout is loaded: its power targets in % (1% a tap) -->
+    <string name="scale_workout">Scale workout</string>
+    <string name="scale_help" formatted="false">Power targets in % of the plan.</string>
+    <string name="scale_pct">%1$d%%</string>
+    <string name="cd_scale_down">Easier: 1% less</string>
+    <string name="cd_scale_up">Harder: 1% more</string>
+    <string name="stop_workout">Remove workout</string>
+    <string name="need_api_key">Connect your intervals.icu account to see your workouts.</string>
+    <string name="none_this_week">No planned rides on intervals.icu this week.</string>
+    <string name="today_label">Today · %1$s</string>
+    <string name="back_to_ride">Back to ride</string>
+    <string name="sync">Sync</string>
+    <string name="wifi_off">Wi-Fi off</string>
+    <string name="offline">Offline</string>
+    <string name="turn_on">Turn on</string>
+    <string name="syncing">Syncing…</string>
+    <string name="synced_at">Synced %1$s</string>
+    <string name="heart_rate">Heart rate</string>
+    <string name="lap_number">Lap %1$d</string>
+    <string name="last_lap">Last lap %1$s · %2$d W</string>
+    <string name="workout_paused">Workout paused</string>
+    <string name="workout_auto_paused">Workout auto-paused</string>
+    <!-- Ride paused by the Karoo: shorter, next to the gear that comes down then -->
+    <string name="ride_paused_short">Paused</string>
+    <string name="ride_auto_paused_short">Auto-paused</string>
+    <string name="next_up">Next up</string>
+    <string name="restarting_interval">Restarting interval</string>
+    <plurals name="jumping_ahead">
+        <item quantity="one">Jumping %d ahead</item>
+        <item quantity="other">Jumping %d ahead</item>
+    </plurals>
+    <plurals name="jumping_back">
+        <item quantity="one">Jumping %d back</item>
+        <item quantity="other">Jumping %d back</item>
+    </plurals>
+    <string name="confirm_move">Confirm move</string>
+    <string name="confirming">Confirming… %1$d</string>
+    <string name="cd_cancel_jump">Cancel jump</string>
+    <string name="move_cancelled">Move cancelled</string>
+
+    <!-- First-run introduction -->
+    <string name="intro_skip">Skip</string>
+    <string name="intro_next">Next</string>
+    <string name="intro_done">Done</string>
+    <string name="intro_pick_workout">Pick a workout</string>
+    <string name="intro_step">Step %1$d of %2$d</string>
+    <string name="intro_welcome_title">Welcome</string>
+    <string name="intro_welcome">Runs your intervals.icu workouts on the Karoo. Connect your account to load this week\'s rides.</string>
+    <string name="intro_key_hint">Paste or type your key</string>
+    <string name="intro_key_help">On intervals.icu: Settings → Developer settings.</string>
+    <string name="intro_athlete_help">Leave it at 0: that\'s your own account.</string>
+    <string name="intro_look_title">Choose a look</string>
+    <string name="intro_ride_title">Add it to a ride</string>
+    <string name="intro_ride_1">1  In Profiles, open a profile, then Data Pages, and add a page with +.</string>
+    <string name="intro_ride_2">2  Tap ADD FIELD and pick DDB BetterIntervals. It fills the whole page.</string>
+    <string name="cd_intro_data_pages">The Karoo\'s Data Pages list, with the + button ringed</string>
+    <string name="cd_intro_select_data">The Karoo\'s Select Data list, with DDB BetterIntervals ringed</string>
+    <string name="intro_watts_title">Tap the watts</string>
+    <string name="intro_watts">In a ride, tap the big number to switch how the watts look. It remembers your pick.</string>
+    <string name="intro_watts_number">Number</string>
+    <string name="intro_watts_colour">Colour</string>
+    <string name="intro_watts_background">Background</string>
+    <string name="intro_watts_both">Both</string>
+    <string name="intro_watts_gauge">Gauge</string>
+    <string name="intro_change_later">Change the rest in</string>
+    <string name="intro_settings">Settings.</string>
+    <string name="intro_again">Show introduction</string>
+    <string name="continue_workout">▶ Continue</string>
+    <string name="continue_from">Interval %1$d / %2$d · %3$s in</string>
+    <string name="start_over">Start over</string>
+    <string name="finish">Workout finished</string>
+    <!-- How BetterIntervals tells about an update (settingsAppRows' updateHelp): a Karoo notification -->
+    <string name="update_notices_help">A card in Control Center › Notifications when a new version is out. Checked once a day, never during a ride.</string>
+</resources>

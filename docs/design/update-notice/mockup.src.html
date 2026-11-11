@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Update Notice Mockup</title>
+<style>
+@font-face { font-family: Plex; src: url(__FONT_REG__); font-weight: 400; }
+@font-face { font-family: Plex; src: url(__FONT_SEMI__); font-weight: 600; }
+:root { --bg:#f6f5f2; --fg:#1d1d1b; --muted:#6b6a66; --card:#fff; --line:#e2e0da; --accent:#2f7d4f; --warn:#a15c00; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; --card:#21211f; --line:#34332f; --accent:#6cc28f; --warn:#f0a94a; } }
+:root[data-theme="dark"] { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; --card:#21211f; --line:#34332f; --accent:#6cc28f; --warn:#f0a94a; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system, system-ui, sans-serif; }
+main { max-width: 1080px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 28px; margin: 0 0 4px; }
+h2 { font-size: 20px; margin: 40px 0 8px; }
+p.lead { color: var(--muted); margin: 0 0 24px; }
+.flow { display:flex; flex-wrap:wrap; gap: 20px; align-items:flex-start; }
+.step { flex: 1 1 260px; max-width: 340px; }
+.step canvas { display:block; max-width:100%; height:auto; }
+.step h3 { font-size: 15px; margin: 10px 0 2px; }
+.step p { margin: 0; color: var(--muted); font-size: 14px; }
+.arrow { align-self:center; font-size: 28px; color: var(--muted); }
+.box { background: var(--card); border:1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin: 12px 0; }
+.box.rec { border-color: var(--accent); }
+.tag { display:inline-block; font-size:12px; font-weight:600; padding:1px 8px; border-radius:99px; background:var(--accent); color:var(--bg); margin-left:6px; vertical-align: 2px; }
+ul { padding-left: 20px; margin: 6px 0; }
+li { margin: 3px 0; }
+code { font-size: 13px; }
+.q { color: var(--warn); font-weight: 600; }
+.zoom { margin-top: 12px; }
+</style>
+</head>
+<body>
+<main>
+<h1>BetterIntervals: "update available" on the Karoo</h1>
+<p class="lead">Round 1. Drawn on real screenshots from our test Karoo 3 (light mode). The Notifications page and the App info page with its UPDATE button are the Karoo's own; only the BetterIntervals card and texts are drawn in.</p>
+
+<h2>How it would work (option B)</h2>
+<div class="flow">
+  <div class="step"><div id="d1"></div><h3>1. A card in Notifications</h3><p>Not riding, at most once a day: BetterIntervals checks GitHub. If there's a newer release, a card appears here (and the count goes up). Never during a ride.</p></div>
+  <div class="arrow">→</div>
+  <div class="step"><div id="d2"></div><h3>2. Tap it: the Karoo's own App info page</h3><p>Release notes from GitHub and the Karoo's UPDATE button. Tap UPDATE: the Karoo downloads the APK over Wi-Fi and installs it. Settings and the intervals.icu key are kept.</p></div>
+</div>
+<div class="zoom"><div id="z1"></div><p style="color:var(--muted);font-size:14px">The card at 2×. Header, text and the action word are ours; the look is the Karoo's.</p></div>
+
+<h2>What I found</h2>
+<div class="box">
+<ul>
+<li><b>The Karoo already has an update button</b> for side-loaded apps. An app names a <code>manifest.json</code> in its AndroidManifest (<code>io.hammerhead.karooext.MANIFEST_URL</code>). Settings › Apps › the app then shows About, Release notes and an <b>UPDATE</b> button that installs <code>latestApkUrl</code>. Seen working on our test Karoo for kDouble (screenshot <code>03</code>).</li>
+<li><b>But the Karoo never tells you.</b> It fetches the manifest only when you open that page (logcat). So without our own check, nobody finds the update.</li>
+<li><b>We can open that page for the rider</b>: <code>io.hammerhead.action.APP_INFO</code> with <code>packageName</code> opens it (tested). A notification card can only open one of our activities, so a tiny invisible activity hands over to that page.</li>
+<li><b>Notifications</b>: <code>SystemNotification(style = UPDATE)</code> puts a card in Control Center › Notifications, like myWindsock's. <code>InRideAlert</code> is for rides only, so we don't use it.</li>
+<li><b>Checking</b> goes through the Karoo's own HTTP (Wi-Fi, or the phone over Bluetooth), the same way BetterIntervals already talks to intervals.icu. Headwind and Powerbar (timklge) do exactly this.</li>
+<li><b>Releases need one more file</b>: <code>manifest.json</code> next to the APK, made by a Gradle task from the version in <code>build.gradle.kts</code>. URL: <code>…/releases/latest/download/manifest.json</code>.</li>
+<li><b>Only builds that have this can be told.</b> 0.5.1/0.5.2 on the Karoos don't name a manifest, so the first version with it still goes the old way (Companion app).</li>
+<li><b>ClearWind</b>: its only release is a pre-release, and GitHub's <code>releases/latest</code> skips pre-releases. Rolling this out there needs a normal release (or a fixed URL per release).</li>
+</ul>
+</div>
+
+<h2>Options</h2>
+<div class="box">
+<b>A. Karoo's page only.</b> Add the manifest to each release, nothing else. No code; the UPDATE button appears in Settings › Apps, but the rider has to go and look.
+</div>
+<div class="box rec">
+<b>B. A + our notification card</b><span class="tag">Recommended</span><br>
+What's drawn above. Check when the Karoo starts and then once a day, only when no ride is recording; one card per new version (it stays until dismissed or updated). Tapping it opens the Karoo's App info page, where UPDATE installs. Reusable: one file, <code>UpdateCheck.kt</code>, plus a manifest line and the Gradle task, also in <code>karoo-starter/</code>.
+</div>
+<div class="box">
+<b>C. B, but our own update screen.</b> The card opens a BetterIntervals page (version, notes, Update button that then goes to the Karoo page). More work and a second page saying the same as the Karoo's; only worth it if the Karoo's page ever goes away.
+</div>
+
+<h2>Open questions</h2>
+<div class="box">
+<ul>
+<li><span class="q">1.</span> Option B, with the card as drawn ("UPDATE AVAILABLE" / "BetterIntervals 0.5.3" / "You have 0.5.2. Tap to see what's new and update.")?</li>
+<li><span class="q">2.</span> A setting to turn the notices off (Settings page, on by default)? I'd add it; Headwind has one.</li>
+<li><span class="q">3.</span> Testing on your Karoo: it has the 0.5.1 release with your intervals.icu key. A debug build means uninstalling it (the key is lost). Instead I can install a test build signed with the release key as 0.5.2 (same versionCode 7), so it installs over 0.5.1 and keeps your data, and a later real release still updates it. I'd fake "0.5.3 on GitHub" with a debug-only test manifest. OK?</li>
+</ul>
+</div>
+</main>
+<script>
+/*__KAROO_DEVICE_JS__*/
+const REFS = "__REFS__";
+const FRAME = '__FRAME__';
+const W = 320;
+
+function px(img, x, y) { const c = document.createElement('canvas'); c.width = c.height = 1; const g = c.getContext('2d'); g.drawImage(img, x, y, 1, 1, 0, 0, 1, 1); const d = g.getImageData(0,0,1,1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; }
+const loadImg = src => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
+function wrap(ctx, text, x, y, maxW, lh) {
+  const words = text.split(' '); let line = '';
+  for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { ctx.fillText(line, x, y); y += lh; line = w; } else line = t; }
+  if (line) ctx.fillText(line, x, y); return y + lh;
+}
+
+(async () => {
+  await document.fonts.load('22px Plex'); await document.fonts.load('600 22px Plex');
+
+  // 1. Notifications page with our card on top
+  const nImg = await loadImg(REFS['02-cc-left-light']);
+  const panel = px(nImg, 240, 500), head = px(nImg, 200, 135), body = px(nImg, 200, 245), act = px(nImg, 350, 147), red = px(nImg, 390, 40);
+  const dev1 = await KarooDevice.load({ frame: FRAME, screen: REFS['02-cc-left-light'] });
+  const s1 = dev1.screen({ draw(ctx) {
+    ctx.fillStyle = panel; ctx.fillRect(57, 112, 366, 576);
+    // our card
+    ctx.fillStyle = body; ctx.beginPath(); ctx.roundRect(67, 120, 346, 168, 14); ctx.fill();
+    ctx.fillStyle = head; ctx.beginPath(); ctx.roundRect(67, 120, 346, 54, [14, 14, 0, 0]); ctx.fill();
+    // icon: circle with a down arrow
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(97, 147, 15, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(97, 138); ctx.lineTo(97, 156); ctx.moveTo(90, 149); ctx.lineTo(97, 156); ctx.lineTo(104, 149); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = '600 22px Plex'; ctx.fillText('UPDATE AVAILABLE', 124, 155);
+    ctx.fillStyle = act; ctx.textAlign = 'right'; ctx.fillText('VIEW', 399, 155); ctx.textAlign = 'left';
+    ctx.fillStyle = '#fff'; ctx.font = '600 23px Plex'; ctx.fillText('BetterIntervals 0.5.3', 90, 210);
+    ctx.font = '19px Plex'; ctx.fillStyle = '#d8d8d8';
+    wrap(ctx, 'You have 0.5.2. Tap to see what’s new and update.', 90, 240, 310, 26);
+    // the existing myWindsock card, moved down
+    ctx.drawImage(nImg, 66, 119, 348, 142, 66, 299, 348, 142);
+    // badge 1 → 2
+    ctx.fillStyle = red; ctx.beginPath(); ctx.arc(404, 57, 22, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#000'; ctx.font = '600 34px Plex'; ctx.textAlign = 'center'; ctx.fillText('2', 404, 69); ctx.textAlign = 'left';
+  }});
+  document.getElementById('d1').append(dev1.device(s1, W));
+  document.getElementById('z1').append(dev1.crop(s1, [56, 110, 368, 340], 1.4));
+
+  // 2. Karoo App info page (kDouble screenshot, texts replaced)
+  const aImg = await loadImg(REFS['03-karoo-app-info-update-light']);
+  const bg = px(aImg, 240, 265), white = px(aImg, 20, 20), pill = px(aImg, 340, 700);
+  const dev2 = await KarooDevice.load({ frame: FRAME, screen: REFS['03-karoo-app-info-update-light'] });
+  const s2 = dev2.screen({
+    draw(ctx) {
+      ctx.fillStyle = white; ctx.fillRect(60, 0, 360, 50);
+      ctx.fillStyle = '#000'; ctx.font = '600 30px Plex'; ctx.textAlign = 'center'; ctx.fillText('DDB BETTERINTERVALS', 240, 37); ctx.textAlign = 'left';
+      ctx.fillStyle = bg; ctx.fillRect(0, 262, 480, 538);
+      ctx.fillStyle = '#000'; ctx.font = '600 22px Plex'; ctx.fillText('ABOUT', 19, 300);
+      ctx.font = '22px Plex';
+      let y = wrap(ctx, 'Your intervals.icu workout on the Karoo: target watts, interval timer and the workout chart on one screen.', 19, 356, 440, 30);
+      ctx.font = '600 22px Plex'; ctx.fillText('RELEASE NOTES', 19, y + 26);
+      ctx.font = '22px Plex';
+      wrap(ctx, '0.5.3: BetterIntervals now tells you when a new version is out (never during a ride).', 19, y + 82, 440, 30);
+      // the Karoo's back and UPDATE pills, redrawn over the cleared page
+      ctx.fillStyle = pill;
+      ctx.beginPath(); ctx.roundRect(-50, 683, 150, 102, 51); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(320, 683, 210, 102, 51); ctx.fill();
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 2.5; ctx.beginPath();
+      ctx.moveTo(52, 734); ctx.lineTo(32, 734); ctx.moveTo(41, 725); ctx.lineTo(32, 734); ctx.lineTo(41, 743); ctx.stroke();
+      ctx.fillStyle = '#000'; ctx.font = '600 30px Plex'; ctx.fillText('UPDATE', 353, 746);
+    },
+  });
+  document.getElementById('d2').append(dev2.device(s2, W));
+})();
+</script>
+</body>
+</html>

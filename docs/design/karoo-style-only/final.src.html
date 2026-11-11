@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BetterIntervals, Karoo style</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
+  h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
+  h2 { font-size:15px; font-weight:500; margin:8px 0 12px; text-align:center; color:#CFCCC6; }
+  p.d { color:#A9A6A0; margin:0 auto 22px; max-width:780px; text-align:center; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:24px; margin-bottom:34px; }
+  .dev { display:grid; justify-items:center; gap:8px; }
+  .cap { color:#A9A6A0; font-size:13px; text-align:center; }
+</style>
+</head>
+<body>
+<h1>BetterIntervals, Karoo style only</h1>
+<p class="d">Drawn by the app's own code (this branch) on a Karoo 3 emulator, data field boundaries on, the showcase ride (1:12:40, 280 W, 132 bpm, HR zone 2).</p>
+<div id="rows"></div>
+<script>/*__KAROO_DEVICE_JS__*/</script>
+<script>
+const FRAME = "__FRAME__";
+const SCREENS = /*__SCREENS__*/;
+(async () => {
+  for (const [title, shots] of SCREENS) {
+    const h = document.createElement('h2'); h.textContent = title; document.getElementById('rows').append(h);
+    const row = document.createElement('div'); row.className = 'devices';
+    for (const t of ['light', 'dark']) {
+      const dev = await KarooDevice.load({ frame: FRAME, screen: shots[t] });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(dev.screen({ scale: 2 }), 380));
+      const c = document.createElement('div'); c.className = 'cap'; c.textContent = t === 'light' ? 'Light' : 'Dark'; el.append(c);
+      row.append(el);
+    }
+    document.getElementById('rows').append(row);
+  }
+})();
+</script>
+</body>
+</html>

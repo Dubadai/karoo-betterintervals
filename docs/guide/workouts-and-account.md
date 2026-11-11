@@ -1,0 +1,48 @@
+# Workouts and Account
+
+Open the **Workouts** page with ⚙ on the ride screen, or open **DDB BetterIntervals** from the Karoo's
+app list. ⚙ on the Workouts page opens [Settings](settings.md).
+
+## Workouts
+
+<img src="images/workouts.png" width="240" alt="Workouts page"> <img src="images/workouts-week.png" width="240" alt="This week's workouts">
+
+- **Sync** loads this week's planned workouts from intervals.icu. The page shows when it last
+  synced.
+- Today's workouts come first, then the coming days, then the days already past this week.
+- Each card shows the workout's name, its shape in zone colours, its length and its day.
+- Tap a card to pick it. You go straight back to the ride screen.
+- **Remove workout** takes the current workout off, so the ride screen shows the
+  [free-ride screen](free-ride.md).
+- **Back to ride** (yellow) returns to the ride.
+
+The app never picks a workout by itself.
+
+### Scale workout
+
+<img src="images/workouts-scale.png" width="240" alt="Workouts page: Scale workout at 105%">
+
+While a workout is loaded, **Scale workout** sits above it: − and + make every power target 1%
+easier or harder (100% is the workout as planned). The card shows the scale and its shape grows
+or shrinks with it, and the ride screen uses the scaled watts at once: where you are in the
+workout doesn't change. Heart-rate targets aren't scaled. Picking another workout starts it at
+100%.
+
+## Offline
+
+Syncing goes through the Karoo, over Wi-Fi or your phone. Without either, the page says **Enable
+Wi-Fi to sync** with a **Turn on Wi-Fi** button. It syncs by itself as soon as Wi-Fi connects. The
+last synced week stays available offline.
+
+<img src="images/workouts-offline.png" width="240" alt="Workouts page offline, with Turn on Wi-Fi">
+
+## Account
+
+On the Workouts page, tap ⚙, then **intervals.icu account**. The row says **Connected** once a
+key is saved.
+
+- **API key**: from intervals.icu under **Settings → Developer settings**. It's hidden as you
+  type and stored only on the Karoo.
+- **Athlete ID**: leave it at `0` for your own account.
+
+<img src="images/account.png" width="240" alt="Account page">

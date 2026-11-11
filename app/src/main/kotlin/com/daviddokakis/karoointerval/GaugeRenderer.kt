@@ -1,0 +1,186 @@
+package com.daviddokakis.karoointerval
+
+import com.dubadai.karoo.common.*
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
+import android.graphics.RectF
+import android.graphics.Typeface
+import androidx.core.content.ContextCompat
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.sin
+import kotlin.math.sqrt
+
+/**
+ * Draws the power gauge: a grey arc with the target range in green, a needle at the current
+ * watts, and the watts number under the arc. Everything is one bitmap of the gauge's space.
+ *
+ * The gauge fills its space: it always uses the full width, and when the space is short (a route
+ * is loaded) the arc gets flatter (smaller sweep, larger radius) instead of the whole gauge
+ * shrinking. The watts take the biggest size that fits under the arc, and sit up level with the
+ * arc's ends when there's room.
+ *
+ * The arc spans the target ± 10 % ([ARC_SPAN]), and at least twice the band ([BAND_TIMES]). The needle stops at
+ * the ends. It points at the number itself (Settings › Power picks the smoothing for both): a
+ * calmer 10 s needle under a 3 s number disagreed by 20–30 W on a ride (2026-11-10).
+ */
+class GaugeRenderer(private val context: Context) {
+
+    private fun color(id: Int) = ContextCompat.getColor(context, id)
+
+    private class Layout(val sweep: Float, val r: Float, val cy: Float, val sw: Float, val textSize: Float, val baseline: Float)
+
+    private val numberPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
+
+    init {
+        // The watts in the Karoo's value font and spacing (KarooType: Relative, −0.04)
+        numberPaint.typeface = KarooType.value
+        numberPaint.letterSpacing = KarooType.VALUE_LETTER_SPACING
+    }
+
+    /** The arc that gives the watts the biggest size in a [w] × [h] space (flatter when short). */
+    private fun layout(w: Float, h: Float, text: String): Layout {
+        val sw = w * 0.07f
+        val gap = w * 0.014f
+        // Room around the arc for the needle, which sticks out past the arc's edge (plus its
+        // see-through outline); without it the needle is cut off at the top and the ends.
+        val m = NEEDLE_OVERHANG * w
+        var best: Layout? = null
+        var sweep = 140f
+        while (sweep >= 70f) {
+            val half = Math.toRadians(sweep / 2.0)
+            val r = ((w - sw - 2f * m) / 2f / sin(half)).toFloat()
+            val cy = m + sw / 2f + r
+            val endY = (cy - r * cos(half) + sw / 2f).toFloat()   // bottom of the arc's rounded ends
+            if (endY <= h) {
+                val inner = r - sw / 2f - gap
+                var lo = 20f
+                var hi = w * 0.36f
+                repeat(18) {
+                    val f = (lo + hi) / 2f
+                    numberPaint.textSize = f
+                    val tw = numberPaint.measureText(text)
+                    val base = min(h - gap, endY + 0.22f * f)
+                    val top = base - CAP * f
+                    val x = min(tw / 2f, inner - 1f)
+                    val arcY = cy - sqrt(max(0f, inner * inner - x * x))
+                    if (tw / 2f < inner && top >= arcY) lo = f else hi = f
+                }
+                if (best == null || lo > best.textSize + 0.5f) {
+                    best = Layout(sweep, r, cy, sw, lo, min(h - gap, endY + 0.22f * lo))
+                }
+            }
+            sweep -= 2f
+        }
+        return best ?: Layout(140f, w * 0.4f, m + w * 0.43f, sw, w * 0.2f, h - gap)
+    }
+
+    /**
+     * @param width bitmap width in px.
+     * @param height bitmap height in px: the gauge's space on screen.
+     * @param numberColor colour of the watts digits (plain text colour, or a range colour).
+     * @param bandColor the target range's colour: Karoo green for power, the heart red for a
+     *   heart-rate step (then [watts] is the heart rate and the target and range are in bpm).
+     */
+    fun render(width: Int, height: Int, watts: Int?, target: Int?, range: IntRange?, numberColor: Int, bandColor: Int = color(R.color.karoo_green), empty: String? = null): Bitmap {
+        val w = width.coerceAtLeast(1)
+        val h = height.coerceAtLeast(1)
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val c = Canvas(bmp)
+        val text = watts?.toString() ?: "--"
+        val g = layout(w.toFloat(), h.toFloat(), text)
+
+        val cx = w / 2f
+        val oval = RectF(cx - g.r, g.cy - g.r, cx + g.r, g.cy + g.r)
+        val start = 270f - g.sweep / 2f     // Android angles: clockwise from 3 o'clock; 270 = top
+        val arc = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = g.sw
+            strokeCap = Paint.Cap.ROUND
+        }
+        arc.color = color(R.color.gauge_track)
+        c.drawArc(oval, start, g.sweep, false, arc)
+
+        val center = target ?: range?.let { (it.first + it.last) / 2 }
+        if (center != null && center > 0) {
+            val bandHalf = range?.let { (it.last - it.first) / 2f } ?: 0f
+            val half = max(center * ARC_SPAN, bandHalf * BAND_TIMES)
+            val lo = center - half
+            val hi = center + half
+            fun fraction(v: Float) = ((v - lo) / (hi - lo)).coerceIn(0f, 1f)
+
+            if (range != null) {
+                arc.color = bandColor
+                val a = fraction(range.first.toFloat())
+                val b = fraction(range.last.toFloat())
+                c.drawArc(oval, start + a * g.sweep, (b - a) * g.sweep, false, arc)
+            }
+
+            if (watts != null) {
+                // Needle across the arc: a transparent gap first (so whatever is behind the field
+                // shows through), then the solid bar.
+                val rad = Math.toRadians((start + fraction(watts.toFloat()) * g.sweep).toDouble())
+                val r0 = g.r - g.sw / 2f - w * 0.0125f
+                val r1 = g.r + g.sw / 2f + w * 0.0125f
+                val x0 = cx + r0 * cos(rad).toFloat()
+                val y0 = g.cy + r0 * sin(rad).toFloat()
+                val x1 = cx + r1 * cos(rad).toFloat()
+                val y1 = g.cy + r1 * sin(rad).toFloat()
+                val needle = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    style = Paint.Style.STROKE
+                    strokeCap = Paint.Cap.ROUND
+                }
+                needle.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+                needle.strokeWidth = w * 0.036f
+                c.drawLine(x0, y0, x1, y1, needle)
+                needle.xfermode = null
+                needle.color = color(R.color.text)
+                needle.strokeWidth = w * 0.02f
+                c.drawLine(x0, y0, x1, y1, needle)
+            }
+        }
+
+        if (empty != null) {
+            // The Karoo's empty state, centred where the number goes (as BigWatts)
+            val k = context.resources.displayMetrics.density / 1.875f
+            val p = KarooType.emptyPaint(empty, (width / k).toInt()).apply { color = numberColor; textSize *= k }
+            val ink = android.graphics.Rect(); numberPaint.textSize = g.textSize; numberPaint.getTextBounds("8", 0, 1, ink)
+            val b = android.graphics.Rect(); p.getTextBounds(empty, 0, empty.length, b)
+            c.drawText(empty, cx, g.baseline + (ink.top + ink.bottom) / 2f - (b.top + b.bottom) / 2f, p)
+            return bmp
+        }
+        numberPaint.color = numberColor
+        numberPaint.textSize = g.textSize
+        c.drawText(text, cx, g.baseline, numberPaint)
+        return bmp
+    }
+
+    companion object {
+        /**
+         * How sensitive the gauge is: the arc spans the target ± this share of it, so the same
+         * number of watts moves the needle the same way whatever the band (280–320 W at 300: an
+         * arc from 270 to 330 W). Wider = calmer needle. Tried after a ride on 2026-11-08 (was at
+         * least 4 × the band's half width, which made tight bands jumpy and wide ones dull).
+         */
+        private const val ARC_SPAN = 0.10f
+        /**
+         * …and at least twice the band, so the green is at most half the arc and the needle can
+         * show you're out of it (one-number power targets are ± 12 % since 2026-11-10).
+         */
+        private const val BAND_TIMES = 2f
+
+        /** Digit height as a share of the text size (IBM Plex). */
+        private const val CAP = 0.71f
+
+        /**
+         * How far the needle reaches past the arc's outer edge, as a share of the width: its
+         * length past the edge (0.0125) plus half its see-through outline (0.018).
+         */
+        private const val NEEDLE_OVERHANG = 0.0125f + 0.018f
+    }
+}

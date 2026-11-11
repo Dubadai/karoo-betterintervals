@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Karoo's own heart rate zone colours: what its HR field shows with Zone Color on (ride app
+  colours climb1..climb7, the same in light and dark mode). Which ones a rider sees depends on how
+  many zones their profile has (ScreenRenderer.hrZoneDrawable); for 5 zones c1 c2 c3 c4 c6.
+  Text and icon on them are black, as on the Karoo.
+-->
+<resources>
+    <color name="karoo_hr_c1">#FF60EEB2</color>
+    <color name="karoo_hr_c2">#FF00B988</color>
+    <color name="karoo_hr_c3">#FFFFF500</color>
+    <color name="karoo_hr_c4">#FFFB8C65</color>
+    <color name="karoo_hr_c5">#FFFE581F</color>
+    <color name="karoo_hr_c6">#FFD60404</color>
+    <color name="karoo_hr_c7">#FFB700A2</color>
+    <color name="karoo_hr_text">#FF000000</color>
+</resources>

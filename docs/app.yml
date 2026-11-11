@@ -1,0 +1,86 @@
+# One source for the README (top block) and the Reddit post: edit here, then run setup/docs.sh.
+# headline: "path | alt text", light first, then dark. Text in our plain voice; no real names.
+name: BetterIntervals
+apk: betterintervals.apk
+intro: |
+  *Formerly Interval Screen. On the Karoo it is listed as **DDB BetterIntervals**, next to the other DDB apps.*
+
+  A full-page data field for the Hammerhead Karoo 3 that makes structured workouts easy to follow.
+  It loads your planned workouts from [intervals.icu](https://intervals.icu) and runs them itself, so
+  you can jump forward **and back** between intervals.
+headline:
+  - docs/images/betterintervals-light.gif | BetterIntervals on three Karoo 3s during a workout, in three looks (gauge, coloured number, coloured background): the last seconds of interval 4, then the recovery starts and the watts drop to the new target
+  - docs/images/betterintervals-dark.jpg | The same in dark mode, at one moment of the ride
+features:
+  - **Before, during and after:** a workout waits for **START WORKOUT** (pick where to start with
+      ⏮ / ⏭, then a 5-second countdown), runs interval by interval with beeps before each change,
+      and ends on a **Workout complete** screen with its time, average power, NP and heart rate.
+  - **Big power** (instant or 3 / 5 / 10 s): starts on the **power gauge**; tap the watts for a plain,
+      coloured number, coloured background or both. Blue is below the range, green in it, red above it.
+  - **Interval, time left and progress bar,** with lap average and target (tap Lap avg for Lap NP,
+      tap Target for the range) and heart rate. **Settings › Top row** puts heart rate, cadence or the
+      target at the top.
+  - **Next up with ⏮ / ⏭:** a jump starts a 5-second countdown with beeps, so you can get ready.
+  - **The whole workout as a chart** in zone colours with a "now" marker; tap it to zoom in.
+  - **Pause** stops the interval timer (for traffic, say) while the ride keeps recording. One lap per
+      interval in your ride file, and short beeps before each interval ends.
+  - **Without a workout:** big watts, the current lap time, and two tiles you tap through: LAP AVG,
+      LAP NP, RIDE AVG and HR, LAP HR, RIDE HR (heart rate in the Karoo's zone colours), plus the
+      last lap.
+  - **The Karoo's own look:** its fonts, field sizes, icons and colours. **Dark / Light / Auto** follows the
+      Karoo or stays fixed.
+  - **Remote button actions:** next interval, previous interval, pause or resume the workout.
+more: |
+  ### Without a workout
+
+  Big power and the current lap, and two tiles you tap through: the lap's average, the lap's NP and the
+  whole ride's average, and heart rate now, for the lap and for the ride.
+
+  <img src="docs/images/free-ride.png" alt="Free ride on a Karoo 3: 3S POWER 280, the current lap time 4:21, the tiles on LAP NP 289 and LAP HR 138 (heart rate in its zone colour), and the last lap">
+
+  <img src="docs/images/free-ride-dark.png" alt="The same in dark mode">
+
+  ### Settings
+
+  Each change shows straight away in the example at the top.
+
+  <img src="docs/images/settings.png" alt="Settings on three Karoo 3s: the example and Appearance; Power smoothing and Heart rate or cadence; Top row and Update notices">
+
+  Values show `--` when a sensor isn't connected. There's a step-by-step
+  [guide with pictures](docs/guide/README.md) for every feature.
+
+  Building it yourself or making a release: see [docs/DEVELOPING.md](docs/DEVELOPING.md).
+install:
+  - On your phone, open the latest [release](../../releases/latest) and share the `.apk` download
+      link to the **Hammerhead Companion** app. It installs the app on your paired Karoo.
+      (With a computer: `adb install betterintervals.apk`.)
+  - On the Karoo, open **DDB BetterIntervals** from the app list, tap the person icon and enter your
+      intervals.icu API key (intervals.icu → Settings → Developer settings). Keep Athlete ID `0`.
+  - Pick a workout from this week's list.
+  - In a ride profile, add a page with one field and choose **DDB BetterIntervals → Workout screen**.
+  - Optional: assign *Next interval*, *Previous interval* and *Pause or resume workout* to remote buttons.
+install_note: |
+  Syncing uses the Karoo's Wi-Fi, or your phone through the Companion app. Your API key is stored
+  only on the Karoo.
+
+  Don't also start the same workout in Karoo's own workout player: this app marks a lap at every
+  interval change, which would move Karoo's player along too.
+reddit:
+  title: |
+    BetterIntervals update: it looks like the Karoo now, plus START WORKOUT and a workout summary
+  body: |
+    A few days ago I posted my intervals.icu workout screen for the Karoo 3. Thanks for all the great feedback! It has changed a lot since then, so here's what's new.
+
+    It's called BetterIntervals now, and it looks like the Karoo's own data pages: same fonts, same tiles, and the power gauge is the default view. It picks up your power zones and heart rate zones from your Karoo profile.
+
+    - START WORKOUT: a loaded workout waits for you. Pick where to start, tap the big yellow button, and a 5 second countdown gets you going.
+    - Workout done: after the last interval you get time, average power, NP and heart rate. The ride keeps recording.
+    - Top row: heart rate, cadence or the target range, your choice.
+    - Riding without a workout: tap the tiles to switch between lap and whole-ride numbers (avg power, NP, heart rate).
+    - Settings with a live preview, light, dark or auto, and 3/5/10 s power smoothing.
+    - Updates on the Karoo: when a new version is out you get a notification and update right there. No phone or computer needed after this one.
+
+    Still free and open source. If you already have it, install `betterintervals.apk` from the latest release once more; your settings and API key are kept.
+  closing: Let me know how it works on your rides.
+versions:
+

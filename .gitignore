@@ -1,0 +1,17 @@
+.gradle/
+build/
+build.nosync/
+local.properties
+.idea/
+*.iml
+.DS_Store
+captures/
+.kotlin/
+
+# Release signing key and its passwords: never commit these
+keystore.properties
+*.jks
+*.keystore
+
+# Field gallery: the big framed images are made on demand (design-assets/tools/field-gallery)
+docs/design/gallery/artboard/

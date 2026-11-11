@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data field boundaries</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#2A2A2A; color:#E8E6E1; font:14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; margin:0; padding:28px 16px; }
+  h1 { font-size:18px; font-weight:500; margin:0 0 4px; text-align:center; }
+  p.d { color:#A9A6A0; margin:0 auto 22px; max-width:780px; text-align:center; }
+  .devices { display:flex; flex-wrap:wrap; justify-content:center; gap:30px; margin-bottom:34px; }
+  .dev { display:grid; justify-items:center; gap:8px; }
+  .cap { color:#A9A6A0; font-size:13px; max-width:240px; text-align:center; }
+</style>
+</head>
+<body>
+<h1>BetterIntervals with data field boundaries on: round 2</h1>
+<p class="d">Drawn on Karoo 3 screenshots (gauge screen). The Karoo's grey is an estimate until it's measured on the device.</p>
+<div class="devices" id="light"></div>
+<div class="devices" id="dark"></div>
+<div class="devices" id="zoom"></div>
+
+<script>/*__KAROO_DEVICE_JS__*/</script>
+<script>
+const FRAME = "__FRAME__";
+const SHOTS = { light: "__SHOT_light__", dark: "__SHOT_dark__" };
+
+// Measured on the screenshots (px, 480×800): field starts at y≈64; tiles 16–234 / 246–464 × 461–562;
+// Next up box 16–464 × 574–664 with a 2 px outline; corners ≈15 px (8dp). Tile fill 235 (light) / 31 (dark).
+const FIELD_TOP = 64;
+const TILES = [[16, 461, 218, 101], [246, 461, 218, 101]];
+const NEXT = [16, 574, 448, 90];
+const R = 15;
+// Estimated Karoo colours with boundaries on (to be measured on the device).
+const KAROO = {
+  light: { bg: 255, tile: 235, page: 230, tileA: 214, card: 255 },
+  dark:  { bg: 0,   tile: 31,  page: 28,  tileA: 54,  card: 0 },
+};
+
+const rr = ([x, y, w, h], r = R) => { const p = new Path2D(); p.roundRect(x, y, w, h, r); return p; };
+const inset = ([x, y, w, h], d) => [x + d, y + d, w - 2 * d, h - 2 * d];
+
+/** Repaint the field as if its surfaces had other colours, keeping text and icons.
+ *  Light: ink is dark, so scale towards the new surface. Dark: ink is light, so scale from white. */
+function resurface(theme, { status, page, tile, nextFill, dropOutline }) {
+  return ctx => {
+    const k = KAROO[theme], img = ctx.getImageData(0, 0, 480, 800), d = img.data;
+    const tiles = TILES.map(t => rr(t)), nextOuter = rr(NEXT), nextInner = rr(inset(NEXT, 3), R - 3);
+    const remap = (v, from, to) => theme === 'light'
+      ? Math.min(255, v * to / from)
+      : Math.max(0, 255 - (255 - v) * (255 - to) / (255 - from));
+    for (let y = 0; y < 800; y++) for (let x = 0; x < 480; x++) {
+      const i = (y * 480 + x) * 4, r = d[i], g = d[i + 1], b = d[i + 2];
+      let from = k.bg, to = y < FIELD_TOP ? status : page;
+      if (y >= FIELD_TOP) {
+        if (tiles.some(p => ctx.isPointInPath(p, x + .5, y + .5))) { from = k.tile; to = tile; }
+        else if (ctx.isPointInPath(nextOuter, x + .5, y + .5)) {
+          const inner = ctx.isPointInPath(nextInner, x + .5, y + .5);
+          if (!inner && dropOutline) { d[i] = d[i + 1] = d[i + 2] = nextFill; continue; }
+          if (inner) to = nextFill;
+        }
+      }
+      if (from === to) continue;
+      if (Math.max(r, g, b) - Math.min(r, g, b) > 24) continue;   // keep coloured marks (gauge, chart, icons) as they are
+      d[i] = remap(r, from, to); d[i + 1] = remap(g, from, to); d[i + 2] = remap(b, from, to);
+    }
+    ctx.putImageData(img, 0, 0);
+  };
+}
+
+const VARIANTS = theme => {
+  const k = KAROO[theme];
+  return [
+    ['Now: a white card on the Karoo grey', { status: k.page, page: k.bg, tile: k.tile, nextFill: k.bg }],
+    ['Chosen: white tile cards, Next up keeps only its border', { status: k.page, page: k.page, tile: k.card, nextFill: k.page }],
+  ];
+};
+
+(async () => {
+  for (const t of ['light', 'dark']) {
+    const dev = await KarooDevice.load({ frame: FRAME, screen: SHOTS[t] });
+    const row = document.getElementById(t);
+    for (const [cap, opts] of VARIANTS(t)) {
+      const scr = dev.screen({ draw: resurface(t, opts) });
+      const el = document.createElement('div'); el.className = 'dev'; el.append(dev.device(scr, 240));
+      const c = document.createElement('div'); c.className = 'cap'; c.textContent = `${cap} (${t})`; el.append(c); row.append(el);
+      if (t === 'light') {
+        const z = document.createElement('div'); z.className = 'dev'; z.append(dev.crop(scr, [0, 380, 480, 300], 0.75));
+        const zc = document.createElement('div'); zc.className = 'cap'; zc.textContent = cap.split(':')[0]; z.append(zc);
+        document.getElementById('zoom').append(z);
+      }
+    }
+  }
+})();
+</script>
+</body>
+</html>

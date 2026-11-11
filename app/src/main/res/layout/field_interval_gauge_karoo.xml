@@ -1,0 +1,811 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Interval screen in the Gauge watts mode (5th option when you tap the watts): Target range in the
+  top row, a power gauge with the watts inside, interval time and progress, then Lap avg / HR tiles.
+  The other four watts modes use field_interval.xml. Sized for a Karoo 3 full page
+  (about 255x385 dp); ScreenRenderer rescales text and the chart height for other field sizes.
+
+  KAROO NATIVE STYLING variant (gauge screen): generated from field_interval_gauge.xml and kept in step
+  with it. Karoo's condensed IBM Plex font, uppercase labels with green icons, Karoo-style cells
+  on tonal tiles, Next up with its outline, Karoo-yellow skip and resume buttons.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/field_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Upper part: gauge, interval and progress, tiles. Its background is the optional
+             target-range tint (third watts mode), which reaches the field's top and side edges and
+             fades out halfway between the tiles and the Next box. -->
+        <LinearLayout
+            android:id="@+id/upper"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:clipToPadding="false"
+            android:paddingStart="8dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="3dp">
+
+        <!-- Power gauge with the watts inside (one bitmap from GaugeRenderer). fitCenter keeps
+             the arc and the number together when Karoo makes the field shorter (a loaded route).
+             The top margin leaves room for the Target label and range in the top row. -->
+        <ImageView
+            android:id="@+id/gauge"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="34dp"
+            android:layout_weight="1"
+            android:contentDescription="@string/cd_gauge"
+            android:scaleType="fitCenter" />
+
+        <!-- Interval number + time left + progress. The label (or the paused box) is centred on the
+             time's digits, like free ride's CURRENT LAP TIME. -->
+        <LinearLayout
+            android:layout_marginStart="3dp"
+            android:layout_marginEnd="3dp"
+            android:layout_marginTop="4dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Ride paused by the Karoo: its yellow bar covers the gear at the top, so the gear
+                 comes down here, before the paused box (only then) -->
+            <FrameLayout
+                android:id="@+id/btn_settings_paused"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_btn_pause"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/settings_paused_icon"
+                    android:layout_width="19dp"
+                    android:layout_height="19dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/cd_settings"
+                    android:src="@drawable/ic_settings"
+                    android:tint="@color/text" />
+            </FrameLayout>
+
+            <!-- Timer icon on the label's capitals (12dp icon, baseline 10dp from its top) -->
+            <ImageView
+                android:id="@+id/icon_timer"
+                android:layout_width="13dp"
+                android:layout_height="13dp"
+                android:layout_marginEnd="4dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_timer"
+                android:tint="@color/karoo_green"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/interval_label"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/text"
+                android:textSize="15sp"
+                android:fontFamily="relative"
+                android:letterSpacing="-0.04"
+                />
+
+            <!-- While paused: a yellow box sized to its text, centred on the time's line, then a spacer -->
+            <LinearLayout
+                android:id="@+id/paused_box"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/bg_paused"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="7dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="9dp"
+                android:paddingBottom="5dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/paused_icon"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginEnd="4dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_pause_filled" />
+
+                <TextView
+                    android:id="@+id/paused_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="ibm-plex-sans-condensed"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textAllCaps="true"
+                    android:textColor="@color/paused_fg"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/paused_spacer"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:importantForAccessibility="no"
+                android:visibility="gone" />
+
+            <!-- Time left, counting down ("−2:18"), Plex Sans Medium like the cell values -->
+            <TextView
+                android:id="@+id/time_left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="relative"
+                android:letterSpacing="-0.04"
+                android:includeFontPadding="false"
+                android:textColor="@color/text"
+                android:textSize="28sp" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/interval_progress"
+            android:layout_marginStart="3dp"
+            android:layout_marginEnd="3dp"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginBottom="4.5dp"
+            android:max="1000"
+            android:progressDrawable="@drawable/progress_interval" />
+
+        <!-- Lap avg and HR: one compact block, the same on every screen (54dp cells, 6dp insets). Header: green icons left, 15sp label right, icons centred on the capitals via
+             android:baseline (12dp icon, baseline 11dp from its top). Value: Karoo's number font
+             (Plex Sans Regular, 90% wide, tighter), 48sp (the code shrinks a value that's too wide); its box starts 30dp
+             up (under the header's empty space) and hangs 7dp below the cell (the font's empty
+             descender space), so the digits sit 12 px above the cell's bottom, like Karoo's fields. -->
+        <LinearLayout
+            android:id="@+id/tiles_row"
+            android:layout_width="match_parent"
+            android:layout_height="75dp"
+            android:layout_marginStart="-5dp"
+            android:layout_marginEnd="-5dp"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:id="@+id/lap_tile"
+                android:clipToPadding="false"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginEnd="1dp"
+                android:background="@drawable/bg_tile_tonal"
+                android:paddingStart="4dp"
+                android:paddingEnd="3dp"
+                android:paddingTop="6dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:baselineAligned="true"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/icon_lap"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:layout_marginEnd="3dp"
+                        android:baseline="11dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_lap"
+                        android:tint="@color/karoo_green" />
+
+                    <ImageView
+                        android:id="@+id/icon_bolt"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:layout_marginEnd="3dp"
+                        android:baseline="11dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_bolt_filled"
+                        android:tint="@color/karoo_green" />
+
+                    <TextView
+                        android:id="@+id/lap_avg_label"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="ibm-plex-sans-condensed"
+                        android:gravity="end"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:text="@string/lap_avg"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/lap_avg"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginBottom="-1.5dp"
+                    android:fontFamily="relative"
+                android:letterSpacing="-0.04"
+                    android:includeFontPadding="false"
+                    android:gravity="end|bottom"
+                    android:maxLines="1"
+                    android:textColor="@color/text"
+                    android:textSize="31sp"
+                    android:layout_marginEnd="-1.5dp" />
+            
+                <!-- The tile's header and number as one image (TileArt: the Karoo's own rules, 1:1);
+                     it covers the whole tile, so the margins undo the tile's padding -->
+                <ImageView
+                    android:id="@+id/lap_tile_img"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="-4dp"
+                    android:layout_marginEnd="-3dp"
+                    android:layout_marginTop="-6dp"
+                    android:layout_marginBottom="0dp"
+                    android:importantForAccessibility="no"
+                    android:scaleType="fitXY" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/tile2"
+                android:clipToPadding="false"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="1dp"
+                android:background="@drawable/bg_tile_tonal"
+                android:paddingStart="4dp"
+                android:paddingEnd="3dp"
+                android:paddingTop="6dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:baselineAligned="true"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/tile2_icon"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:layout_marginEnd="3dp"
+                        android:baseline="11dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_heart" />
+
+                    <ImageView
+                        android:id="@+id/tile2_icon2"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:layout_marginEnd="3dp"
+                        android:baseline="11dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_heart"
+                        android:visibility="gone" />
+                    <TextView
+                        android:id="@+id/tile2_label"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="ibm-plex-sans-condensed"
+                        android:gravity="end"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:text="@string/hr"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tile2_value"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginBottom="-1.5dp"
+                    android:fontFamily="relative"
+                android:letterSpacing="-0.04"
+                    android:includeFontPadding="false"
+                    android:gravity="end|bottom"
+                    android:maxLines="1"
+                    android:textColor="@color/text"
+                    android:textSize="31sp"
+                    android:layout_marginEnd="-1.5dp" />
+            
+                <!-- The tile's header and number as one image (TileArt: the Karoo's own rules, 1:1);
+                     it covers the whole tile, so the margins undo the tile's padding -->
+                <ImageView
+                    android:id="@+id/tile2_img"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="-4dp"
+                    android:layout_marginEnd="-3dp"
+                    android:layout_marginTop="-6dp"
+                    android:layout_marginBottom="0dp"
+                    android:importantForAccessibility="no"
+                    android:scaleType="fitXY" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- While choosing a jump: a small ✕ and "Confirm move" (right, above ⏭) in place of the tiles -->
+        <LinearLayout
+            android:id="@+id/confirm_row"
+            android:layout_width="match_parent"
+            android:layout_height="75dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <FrameLayout
+                android:id="@+id/btn_confirm_x"
+                android:layout_width="48dp"
+                android:layout_marginEnd="6dp"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_tile_tonal">
+
+                <ImageView
+                    android:id="@+id/th_interval_gauge_karoo_4"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/cd_cancel_jump"
+                    android:src="@drawable/ic_x"
+                    android:tint="@color/text" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/btn_confirm"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_confirm_karoo">
+
+            <!-- Fills up while a remote-made choice confirms itself -->
+            <ProgressBar
+                android:id="@+id/confirm_fill"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:max="1000"
+                android:progressDrawable="@drawable/progress_confirm_karoo"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/th_interval_gauge_karoo_5"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginEnd="8dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_check"
+                    android:tint="@color/karoo_yellow_fg" />
+
+                <TextView
+                    android:fontFamily="ibm-plex-sans-condensed"
+                    android:id="@+id/confirm_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/confirm_move"
+                    android:textColor="@color/karoo_yellow_fg"
+                    android:textAllCaps="true"
+                    android:textSize="17sp"
+                    android:textStyle="normal" />
+            </LinearLayout>
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- "Move cancelled" after the ✕ next to Confirm move: same 52 dp, tap to hide -->
+        <LinearLayout
+            android:id="@+id/move_cancelled"
+            android:layout_width="match_parent"
+            android:layout_height="75dp"
+            android:background="@drawable/bg_info"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/th_interval_gauge_karoo_6"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="8dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_info"
+                android:tint="@color/info_fg" />
+
+            <TextView
+                android:fontFamily="ibm-plex-sans-condensed"
+                android:id="@+id/move_cancelled_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:textAllCaps="true"
+                android:text="@string/move_cancelled"
+                android:textColor="@color/info_fg"
+                android:textSize="16sp"
+                android:textStyle="normal" />
+        </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Lower part: next interval / countdown and the chart -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:clipToPadding="false"
+            android:paddingStart="3dp"
+            android:paddingTop="3dp"
+            android:paddingEnd="3dp"
+            android:paddingBottom="1dp">
+
+        <!-- "Next up" box: ⏮ near the left edge, ⏭ near the right edge, each with an invisible tap
+             area covering its end of the box; centred text. While a jump is being chosen, a fill
+             grows behind everything (3 steps) and tapping the middle cancels. -->
+        <FrameLayout
+            android:id="@+id/next_box"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_outline">
+
+            <ImageView
+                android:id="@+id/select_fill"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="start"
+                android:importantForAccessibility="no"
+                android:scaleType="fitXY"
+                android:src="@drawable/bg_select_fill" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:id="@+id/btn_previous"
+                    android:layout_width="56dp"
+                    android:layout_height="match_parent">
+
+                    <FrameLayout
+                        android:id="@+id/th_interval_gauge_karoo_7"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:layout_gravity="start|center_vertical"
+                        android:layout_marginStart="7dp"
+                        android:background="@drawable/bg_btn_pause">
+
+                        <ImageView
+                            android:id="@+id/th_interval_gauge_karoo_8"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@string/cd_previous"
+                            android:src="@drawable/ic_previous" />
+                    </FrameLayout>
+                </FrameLayout>
+
+                <LinearLayout
+                    android:id="@+id/next_mid"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:fontFamily="ibm-plex-sans-condensed"
+                        android:id="@+id/next_label"
+                        android:textAllCaps="true"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="1dp"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/next_value"
+                        android:layout_width="match_parent"
+                        android:layout_height="24dp"
+                        android:autoSizeMaxTextSize="23sp"
+                        android:autoSizeMinTextSize="11sp"
+                        android:autoSizeStepGranularity="1sp"
+                        android:autoSizeTextType="uniform"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:textColor="@color/text"
+                android:fontFamily="relative"
+                android:letterSpacing="-0.04"
+                />
+                </LinearLayout>
+
+                <FrameLayout
+                    android:id="@+id/btn_skip"
+                    android:layout_width="56dp"
+                    android:layout_height="match_parent">
+
+                    <FrameLayout
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:id="@+id/skip_bg"
+                        android:layout_gravity="end|center_vertical"
+                        android:layout_marginEnd="7dp"
+                        android:background="@drawable/bg_btn_skip_inverted">
+
+                        <ImageView
+                            android:id="@+id/skip_icon"
+                            android:tint="@color/bg"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@string/cd_skip"
+                            android:src="@drawable/ic_skip" />
+                    </FrameLayout>
+                </FrameLayout>
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- Jump countdown (replaces the Next up box). Karoo style: the Karoo's workout purple,
+             filling with its darker purple as the seconds run down (countdown_fill); the number
+             left, "JUMPING TO" and the step right, spaced like Next up. -->
+        <FrameLayout
+            android:id="@+id/countdown_box"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="6dp"
+            android:visibility="gone">
+
+            <ProgressBar
+                android:id="@+id/countdown_fill"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:max="1000"
+                android:progressDrawable="@drawable/progress_countdown_karoo" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp">
+
+                <TextView
+                    android:id="@+id/countdown"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="relative"
+                android:letterSpacing="-0.04"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/karoo_purple_fg"
+                    android:textSize="31sp" />
+
+                <!-- Same text block as Next up: 11sp label, 1dp gap, the step on a 24dp line (up to 20sp),
+                     centred in the 48dp box; here aligned right. -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="end|center_vertical"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/countdown_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="1dp"
+                        android:fontFamily="ibm-plex-sans-condensed"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:text="@string/jumping_to"
+                        android:textAllCaps="true"
+                        android:textColor="@color/karoo_purple_sub"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/countdown_value"
+                        android:layout_width="match_parent"
+                        android:layout_height="24dp"
+                        android:autoSizeMaxTextSize="23sp"
+                        android:autoSizeMinTextSize="11sp"
+                        android:autoSizeStepGranularity="1sp"
+                        android:autoSizeTextType="uniform"
+                        android:gravity="end|center_vertical"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:textColor="@color/karoo_purple_fg"
+                android:fontFamily="relative"
+                android:letterSpacing="-0.04"
+                />
+                </LinearLayout>
+            </LinearLayout>
+        </FrameLayout>
+
+        <ImageView
+            android:id="@+id/chart"
+            android:layout_marginStart="-3dp"
+            android:layout_marginEnd="-3dp"
+            android:layout_marginBottom="-1dp"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:contentDescription="@string/cd_chart"
+            android:scaleType="fitXY" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Corner buttons on the outer layer, so they sit right in the corners. No background,
+         48dp touch area each. -->
+    <FrameLayout
+        android:id="@+id/btn_settings"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="top|start">
+
+        <ImageView
+            android:id="@+id/th_interval_gauge_karoo_9"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="top|start"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="4dp"
+            android:contentDescription="@string/cd_settings"
+            android:src="@drawable/ic_settings"
+            android:alpha="0.55"
+            android:tint="@color/text" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/btn_pause"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="top|end">
+
+        <ImageView
+            android:id="@+id/btn_pause_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="top|end"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="4dp"
+            android:contentDescription="@string/cd_pause"
+            android:src="@drawable/ic_pause" />
+    </FrameLayout>
+
+    <!-- Top row, centred between the gear and pause on the gear's line (Settings › Top row): one
+         or two values, each an icon centred on its digits (18dp icon box, baseline 16dp: the box's
+         middle sits 7dp above the baseline, the middle of 20sp digits). During a jump, "→ 250"
+         (target_next) shows where it would land, next to the target. -->
+    <FrameLayout
+        android:id="@+id/top_block"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_gravity="top|center_horizontal">
+
+        <!-- The top row as one image (TopRowArt: BigWatts' heart-rate line rules) -->
+        <ImageView
+            android:id="@+id/top_img"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:scaleType="center" />
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:baselineAligned="true"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/top1_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="6dp"
+                android:baseline="17dp"
+                android:contentDescription="@string/target"
+                android:src="@drawable/ic_target" />
+
+            <TextView
+                android:id="@+id/top1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:fontFamily="relative"
+                android:letterSpacing="-0.04"
+                android:includeFontPadding="false"
+                android:textColor="@color/text"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/target_next_top"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:fontFamily="relative"
+                android:letterSpacing="-0.04"
+                android:includeFontPadding="false"
+                android:textColor="@color/text"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/top2_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="6dp"
+                android:baseline="17dp"
+                android:contentDescription="@string/cadence"
+                android:src="@drawable/ic_top_cadence"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/top2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:fontFamily="relative"
+                android:letterSpacing="-0.04"
+                android:includeFontPadding="false"
+                android:textColor="@color/text"
+                android:textSize="20sp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- Resume button while you've paused the workout: a green half-pill, rounded on the left and
+         flat against the screen edge. Replaces the small pause button. -->
+    <FrameLayout
+        android:id="@+id/btn_resume"
+        android:layout_width="64dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/bg_resume_karoo"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/th_interval_gauge_karoo_10"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:layout_marginStart="3dp"
+            android:contentDescription="@string/cd_resume"
+            android:src="@drawable/ic_play_filled"
+            android:tint="@color/karoo_yellow_fg" />
+    </FrameLayout>
+</FrameLayout>
