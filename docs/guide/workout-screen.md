@@ -29,14 +29,16 @@ From top to bottom:
 | Part | What it shows |
 | --- | --- |
 | ⚙ (top left) | Opens the [Workouts page](workouts-and-account.md) |
-| ❤ number | Heart rate |
-| ⏸ (top right) | [Pauses the workout](pausing.md) |
+| Top row | Heart rate, or what you pick in [Settings › Workout screen](settings.md#workout-screen) |
+| ⏸ (top right, outdoors) | [Pauses the workout](pausing.md). Indoors the Karoo's own start / pause button does it |
+| ⓘ (top right, indoors) | The whole workout so far: elapsed, time left, average power, NP, heart rate, cadence, calories, max, TSS and IF. Tap anywhere to close it |
 | Big number | Power (5 s by default, see [Settings](settings.md)). Tap it to [change the colours](watts-colours.md) |
+| Under it | The target (a ramp: its start and end), or what you pick in Settings |
 | Interval 1 / 16 | Which interval you're in, out of how many |
 | Time | Time left in this interval, counting down (−2:18) |
 | Bar | How much of the interval is done |
-| Left tile | Lap avg or [Lap NP](tiles.md) for this interval |
-| Right tile | Target or [Target range](tiles.md) for this interval |
+| Left tile | Lap avg by default; [tap it](tiles.md) to go through what you switch on |
+| Right tile | Cadence by default; [tap it](tiles.md) to go through what you switch on |
 | Next up | The next interval's length and watts, with ⏮ / ⏭ to [jump](jumping.md) |
 | Chart | The whole workout |
 
@@ -72,8 +74,9 @@ Tap the chart to zoom in on the current interval. Tap again to see the whole wor
 ## When the workout is done
 
 After the last interval a **Workout complete** screen shows the workout's own numbers: its time,
-average power, NP and average heart rate. Tap **DONE** to take the workout off and go back to the
-free-ride screen. The ride itself is still recording, as the blinking red dot under DONE says.
+average power, NP and average heart rate. Tap **Close summary** to take the workout off and go
+back to the free-ride screen. The ride itself is still recording, as the blinking red dot says.
+With the ride paused (indoors, say), pressing the Karoo's own resume button does the same.
 
 <img src="images/done.png" width="240" alt="Workout complete: a green check, the workout's name, time 52:00, average power 232, NP 251, average HR 132, and a yellow DONE button">
 

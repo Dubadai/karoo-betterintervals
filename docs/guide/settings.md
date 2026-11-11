@@ -56,17 +56,27 @@ field), **3 s**, **5 s** or **10 s**.
 
 <img src="images/settings-cadence.png" width="240" alt="Settings: Heart rate or cadence, Cadence smoothing"> <img src="images/workout-cadence.png" width="240" alt="Workout screen with cadence at the top">
 
-## Top row
+## Workout screen
 
-**One / Two**: one value at the top of the workout screen, or two side by side. Then pick
-**Left** (and with Two, **Right**): **Heart rate / Cadence / Target**. Right can't repeat Left.
-The target and Lap avg are always on the screen: whatever isn't at the top goes in the tile next
-to Lap avg. With **Target** at the top, that tile shows heart rate (or cadence). Until you pick,
-heart rate (or cadence) is at the top on every style, the gauge too.
+What each spot on the workout screen shows. Each row opens its own page, with the example ringed
+where that spot is:
+
+- **Top row**: **One** value or **Two** side by side, between ⚙ and ⓘ. Each is **Heart rate**,
+  **Cadence**, **Target**, **Calories** or **Speed**; the right one can't repeat the left.
+  Default: heart rate.
+- **Under the watts**: the small line right under the big number: **Target** (the default),
+  **Heart rate**, **Cadence**, **Calories**, **Speed** or **Nothing**. The power gauge shows the
+  target in its band instead.
+- **Left tile** and **Right tile**: switch on what the tile goes through when you tap it (see
+  [The two tiles](tiles.md)). The last one on stays on. Defaults: Lap avg on the left, Cadence on
+  the right.
 
 On a [heart-rate interval](workout-screen.md#heart-rate-targets), power takes heart rate's place.
 
-<img src="images/settings-top-row.png" width="240" alt="Settings: Top row, Two, Left heart rate and Right cadence"> <img src="images/top-two.png" width="240" alt="Workout screen with heart rate and cadence at the top">
+## Zone colours
+
+The chart's power zone colours: **Karoo** (the default, the Karoo's own), **Zwift** or
+**intervals.icu**. A ramp fades from its start zone's colour to its end zone's.
 
 All settings apply right away, also during a ride.
 
