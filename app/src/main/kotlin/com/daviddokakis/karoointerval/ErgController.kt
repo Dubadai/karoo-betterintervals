@@ -59,8 +59,9 @@ class ErgController(
             return
         }
         trainer.start(m)
+        // Turned off on the screen: hand the trainer back, stay connected for the way back on.
         val cmd = planner.next(
-            ErgInputs(indoor.value, store.ergOn.value, recording.value, st, store.ergRecoveryPct.value),
+            ErgInputs(indoor.value, !st.ergOffThisRide, recording.value, st, store.ergRecoveryPct.value),
             System.currentTimeMillis() / 1000,
         )
         if (pacer.due(cmd, System.currentTimeMillis())) {
@@ -69,7 +70,7 @@ class ErgController(
                 ErgCommand.Release -> trainer.release()
             }
         }
-        val status = when (trainer.link.value) {
+        val status = if (st.ergOffThisRide) ErgStatus.OFF else when (trainer.link.value) {
             ErgLink.READY -> if (cmd is ErgCommand.Target) ErgStatus.HOLDING else ErgStatus.FREE
             ErgLink.LOST -> ErgStatus.LOST
             ErgLink.CONNECTING, ErgLink.OFF -> ErgStatus.CONNECTING

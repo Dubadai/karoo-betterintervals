@@ -665,6 +665,18 @@
 
     <!-- Corner buttons on the outer layer, so they sit right in the corners. No background,
          48dp touch area each. -->
+    <!-- ERG turned off for this ride: a small grey "ERG off" pill right of the gear; tap it to
+         turn ERG back on (docs/design/indoor-erg/erg-screen) -->
+    <ImageView
+        android:id="@+id/erg_pill_top"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="48dp"
+        android:layout_marginTop="10dp"
+        android:contentDescription="@string/cd_erg"
+        android:visibility="gone" />
+
     <FrameLayout
         android:id="@+id/btn_settings"
         android:layout_width="48dp"

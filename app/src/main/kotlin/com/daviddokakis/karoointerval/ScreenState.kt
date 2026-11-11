@@ -111,9 +111,13 @@ data class ScreenState(
     val erg: ErgStatus? = null,
     /** The watts the trainer holds now, while [erg] is [ErgStatus.HOLDING]. */
     val ergWatts: Int? = null,
+    /** ERG turned off from the screen (tap the pill) for this ride: ride free, with the gauge. */
+    val ergOffThisRide: Boolean = false,
 )
  {
     val workoutLoaded: Boolean get() = plan != null
+    /** ERG drives the trainer (or is getting there): the plain big number with the big pill, no gauge. */
+    val ergDrives: Boolean get() = erg != null && erg != ErgStatus.OFF
     val stepCount: Int get() = plan?.steps?.size ?: 0
     val currentStep: PlanStep? get() = plan?.steps?.getOrNull(stepIndex)
     val nextStep: PlanStep? get() = plan?.steps?.getOrNull(stepIndex + 1)
@@ -292,4 +296,6 @@ enum class ErgStatus {
     CONNECTING,
     /** ERG ✕, amber: the trainer is lost or refused control. */
     LOST,
+    /** "ERG off", small and grey by the gear: turned off for this ride, tap to turn back on. */
+    OFF,
 }

@@ -109,6 +109,11 @@ class WorkoutSession(
     /** Interval screens currently showing. While one is, it plays the countdown beeps (see [onCountdownShown]). */
     private val viewsActive = java.util.concurrent.atomic.AtomicInteger(0)
 
+    /** Tap on the ERG pill: ERG off (ride free) or back on, for this ride. */
+    fun toggleErg() {
+        scope.launch { _state.update { it.copy(ergOffThisRide = !it.ergOffThisRide) } }
+    }
+
     /** The ERG pill (from [ErgController]); only redraws when it changes. */
     fun setErg(status: ErgStatus?, watts: Int?) {
         val st = _state.value
@@ -592,6 +597,8 @@ class WorkoutSession(
     }
 
     private fun resetToStart() {
+        // A new ride starts with ERG as Settings has it.
+        _state.update { it.copy(ergOffThisRide = false) }
         val st = _state.value
         // The ride ended while CONTINUE was offered: nothing to continue any more.
         if (st.notStarted && st.resumeFromSec != null) {

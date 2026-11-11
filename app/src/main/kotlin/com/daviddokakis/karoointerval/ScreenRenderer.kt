@@ -129,6 +129,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     private val startIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_START, 15) }
     private val startOverIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_START_OVER, 27) }
     private val doneIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_DONE, 16) }
+    private val ergToggleIntent: PendingIntent by lazy { actionIntent(ActionReceiver.ACTION_TOGGLE_ERG, 28) }
     private val settingsIntent: PendingIntent by lazy {
         PendingIntent.getActivity(
             context,
@@ -147,7 +148,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         if (s.finished) return renderDone(s, plan)
         // The Gauge watts mode has its own layout; the other four share the number one. Both in the
         // Karoo's own style (fonts, labels, icons, yellow buttons).
-        val gaugeMode = s.wattsMode == WattsMode.GAUGE
+        // ERG drives the trainer: no gauge, the plain big number with the ERG pill above it (the
+        // watts follow the target by themselves; the gauge is for riding free).
+        val gaugeMode = s.wattsMode == WattsMode.GAUGE && !s.ergDrives
         val layout = if (gaugeMode) R.layout.field_interval_gauge_karoo else R.layout.field_interval_karoo
         val v = RemoteViews(context.packageName, layout)
         applyAppearance(v, layout)
@@ -181,7 +184,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // target range shows: plain, coloured number, coloured background behind the top of the
         // screen, both, or the gauge.
         val range = rangeState(s)
-        val wattsColor = if (s.wattsMode.colorsText && range != null) {
+        val wattsColor = if (s.wattsMode.colorsText && !s.ergDrives && range != null) {
             when (range) {
                 RangeState.UNDER -> R.color.watts_under
                 RangeState.IN -> R.color.watts_in_range
@@ -197,7 +200,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
                 val band = color(if (hrStep) R.color.heart_icon else R.color.karoo_green)
                 v.setImageViewBitmap(
                     R.id.gauge,
-                    gauge.render(gaugeW, gaugeHeightPx(s.navigating), s.mainValue, s.target, s.targetRange, color(wattsColor), band, empty = mainSensor(s).emptyText, pill = ergPill(s)),
+                    gauge.render(gaugeW, gaugeHeightPx(s.navigating), s.mainValue, s.target, s.targetRange, color(wattsColor), band, empty = mainSensor(s).emptyText),
                 )
             }
         } else {
@@ -205,7 +208,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             v.setTextColor(R.id.watts, color(wattsColor))
             bigEmpty(v, R.id.watts, R.id.watts_empty, mainSensor(s), config.viewSize.first.toFloat(), 0f + config.viewSize.second)
         }
-        val upperBg = if (s.wattsMode.colorsBackground && range != null) {
+        val upperBg = if (s.wattsMode.colorsBackground && !s.ergDrives && range != null) {
             when (range) {
                 RangeState.UNDER -> R.drawable.bg_range_under
                 RangeState.IN -> R.drawable.bg_range_in
@@ -225,7 +228,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         // Green icons turn black (the text colour) on the range tint, so they show.
         val iconColor = color(if (onTint) R.color.text else R.color.karoo_green)
         listOf(R.id.icon_timer, R.id.icon_lap, R.id.icon_bolt).forEach { v.setInt(it, "setColorFilter", iconColor) }
-        v.setOnClickPendingIntent(if (gaugeMode) R.id.gauge else R.id.watts, wattsColorIntent)
+        // With ERG the watts' look is fixed (plain): a tap there changes nothing.
+        if (!s.ergDrives) v.setOnClickPendingIntent(if (gaugeMode) R.id.gauge else R.id.watts, wattsColorIntent)
 
         // Top row: one or two values, each with its icon, drawn like BigWatts' heart-rate line
         listOf(R.id.top1_icon, R.id.top1, R.id.top2_icon, R.id.top2, R.id.target_next_top).forEach { v.setViewVisibility(it, View.GONE) }
@@ -299,7 +303,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setViewVisibility(R.id.btn_settings_paused, if (ridePaused) View.VISIBLE else View.GONE)
         v.setViewVisibility(R.id.btn_settings, if (ridePaused) View.INVISIBLE else View.VISIBLE)
         gearBelowKarooBar(v, R.id.btn_settings, s)
-        showErgPill(v, s, gaugeMode)
+        showErgPill(v, s)
         // Tonal: the text colour at 55%, so a range tint shows through (a translucent tint colour
         // alone comes out solid on the Karoo).
         v.setInt(R.id.btn_pause_icon, "setColorFilter", color(R.color.text))
@@ -852,33 +856,44 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         return out
     }
 
-    /**
-     * The ERG pill (indoor ERG on), above the watts: drawn into the gauge, or its own view over the
-     * plain number. Null when ERG is off.
-     */
-    private fun ergPill(s: ScreenState): android.graphics.Bitmap? {
-        val erg = s.erg ?: return null
+    private fun ergPill(erg: ErgStatus, size: Float): android.graphics.Bitmap {
         val (bg, fg) = when (erg) {
             ErgStatus.HOLDING -> R.color.erg_on_bg to R.color.erg_on_fg
-            ErgStatus.FREE, ErgStatus.CONNECTING -> R.color.erg_wait_bg to R.color.erg_wait_fg
+            ErgStatus.FREE, ErgStatus.CONNECTING, ErgStatus.OFF -> R.color.erg_wait_bg to R.color.erg_wait_fg
             ErgStatus.LOST -> R.color.erg_warn_bg to R.color.erg_warn_fg
         }
-        return ErgPillArt.draw(erg, color(bg), color(fg), density / 1.875f * scale)
+        return ErgPillArt.draw(erg, color(bg), color(fg), density / 1.875f * scale * size)
     }
 
-    /** The plain-number layout: the pill above the watts, which move down to make room. */
-    private fun showErgPill(v: RemoteViews, s: ScreenState, gaugeMode: Boolean) {
-        if (gaugeMode) return
-        val pill = ergPill(s)
+    /**
+     * The ERG pill (docs/design/indoor-erg/erg-screen). ERG on: big, above the plain watts, which move
+     * down to make room. Turned off for this ride: small and grey right of the gear, over the gauge.
+     * Either way a tap switches ERG for this ride.
+     */
+    private fun showErgPill(v: RemoteViews, s: ScreenState) {
+        val erg = s.erg
         val top = (WATTS_TOP_DP * density).roundToInt()
-        if (pill == null) {
-            v.setViewVisibility(R.id.erg_pill, View.GONE)
-            v.setViewPadding(R.id.watts, 0, top, 0, 0)
+        v.setViewVisibility(R.id.erg_pill_top, View.GONE)
+        v.setViewPadding(R.id.top_block, 0, 0, 0, 0)
+        if (s.ergDrives && erg != null) {
+            val pill = ergPill(erg, BIG_PILL)
+            v.setImageViewBitmap(R.id.erg_pill, pill)
+            v.setViewVisibility(R.id.erg_pill, View.VISIBLE)
+            v.setOnClickPendingIntent(R.id.erg_pill, ergToggleIntent)
+            v.setViewPadding(R.id.watts, 0, top + pill.height + (4 * density).roundToInt(), 0, 0)
             return
         }
-        v.setImageViewBitmap(R.id.erg_pill, pill)
-        v.setViewVisibility(R.id.erg_pill, View.VISIBLE)
-        v.setViewPadding(R.id.watts, 0, top + pill.height + (4 * density).roundToInt(), 0, 0)
+        if (!s.ergDrives && s.wattsMode != WattsMode.GAUGE) {
+            v.setViewVisibility(R.id.erg_pill, View.GONE)
+            v.setViewPadding(R.id.watts, 0, top, 0, 0)
+        }
+        if (erg != ErgStatus.OFF || s.karooBarOnTop) return
+        val pill = ergPill(erg, 1f)
+        v.setImageViewBitmap(R.id.erg_pill_top, pill)
+        v.setViewVisibility(R.id.erg_pill_top, View.VISIBLE)
+        v.setOnClickPendingIntent(R.id.erg_pill_top, ergToggleIntent)
+        // Two values at the top reach the pill: the centred top row moves right by half its width.
+        if (s.topRowRight != null && s.topRowRight != s.topRow) v.setViewPadding(R.id.top_block, pill.width + (24 * density).roundToInt(), 0, 0, 0)
     }
 
     /** Screens without an interval row: the gear moves down out from under the Karoo's top strip. */
@@ -1110,6 +1125,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         private const val KAROO_BAR_DP = 24f
         /** The plain watts' top padding (layout: 24dp), more with the ERG pill above them. */
         private const val WATTS_TOP_DP = 24f
+        /** The ERG pill above the watts, against the small one by the gear. */
+        private const val BIG_PILL = 1.5f
         /** The Karoo's seven HR zone colours (hr_colors.xml), picked per zone count by hrZoneDrawable. */
         private val HR_ZONE_COLORS = listOf(
             R.color.karoo_hr_c1, R.color.karoo_hr_c2, R.color.karoo_hr_c3, R.color.karoo_hr_c4,

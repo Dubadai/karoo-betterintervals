@@ -35,8 +35,9 @@ object ErgPillArt {
             color = fg
         }
         val glyph = when (status) { ErgStatus.CONNECTING -> "…"; ErgStatus.LOST -> "✕"; else -> null }
+        val word = if (status == ErgStatus.OFF) "ERG off" else "ERG"
         val dot = if (status == ErgStatus.HOLDING) DOT_W * scale else 0f
-        val textW = label.measureText("ERG")
+        val textW = label.measureText(word)
         val glyphW = glyph?.let { GAP * scale + glyphPaint.measureText(it) } ?: 0f
         val w = ceil(PAD * scale * 2 + dot + textW + glyphW).toInt()
         val h = ceil(H * scale).toInt()
@@ -49,7 +50,7 @@ object ErgPillArt {
             c.drawCircle(x + DOT_R * scale, h / 2f, DOT_R * scale, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = fg })
             x += dot
         }
-        c.drawText("ERG", x, BASELINE * scale, label)
+        c.drawText(word, x, BASELINE * scale, label)
         if (glyph != null) c.drawText(glyph, x + textW + GAP * scale, BASELINE * scale, glyphPaint)
         return bmp
     }

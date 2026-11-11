@@ -26,6 +26,7 @@ class ActionReceiver : BroadcastReceiver() {
             ACTION_START -> session.startWorkout()
             ACTION_START_OVER -> session.startOver()
             ACTION_DONE -> session.closeWorkout()
+            ACTION_TOGGLE_ERG -> session.toggleErg()
         }
     }
 
@@ -47,5 +48,6 @@ class ActionReceiver : BroadcastReceiver() {
         const val ACTION_START = "com.daviddokakis.karoointerval.START"
         const val ACTION_START_OVER = "com.daviddokakis.karoointerval.START_OVER"
         const val ACTION_DONE = "com.daviddokakis.karoointerval.DONE"
+        const val ACTION_TOGGLE_ERG = "com.daviddokakis.karoointerval.TOGGLE_ERG"
     }
 }
