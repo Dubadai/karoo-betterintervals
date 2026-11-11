@@ -353,6 +353,20 @@ its target regularly (keep-alive every ~2 s instead of 10 s). A tap on the Karoo
 at most a ~2 s blip. Left to decide: drop the notice and keep the Read-Only hint in Settings, or
 keep a notice driven by power-vs-target (needs a rider to tune).
 
+**Decided (2026-11-11): resend, hint only.** The app resends its target every 2 s
+(`ErgSendPacer`), and the "Karoo is controlling the trainer" notice and the `ERG !` pill state are
+dropped. Settings keeps the one-line hint "Set the Karoo's trainer card to Read-Only".
+
+### ErgPlanner (logic, no trainer yet)
+
+`ErgPlanner.kt`, tested in `ErgPlannerTest`: one command a second from the workout state.
+
+- Release (hand back) unless indoor profile, ERG on, recording and the workout started.
+- Interval: its target (ramps second by second), capped at min(plan top + 5 %, 2 × FTP, 1500 W).
+- Paused (ours or the Karoo's) and finished: recovery, 50 % FTP, at least 80 W (100 W without FTP).
+- Resume: 10 s soft start from recovery to the target; a jump during it lands at full target.
+- Heart-rate step: release (no watts to hold).
+
 ## Mockups, round 1
 
 **Decided:** ERG pill goes in the **top row, next to the gear (A)**, on both the classic and the
