@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERG Ready</title>
+<style>
+@font-face { font-family: Plex; src: url(__FONT_REG__); font-weight: 400; }
+@font-face { font-family: Plex; src: url(__FONT_MED__); font-weight: 500; }
+@font-face { font-family: Plex; src: url(__FONT_SEMI__); font-weight: 600; }
+@font-face { font-family: Plex; src: url(__FONT_BOLD__); font-weight: 700; }
+:root { --bg:#f6f5f2; --fg:#1d1d1b; --muted:#6b6a66; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; } }
+:root[data-theme="dark"] { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system, system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 28px; margin: 0 0 4px; } p { color: var(--muted); max-width: 72ch; }
+.flow { display:flex; flex-wrap:wrap; gap: 18px; } .step { flex: 0 1 240px; max-width: 240px; }
+.step canvas { display:block; max-width:100%; height:auto; } .step h3 { font-size: 15px; margin: 8px 0 2px; }
+</style>
+</head>
+<body>
+<main>
+<h1>ERG ready before the start</h1>
+<p>Before START WORKOUT on an indoor ride, the top row says whether ERG will take over. Today it shows a grey "ERG" once the trainer is connected, which doesn't read as ready. A: green dot and "ERG ready" (becomes "● ERG" at START). B: the same green "● ERG" as while riding. Both keep "ERG …" grey while connecting and "ERG ✕" amber when the trainer can't be reached.</p>
+<div class="flow">
+  <div class="step"><div id="today"></div><h3>Today: grey "ERG"</h3></div>
+  <div class="step"><div id="connecting"></div><h3>Connecting (both)</h3></div>
+  <div class="step"><div id="a"></div><h3>A · "ERG ready", green</h3></div>
+  <div class="step"><div id="b"></div><h3>B · "ERG", green</h3></div>
+</div>
+</main>
+<script>
+/*__KAROO_DEVICE_JS__*/
+const IMGS = "__IMGS__";
+const ICONS = "__ICONS__";
+const FRAME_PNG = '__FRAME__';
+// Export URL: #shot=<id>&theme=light|dark&frame=<k>&frames=<n> (shoot.sh). The page itself shows light.
+const HASH = new URLSearchParams(location.hash.slice(1));
+const SHOT = HASH.get('shot'), THEME = HASH.get('theme') || 'light';
+const FRAME = +(HASH.get('frame') || 0), FRAMES = +(HASH.get('frames') || 1);
+const W = SHOT ? 1100 : 240;
+const BACKDROP = THEME === 'dark' ? 'linear-gradient(#120E0B,#3F342E)' : 'linear-gradient(#7E9CB4,#F1F4F6)';   // Night / Sky
+/*__KIT_JS__*/
+(async () => {
+  await Promise.all([400, 500, 600, 700].map(w => document.fonts.load(`${w} 20px Plex`)));
+  const I = {}; for (const k of Object.keys(IMGS)) I[k] = await loadImg(IMGS[k]);
+  const dev = await KarooDevice.load({ frame: FRAME_PNG, screen: IMGS.status });   // a real Karoo screenshot for the status bar
+  // put(id, draw): draw(c, t) gets t from 0 to 1 across a GIF's frames (0 for a still).
+  const put = (id, draw) => { if (SHOT && id !== SHOT) return;
+    const t = FRAMES > 1 ? FRAME / (FRAMES - 1) : 0;
+    const cv = dev.device(dev.screen({ draw: c => draw(c, t) }), W);
+    if (SHOT) { document.body.innerHTML = ''; document.body.style.cssText = `margin:0;background:${BACKDROP};width:1300px;height:2000px;display:flex;align-items:center;justify-content:center`;
+      cv.style.width = '1100px'; document.body.append(cv); } else document.getElementById(id).append(cv); };
+
+  const pic = name => (THEME === 'dark' && I[name + '_dark']) || I[name];
+  const GREEN = '#2E9E4F', GREY = THEME === 'dark' ? '#9A9A9A' : '#7A7A7A', BG = THEME === 'dark' ? '#000000' : '#FFFFFF', TEXT = THEME === 'dark' ? '#FFFFFF' : '#111111';
+  // The top row: the ERG mark first, then the heart rate, centred together (as the app draws it).
+  function top(c, dot, word) {
+    c.drawImage(pic('ready'), 0, 0, 480, 800);
+    const heart = c.getImageData(190, 76, 104, 44);                    // the app's own heart + 132
+    c.fillStyle = BG; c.fillRect(70, 70, 340, 56);
+    c.font = F(600, 27);
+    const ww = c.measureText(word).width, total = 26 + ww + 22 + 104, x = 240 - total / 2;
+    c.fillStyle = dot; c.beginPath(); c.arc(x + 9, 98, 9, 0, 7); c.fill();
+    c.fillStyle = TEXT; c.fillText(word, x + 26, 108);
+    c.putImageData(heart, Math.round(x + 26 + ww + 22), 76);
+  }
+  put('today', c => top(c, GREY, 'ERG'));
+  put('connecting', c => top(c, GREY, 'ERG \u2026'));
+  put('a', c => top(c, GREEN, 'ERG ready'));
+  put('b', c => top(c, GREEN, 'ERG'));
+})();
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-# Trainer sheet (mock, awaiting OK)
+# Trainer sheet (dropped 2026-11-11: replaced by ../trainer-card)
 
 A Karoo data field can't see swipes (taps only; the Karoo keeps swipes for page changes and its
 menu), so the trainer settings can't be a swipe up on the workout screen. Instead, on an indoor ride

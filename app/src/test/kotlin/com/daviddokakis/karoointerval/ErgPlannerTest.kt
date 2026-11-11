@@ -32,20 +32,34 @@ class ErgPlannerTest {
         assertEquals(target(180), p.next(on(running.copy(stepIndex = 2, elapsedInStepSec = 150)), 150))
     }
 
-    @Test fun `hands the trainer back unless indoors, on, recording and started`() {
+    @Test fun `hands the trainer back unless indoors, on and recording`() {
         val p = ErgPlanner()
         assertEquals(ErgCommand.Release, p.next(on(indoor = false), 0))
         assertEquals(ErgCommand.Release, p.next(on(enabled = false), 0))
         assertEquals(ErgCommand.Release, p.next(on(recording = false), 0))
-        assertEquals(ErgCommand.Release, p.next(on(running.copy(notStarted = true)), 0))
-        assertEquals(ErgCommand.Release, p.next(on(ScreenState()), 0))
+        assertEquals(ErgCommand.Release, p.next(on(running.copy(notStarted = true), recording = false), 0))
     }
 
-    @Test fun `paused and finished spin easy at half FTP`() {
+    @Test fun `between workouts and before START mid-ride it holds the When paused watts`() {
+        val p = ErgPlanner()
+        assertEquals(target(140), p.next(on(running.copy(notStarted = true)), 0))       // a new workout's start screen
+        assertEquals(target(100), p.next(on(ScreenState()), 0))                          // removed, no FTP known
+        assertEquals(target(165), p.next(on(ScreenState(profileFtp = 330)), 0))         // removed, the Karoo's FTP
+    }
+
+    @Test fun `a finished workout hands the trainer back until the next one starts`() {
+        val p = ErgPlanner()
+        fun after(s: ScreenState) = p.next(ErgInputs(true, true, true, s, afterFinish = true), 0)
+        assertEquals(ErgCommand.Release, p.next(on(running.copy(finished = true)), 0))
+        assertEquals(ErgCommand.Release, after(ScreenState()))                            // closed with DONE
+        assertEquals(ErgCommand.Release, after(running.copy(notStarted = true)))          // the next one loaded
+        assertEquals(target(300), after(running))                                         // and started
+    }
+
+    @Test fun `paused spins easy at half FTP`() {
         val p = ErgPlanner()
         assertEquals(target(140), p.next(on(running.copy(workoutPaused = true)), 0))
         assertEquals(target(140), p.next(on(running.copy(paused = true)), 0))
-        assertEquals(target(140), p.next(on(running.copy(finished = true)), 0))
     }
 
     @Test fun `recovery has a floor and a fallback`() {
@@ -89,5 +103,24 @@ class ErgPlannerTest {
         assertTrue(pacer.due(ErgCommand.Release, 3_600))
         assertFalse(pacer.due(ErgCommand.Release, 9_000))
         assertTrue(pacer.due(target(150), 9_100))
+    }
+
+    @Test fun `ERG off for the ride and back on picks the target up again`() {
+        val p = ErgPlanner()
+        val pacer = ErgSendPacer()
+        var now = 0L
+        fun step(enabled: Boolean): Pair<ErgCommand, Boolean> {
+            val cmd = p.next(on(enabled = enabled), now / 1000)
+            val sent = pacer.due(cmd, now)
+            now += 1_000
+            return cmd to sent
+        }
+        assertEquals(target(300) to true, step(enabled = true))          // holding
+        assertEquals(ErgCommand.Release to true, step(enabled = false))  // off: handed back at once
+        assertEquals(ErgCommand.Release to false, step(enabled = false)) // and only once
+        assertEquals(target(300) to true, step(enabled = true))          // back on: the target at once
+        assertEquals(target(300) to false, step(enabled = true))
+        now += 1_000
+        assertEquals(target(300) to true, step(enabled = true))          // then the 2 s keep-alive
     }
 }

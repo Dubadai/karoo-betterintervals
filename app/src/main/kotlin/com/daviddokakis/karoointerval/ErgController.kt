@@ -49,6 +49,7 @@ class ErgController(
     private var pmName: String? = null
     private var pmIsTrainer = false
     private var loggedSource: String? = null
+    private var afterFinish = false
 
     // The ERG lines in the ride log (files/ridelog.txt, debug/pull.sh): every LOG_EVERY_MS and on a change.
     private var logAtMs = 0L
@@ -75,7 +76,10 @@ class ErgController(
     private fun tick() {
         val st = workout.state.value
         val m = match.value
-        val wanted = indoor.value && store.ergOn.value && st.plan != null
+        // A finished workout keeps the trainer free until the next one starts.
+        if (st.finished) afterFinish = true else if (st.plan != null && !st.notStarted) afterFinish = false
+        // Also without a workout while a ride records: ERG holds the When paused watts between workouts.
+        val wanted = indoor.value && store.ergOn.value && (st.plan != null || recording.value)
         if (!wanted || m == null) {
             if (trainer.link.value != ErgLink.OFF) {
                 Timber.i("ERG: off (indoor=%s ergOn=%s plan=%s trainer=%s)", indoor.value, store.ergOn.value, st.plan != null, m != null)
@@ -87,7 +91,7 @@ class ErgController(
         trainer.start(m)
         // Turned off on the screen: hand the trainer back, stay connected for the way back on.
         val cmd = planner.next(
-            ErgInputs(indoor.value, !st.ergOffThisRide, recording.value, st, store.ergRecoveryPct.value),
+            ErgInputs(indoor.value, !st.ergOffThisRide, recording.value, st, store.ergRecoveryPct.value, afterFinish),
             System.currentTimeMillis() / 1000,
         )
         val send = if (cmd is ErgCommand.Target) ErgCommand.Target(matched(cmd.watts, st, m)) else cmd
@@ -98,7 +102,11 @@ class ErgController(
             }
         }
         val status = if (st.ergOffThisRide) ErgStatus.OFF else when (trainer.link.value) {
-            ErgLink.READY -> if (cmd is ErgCommand.Target) ErgStatus.HOLDING else ErgStatus.FREE
+            ErgLink.READY -> when {
+                cmd is ErgCommand.Target -> ErgStatus.HOLDING
+                st.notStarted -> ErgStatus.READY
+                else -> ErgStatus.FREE
+            }
             ErgLink.LOST -> ErgStatus.LOST
             ErgLink.CONNECTING, ErgLink.OFF -> ErgStatus.CONNECTING
         }
@@ -153,6 +161,7 @@ class ErgController(
         if (on == recording.value) return
         recording.value = on
         if (on) {
+            afterFinish = false
             matcher = PmMatcher(PmMatcher.decode(store.pmBands))
             pmIsTrainer = false; pmName = null
         } else saveMatch()

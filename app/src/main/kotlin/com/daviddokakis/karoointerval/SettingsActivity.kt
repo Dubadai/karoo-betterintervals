@@ -262,9 +262,9 @@ class SettingsActivity : AppearanceActivity() {
         form.addView(settingsDivider())
     }
 
-    private companion object {
-        val BLUETOOTH_PERMISSIONS = arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
-        val RECOVERY_CHOICES = listOf(40, 50, 60)
+    companion object {
+        internal val BLUETOOTH_PERMISSIONS = arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+        internal val RECOVERY_CHOICES = listOf(40, 50, 60)
     }
 
     private fun <T> named(vararg options: Pair<Int, T>) = options.map { (name, value) -> getString(name) to value }

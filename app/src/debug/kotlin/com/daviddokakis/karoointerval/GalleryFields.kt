@@ -32,7 +32,7 @@ object GalleryFields {
         // A workout selected again mid-ride: CONTINUE (interval 4, 2:13 in) or START OVER
         "resume-ready",
         // Indoor ERG: the pill right of the gear (docs/design/indoor-erg)
-        "erg-gauge", "erg-number", "erg-connecting", "erg-lost", "erg-free", "erg-paused", "erg-top-two", "erg-gauge-route", "erg-off", "erg-off-top-two",
+        "erg-gauge", "erg-number", "erg-connecting", "erg-lost", "erg-free", "erg-paused", "erg-top-two", "erg-gauge-route", "erg-off", "erg-off-top-two", "erg-start-connecting", "erg-start-ready", "erg-start-ready-b", "indoor-start", "indoor-start-dim", "indoor-gauge",
     ) + SEQ.indices.flatMap { i -> listOf("seq-gauge-%02d", "seq-both-%02d", "seq-background-%02d").map { it.format(i) } }
     val sizes: List<String>? = listOf("full")   // BetterIntervals is always a full-page field
 
@@ -145,6 +145,12 @@ object GalleryFields {
             "erg-top-two" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(topRowRight = TopRow.CADENCE, erg = ErgStatus.HOLDING, ergWatts = 300)
             "erg-off" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(erg = ErgStatus.OFF, ergOffThisRide = true)
             "erg-off-top-two" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(topRowRight = TopRow.CADENCE, erg = ErgStatus.OFF, ergOffThisRide = true)
+            "indoor-start" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0, erg = ErgStatus.READY, indoor = true, rideIdle = true, startFlash = true)
+            "indoor-start-dim" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0, erg = ErgStatus.READY, indoor = true, rideIdle = true, startFlash = false)
+            "indoor-gauge" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(erg = ErgStatus.HOLDING, ergWatts = 300, indoor = true)
+            "erg-start-connecting" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0, erg = ErgStatus.CONNECTING)
+            "erg-start-ready" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0, erg = ErgStatus.READY)
+            "erg-start-ready-b" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 0, elapsedInStepSec = 0, erg = ErgStatus.HOLDING)
             "erg-gauge-route" -> ExampleScreen.state(wattsMode = WattsMode.GAUGE).copy(navigating = true, erg = ErgStatus.HOLDING, ergWatts = 300)
             "resume-ready" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, notStarted = true).copy(stepIndex = 3, elapsedInStepSec = 0, resumeFromSec = 133)
             "empty-free" -> ExampleScreen.freeRide().copy(hrZones = HR_ZONES, powerShown = null, powerSensor = SensorState.NONE, heartRate = null, hrSensor = SensorState.SEARCHING)

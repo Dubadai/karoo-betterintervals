@@ -20,6 +20,8 @@ data class ErgInputs(
     val state: ScreenState,
     /** Settings › When paused, % of FTP. */
     val recoveryPct: Int = ErgPlanner.RECOVERY_PCT,
+    /** A workout finished earlier in this ride: the trainer stays free until the next one starts. */
+    val afterFinish: Boolean = false,
 )
 
 /**
@@ -36,13 +38,24 @@ class ErgPlanner {
     fun next(input: ErgInputs, nowSec: Long): ErgCommand {
         val s = input.state
         val plan = s.plan
-        if (!input.indoor || !input.enabled || !input.recording || plan == null || s.notStarted) {
+        if (!input.indoor || !input.enabled || !input.recording) {
             resting = false; soft = null
             return ErgCommand.Release
         }
+        // Done: the ride pauses and the trainer is handed back (a cooldown is the rider's own).
+        if (s.finished || (input.afterFinish && (plan == null || s.notStarted))) {
+            resting = false; soft = null
+            return ErgCommand.Release
+        }
+        // Between workouts (removed or switched mid-ride) and on a start screen while the ride
+        // runs: the When paused watts, so the rider isn't suddenly riding free while picking.
+        if (plan == null || s.notStarted) {
+            resting = true; soft = null
+            return ErgCommand.Target(recoveryWatts(s.ftp, input.recoveryPct).coerceAtMost(MAX_WATTS))
+        }
         val cap = capFor(plan, s.ftp)
         val recovery = recoveryWatts(s.ftp, input.recoveryPct).coerceAtMost(cap)
-        if (s.finished || s.paused || s.workoutPaused) {
+        if (s.paused || s.workoutPaused) {
             resting = true; soft = null
             return ErgCommand.Target(recovery)
         }

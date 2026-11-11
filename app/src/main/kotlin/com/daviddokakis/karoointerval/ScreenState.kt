@@ -113,6 +113,12 @@ data class ScreenState(
     val ergWatts: Int? = null,
     /** ERG turned off from the screen (tap the pill) for this ride: ride free, with the gauge. */
     val ergOffThisRide: Boolean = false,
+    /** The Karoo's ride profile is marked indoor: the Karoo's start / pause button runs the workout. */
+    val indoor: Boolean = false,
+    /** No ride yet (the Karoo isn't recording or paused). */
+    val rideIdle: Boolean = false,
+    /** Indoor start box: the start button's green flash, on or off (flips once a second). */
+    val startFlash: Boolean = false,
 )
  {
     val workoutLoaded: Boolean get() = plan != null
@@ -290,7 +296,9 @@ internal fun endingCountdown(remainingMs: Long, seconds: Int = 5): Int? =
 enum class ErgStatus {
     /** ● ERG, green: the trainer follows the workout. */
     HOLDING,
-    /** ERG, grey: connected, not holding a target (before START, a heart-rate step). */
+    /** ● ERG READY, green: before START, the trainer is connected and ERG takes over at START. */
+    READY,
+    /** ERG, grey: connected, not holding a target (a heart-rate step). */
     FREE,
     /** ERG …, grey: looking for or connecting to the trainer. */
     CONNECTING,

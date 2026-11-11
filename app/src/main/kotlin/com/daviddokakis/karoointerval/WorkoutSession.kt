@@ -3,8 +3,11 @@ package com.daviddokakis.karoointerval
 import android.os.SystemClock
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.DataType
+import io.hammerhead.karooext.models.ActiveRideProfile
 import io.hammerhead.karooext.models.MarkLap
+import io.hammerhead.karooext.models.PauseRide
 import io.hammerhead.karooext.models.OnNavigationState
+import io.hammerhead.karooext.models.PerformHardwareAction
 import io.hammerhead.karooext.models.PlayBeepPattern
 import io.hammerhead.karooext.models.RideState
 import io.hammerhead.karooext.models.StreamState
@@ -177,9 +180,18 @@ class WorkoutSession(
         }
         scope.launch {
             karoo.consumerFlow<RideState>().collect { ride ->
+                val wasIdle = rideIdle
                 recording = ride is RideState.Recording
                 rideIdle = ride is RideState.Idle
-                _state.update { it.copy(paused = ride is RideState.Paused, autoPaused = (ride as? RideState.Paused)?.auto == true) }
+                _state.update { it.copy(paused = ride is RideState.Paused, autoPaused = (ride as? RideState.Paused)?.auto == true, rideIdle = rideIdle) }
+                // Indoors the Karoo's start button starts the workout too: a ride that starts with a
+                // workout waiting on its start screen begins it (the usual 5 s countdown). Not when
+                // START already did (its countdown runs), nor for a workout loaded mid-ride.
+                val st = _state.value
+                if (wasIdle && recording && st.indoor && st.plan != null && st.notStarted && countdownJob?.isActive != true) {
+                    Timber.i("Karoo ride started indoors: the workout starts with it")
+                    startCountdown(st.stepIndex)
+                }
                 // No ride (not started, finished or discarded): start the workout from the top
                 // next time. Progress is only kept while a ride is recording or paused.
                 if (ride is RideState.Idle) resetToStart()
@@ -196,6 +208,11 @@ class WorkoutSession(
         scope.launch {
             karoo.consumerFlow<OnNavigationState>().collect { nav ->
                 _state.update { it.copy(navigating = nav.state !is OnNavigationState.NavigationState.Idle) }
+            }
+        }
+        scope.launch {
+            karoo.consumerFlow<ActiveRideProfile>().collect { p ->
+                if (p.profile.indoor != _state.value.indoor) _state.update { it.copy(indoor = p.profile.indoor) }
             }
         }
         scope.launch {
@@ -506,6 +523,13 @@ class WorkoutSession(
                 return@launch
             }
             Timber.i("Start countdown, step ${st.stepIndex + 1}${st.resumeFromSec?.let { " + ${it}s (continue)" } ?: ""}")
+            // One press starts both: no ride yet, so START also starts the Karoo's ride, as its
+            // bottom-right button (the ▶ on the ride screen) would. Only with no ride at all: on a
+            // recording or paused ride that button would pause or resume it instead.
+            if (rideIdle) {
+                Timber.i("Starting the Karoo ride with the workout")
+                karoo.dispatch(PerformHardwareAction.BottomRightPress)
+            }
             startCountdown(st.stepIndex)
         }
     }
@@ -625,6 +649,11 @@ class WorkoutSession(
             val dt = now - lastTick
             lastTick = now
             val st = _state.value
+            // Indoor start box: the start button's green flash flips once a second.
+            if (st.indoor && st.rideIdle && st.notStarted && st.plan != null) {
+                val flash = (now / 1000) % 2 == 0L
+                if (flash != st.startFlash) _state.update { it.copy(startFlash = flash) }
+            }
             val step = st.currentStep ?: continue
             if (!recording || st.finished || st.workoutPaused || st.notStarted) continue
             workoutMs += dt
@@ -656,6 +685,9 @@ class WorkoutSession(
                     _state.update { it.copy(finished = true, elapsedInStepSec = step.durationSec, summary = sum, countdown = null, jumpTarget = null) }
                     karoo.dispatch(MarkLap)
                     beep(GO_TONE)
+                    // Indoors the ride pauses with the workout's end (ERG hands the trainer back);
+                    // to cool down the rider resumes and sets the watts on the Karoo's trainer card.
+                    if (st.indoor) { Timber.i("Workout finished indoors: pausing the ride"); karoo.dispatch(PauseRide) }
                     // Remember it, so a restart of the app shows Workout done again (not START WORKOUT)
                     st.plan?.let { store.saveFinished(it, sum) }
                 }

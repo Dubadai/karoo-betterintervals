@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indoor Tag</title>
+<style>
+@font-face { font-family: Plex; src: url(__FONT_REG__); font-weight: 400; }
+@font-face { font-family: Plex; src: url(__FONT_MED__); font-weight: 500; }
+@font-face { font-family: Plex; src: url(__FONT_SEMI__); font-weight: 600; }
+@font-face { font-family: Plex; src: url(__FONT_BOLD__); font-weight: 700; }
+:root { --bg:#f6f5f2; --fg:#1d1d1b; --muted:#6b6a66; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; } }
+:root[data-theme="dark"] { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system, system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 28px; margin: 0 0 4px; } p { color: var(--muted); max-width: 72ch; }
+.flow { display:flex; flex-wrap:wrap; gap: 18px; } .step { flex: 0 1 240px; max-width: 240px; }
+.step canvas { display:block; max-width:100%; height:auto; } .step h3 { font-size: 15px; margin: 8px 0 2px; }
+</style>
+</head>
+<body>
+<main>
+<h1>Indoor label above the workout name</h1>
+<p>Only on the start screen before the ride: the Karoo's own trainer icon (from its trainer card) and "INDOOR SESSION" in grey, just above the workout's name. It goes away once the workout starts.</p>
+<div class="flow">
+  <div class="step"><div id="c"></div><h3>Trainer icon + grey label</h3></div>
+</div>
+</main>
+<script>
+/*__KAROO_DEVICE_JS__*/
+const IMGS = "__IMGS__";
+const ICONS = "__ICONS__";
+const FRAME_PNG = '__FRAME__';
+// Export URL: #shot=<id>&theme=light|dark&frame=<k>&frames=<n> (shoot.sh). The page itself shows light.
+const HASH = new URLSearchParams(location.hash.slice(1));
+const SHOT = HASH.get('shot'), THEME = HASH.get('theme') || 'light';
+const FRAME = +(HASH.get('frame') || 0), FRAMES = +(HASH.get('frames') || 1);
+const W = SHOT ? 1100 : 240;
+const BACKDROP = THEME === 'dark' ? 'linear-gradient(#120E0B,#3F342E)' : 'linear-gradient(#7E9CB4,#F1F4F6)';   // Night / Sky
+/*__KIT_JS__*/
+(async () => {
+  await Promise.all([400, 500, 600, 700].map(w => document.fonts.load(`${w} 20px Plex`)));
+  const I = {}; for (const k of Object.keys(IMGS)) I[k] = await loadImg(IMGS[k]);
+  const dev = await KarooDevice.load({ frame: FRAME_PNG, screen: IMGS.status });   // a real Karoo screenshot for the status bar
+  // put(id, draw): draw(c, t) gets t from 0 to 1 across a GIF's frames (0 for a still).
+  const put = (id, draw) => { if (SHOT && id !== SHOT) return;
+    const t = FRAMES > 1 ? FRAME / (FRAMES - 1) : 0;
+    const cv = dev.device(dev.screen({ draw: c => draw(c, t) }), W);
+    if (SHOT) { document.body.innerHTML = ''; document.body.style.cssText = `margin:0;background:${BACKDROP};width:1300px;height:2000px;display:flex;align-items:center;justify-content:center`;
+      cv.style.width = '1100px'; document.body.append(cv); } else document.getElementById(id).append(cv); };
+
+  const pic = name => (THEME === 'dark' && I[name + '_dark']) || I[name];
+  const GREEN = '#2E9E4F', GREY = THEME === 'dark' ? '#9A9A9A' : '#7A7A7A', BG = THEME === 'dark' ? '#000000' : '#FFFFFF', TEXT = THEME === 'dark' ? '#FFFFFF' : '#111111';
+  // The top row: the ERG mark first, then the heart rate, centred together (as the app draws it).
+  function top(c, dot, word) {
+    c.drawImage(pic('ready'), 0, 0, 480, 800);
+    const heart = c.getImageData(190, 76, 104, 44);                    // the app's own heart + 132
+    c.fillStyle = BG; c.fillRect(70, 70, 340, 56);
+    c.font = F(600, 27);
+    const ww = c.measureText(word).width, total = 26 + ww + 22 + 104, x = 240 - total / 2;
+    c.fillStyle = dot; c.beginPath(); c.arc(x + 9, 98, 9, 0, 7); c.fill();
+    c.fillStyle = TEXT; c.fillText(word, x + 26, 108);
+    c.putImageData(heart, Math.round(x + 26 + ww + 22), 76);
+  }
+  const YEL = '#FFE600', INK = '#111111';
+  // A small Karoo 3 from the front: body, screen, two buttons on each side; the lower right one
+  // (start / pause) highlighted with a pulsing ring. (x, y): top left of the body; h: its height.
+  function miniKaroo(c, x, y, h, t) {
+    const w = h * 0.62, r = h * 0.12, bw = h * 0.05, bh = h * 0.16;
+    c.fillStyle = INK;
+    [[0.22], [0.62]].forEach(([fy]) => {                                   // side buttons
+      c.beginPath(); c.roundRect(x - bw + 1, y + h * fy, bw, bh, 2); c.fill();
+      c.beginPath(); c.roundRect(x + w - 1, y + h * fy, bw, bh, 2); c.fill();
+    });
+    c.beginPath(); c.roundRect(x, y, w, h, r); c.fill();                  // body
+    c.fillStyle = YEL; c.beginPath(); c.roundRect(x + w * 0.12, y + h * 0.09, w * 0.76, h * 0.62, 4); c.fill();   // screen
+    c.fillStyle = INK; c.beginPath();                                       // a ▶ on the screen
+    const cx = x + w / 2, cy = y + h * 0.40, s2 = h * 0.11;
+    c.moveTo(cx - s2 * 0.7, cy - s2); c.lineTo(cx + s2, cy); c.lineTo(cx - s2 * 0.7, cy + s2); c.closePath(); c.fill();
+    // The start button: lower right, a ring pulsing out from it
+    const bx = x + w - 1 + bw / 2, by = y + h * 0.62 + bh / 2;
+    const k = (t * 2) % 1;                                                 // two pulses per loop
+    c.strokeStyle = INK; c.lineWidth = 4; c.globalAlpha = 1 - k;
+    c.beginPath(); c.arc(bx, by, h * 0.10 + k * h * 0.16, 0, 7); c.stroke(); c.globalAlpha = 1;
+    c.beginPath(); c.arc(bx, by, h * 0.07, 0, 7); c.fill();
+  }
+  function box(c) { c.drawImage(pic('ready'), 0, 0, 480, 800); top(c, GREEN, 'ERG READY'); c.drawImage(pic('ready'), 0, 300, 480, 500, 0, 300, 480, 500);
+    c.fillStyle = YEL; c.beginPath(); c.roundRect(16, 333, 448, 180, 22); c.fill(); }
+  function top(c, dot, word) {
+    c.drawImage(pic('ready'), 0, 0, 480, 300, 0, 0, 480, 300);
+    const heart = c.getImageData(190, 76, 104, 44);
+    c.fillStyle = BG; c.fillRect(70, 70, 340, 56);
+    c.font = F(600, 27);
+    const ww = c.measureText(word).width, total = 26 + ww + 22 + 104, x = 240 - total / 2;
+    c.fillStyle = dot; c.beginPath(); c.arc(x + 9, 98, 9, 0, 7); c.fill();
+    c.fillStyle = TEXT; c.fillText(word, x + 26, 108);
+    c.putImageData(heart, Math.round(x + 26 + ww + 22), 76);
+  }
+  // The real Karoo 3 (3/4 photo, mirrored so its right side shows), zoomed in on the lower right
+  // button, the one that starts the ride; a ring pulses from it. Drawn into a box (dx, dy, dw, dh).
+  const SRC = { x: 290, y: 395, w: 200, h: 290 };                 // in the mirrored photo
+  // The lower side button's outline in the photo (karoo-3-side-frame.png pixels, before mirroring)
+  const BTN_OUTLINE = [[61.7, 475], [90, 451.7], [98.3, 455], [113.3, 596.7], [110, 608], [83.3, 620], [79.3, 615]];
+  const BOX = { x: 16, y: 333, w: 448, h: 180, r: 22 };
+  // The photo fills the box's left part, edge to edge (clipped by the box's corners); the button
+  // flashes a green tint (on / off about once a second).
+  function photo(c, flashOn) {
+    const k = BOX.h / SRC.h, dw = SRC.w * k;
+    c.save(); c.beginPath(); c.roundRect(BOX.x, BOX.y, BOX.w, BOX.h, BOX.r); c.clip();
+    c.save(); c.translate(BOX.x + dw, BOX.y); c.scale(-1, 1);
+    c.drawImage(I.side, 492 - SRC.x - SRC.w, SRC.y, SRC.w, SRC.h, 0, 0, dw, BOX.h);
+    c.restore();
+    // The button's own outline, traced on the photo (original pixels, then mirrored)
+    const pts = BTN_OUTLINE.map(([x, y]) => [BOX.x + ((492 - x) - SRC.x) * k, BOX.y + (y - SRC.y) * k]);
+    const path = () => { c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); };
+    c.lineJoin = 'round';
+    path(); c.fillStyle = flashOn ? 'rgba(46,190,90,0.80)' : 'rgba(46,190,90,0.25)'; c.fill();
+    c.strokeStyle = flashOn ? '#2EBE5A' : 'rgba(46,190,90,0.5)'; c.lineWidth = 5; c.stroke();
+    c.restore();
+    return dw;
+  }
+  // The approved indoor box (no tag), then the rest of the screen pushed down for the label.
+  function screen(c, label) {
+    box(c); const dw = photo(c, true); const x = BOX.x + dw + 20;
+    c.fillStyle = INK; c.font = F(600, 36); c.fillText('PRESS START', x, 392); c.fillText('TO BEGIN', x, 434);
+    // The smallest text on the Karoo: Plex Medium 24 px (karoo-type README)
+    c.font = F(500, 24); wrap(M, 'Starts and pauses the workout.', F(500, 24), BOX.x + BOX.w - x - 14).forEach((l, i) => c.fillText(l, x, 470 + i * 27));
+    const SHIFT = 30;
+    c.drawImage(pic('ready'), 0, 520, 480, 280 - SHIFT, 0, 520 + SHIFT, 480, 280 - SHIFT);   // name, First up, chart: down a little
+    c.fillStyle = BG; c.fillRect(4, 513, 472, 7 + SHIFT);
+    label(c, 22, 553);
+  }
+  const GREYL = THEME === 'dark' ? '#A0A0A0' : '#6E6E6E';
+  // The Karoo's trainer glyph (a rider on a trainer), lifted off its purple circle and drawn grey
+  const glyph = (() => {
+    const src = I.trainer_icon_src, cv = document.createElement('canvas'); cv.width = src.width; cv.height = src.height;
+    const g = cv.getContext('2d'); g.drawImage(src, 0, 0); const d = g.getImageData(0, 0, cv.width, cv.height);
+    const [gr, gg, gb] = [parseInt(GREYL.slice(1, 3), 16), parseInt(GREYL.slice(3, 5), 16), parseInt(GREYL.slice(5, 7), 16)];
+    for (let i = 0; i < d.data.length; i += 4) {
+      const L = (d.data[i] + d.data[i + 1] + d.data[i + 2]) / 3;
+      const a = Math.max(0, Math.min(1, (110 - L) / 70));            // the dark glyph only
+      d.data[i] = gr; d.data[i + 1] = gg; d.data[i + 2] = gb; d.data[i + 3] = Math.round(a * 255);
+    }
+    g.putImageData(d, 0, 0); return cv;
+  })();
+  put('c', c => screen(c, (c, x, y) => {
+    c.imageSmoothingQuality = 'high';
+    // Text 20 px; the glyph as tall as the caps plus a little, centred on them, its left edge on the name's
+    const capH = 17.5, gh = 38, gw = gh * 36 / 32;               // Plex Medium 24 px: caps 17.5 px
+    c.drawImage(glyph, 10, 12, 36, 32, x - 6, y - capH / 2 - gh / 2, gw, gh);
+    c.fillStyle = GREYL; c.font = F(500, 24); c.fillText('INDOOR SESSION', x + gw + 8, y);
+  }));
+})();
+</script>
+</body>
+</html>
