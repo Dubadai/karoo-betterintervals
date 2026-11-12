@@ -36,3 +36,4 @@ and screenshots from the Karoo 3 (`device/`). Newest work first.
 - `workout-details/`: a details page for each workout, Select workout at the top right (mock).
 - `intervals-z7/`: options for the intervals.icu palette's Z7 instead of grey (preview).
 - `empty-spots/`: None for every spot; what's left grows (mock).
+- `details-chart/`: the details picture on one scale for every workout, 80 dp; tap a block for its watts (A, the bubble, built).

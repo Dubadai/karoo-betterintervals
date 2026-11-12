@@ -4,6 +4,7 @@ import com.dubadai.karoo.common.*
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
@@ -12,10 +13,10 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -28,13 +29,14 @@ import kotlin.math.roundToInt
 
 /**
  * A workout's details (docs/design/workout-details), opened from its card on the Workouts page: its
- * picture with FTP, its numbers (time, TSS, IF, average power, NP, estimated calories), the notes
+ * picture with FTP (one scale for every workout; tap a block for its interval: docs/design/details-chart), its numbers (time, TSS, IF, average power, NP, estimated calories), the notes
  * from intervals.icu, time in each power zone and every interval, repeats grouped. Select workout,
  * top right, is the page's one yellow button (not shown for the workout already selected).
  */
 class WorkoutDetailsActivity : AppearanceActivity() {
 
     private lateinit var store: PlanStore
+    private var picture: Picture? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +69,8 @@ class WorkoutDetailsActivity : AppearanceActivity() {
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12), dp(4), dp(12), dp(24))
+            // A tall block's bubble reaches over the title above the picture
+            clipChildren = false
         }
         setContentView(
             LinearLayout(this).apply {
@@ -88,22 +92,19 @@ class WorkoutDetailsActivity : AppearanceActivity() {
         content.addView(text(plan.name, 22f, R.color.settings_title, bold = true))
         content.addView(
             text(listOf(planned.date.format(DAY_FORMAT), formatClock(plan.totalSec)).joinToString(" · "), 13f, R.color.settings_help).apply {
-                setPadding(0, dp(4), 0, dp(12))
+                setPadding(0, dp(4), 0, dp(4))
             },
         )
-        // The workout's picture: the rider's zone colours, ramps fading, FTP as a dashed line
-        val w = resources.displayMetrics.widthPixels - dp(24)
-        content.addView(
-            ImageView(this).apply {
-                setImageBitmap(
-                    ChartRenderer(this@WorkoutDetailsActivity).render(
-                        ScreenState(plan = plan, hrZones = store.hrZones, zonePalette = palette), w, dp(120), 1f, ChartRenderer.Style.CARD, ftpLine = true,
-                    ),
-                )
-                contentDescription = getString(R.string.cd_chart)
-            },
-            LinearLayout.LayoutParams(MATCH_PARENT, dp(120)),
-        )
+        // The workout's picture: the rider's zone colours, ramps fading, FTP as a dashed line, on one
+        // scale for every workout; a tap on a block shows its interval in a bubble
+        val doc = event.optJSONObject("workout_doc")?.optJSONArray("steps")
+        val docSteps = doc?.let { leafSteps(it) }?.takeIf { it.size == plan.steps.size }
+        picture = Picture(ScreenState(plan = plan, hrZones = store.hrZones, zonePalette = palette)) { i ->
+            val st = plan.steps[i]
+            val (name, watts, detail) = describe(docSteps?.get(i) ?: JSONObject(), st, plan)
+            "$name · ${formatClock(st.durationSec)}" to listOf(watts, detail).filter { it.isNotEmpty() }.joinToString(" · ")
+        }
+        content.addView(picture, LinearLayout.LayoutParams(MATCH_PARENT, dp(PICTURE_ROOM + PICTURE_H)))
         content.addView(StatGrid(this, stats.tiles(this)), LinearLayout.LayoutParams(MATCH_PARENT, dp(2 * 60 + 8)).apply { topMargin = dp(16); bottomMargin = dp(16) })
 
         // Notes: the description's own words (the step lines are the intervals, listed below)
@@ -132,7 +133,6 @@ class WorkoutDetailsActivity : AppearanceActivity() {
         }
 
         // Every interval, repeats grouped
-        val doc = event.optJSONObject("workout_doc")?.optJSONArray("steps")
         if (doc != null) {
             content.addView(settingsDivider())
             content.addView(settingsHeading(R.drawable.ic_settings_timer, getString(R.string.intervals_heading)))
@@ -216,8 +216,18 @@ class WorkoutDetailsActivity : AppearanceActivity() {
         }
     }
 
-    /** One interval: a zone-coloured strip, its name and time; its watts, % of FTP and zone under them. */
-    private fun stepRow(json: JSONObject, st: PlanStep, plan: WorkoutPlan, palette: ZonePalette, night: Boolean, indent: Int): View {
+    /** The workout's steps as the plan has them: repeats written out, steps without a time left out. */
+    private fun leafSteps(steps: JSONArray): List<JSONObject> = buildList {
+        for (i in 0 until steps.length()) {
+            val step = steps.optJSONObject(i) ?: continue
+            val children = step.optJSONArray("steps")
+            if (children != null) repeat(step.optInt("reps", 1).coerceAtLeast(1)) { addAll(leafSteps(children)) }
+            else if (step.optInt("duration", 0) > 0) add(step)
+        }
+    }
+
+    /** An interval's name, its watts (or bpm) and its % of FTP and zone, for its row and the picture's bubble. */
+    private fun describe(json: JSONObject, st: PlanStep, plan: WorkoutPlan): Triple<String, String, String> {
         val ftp = plan.ftp
         val za = if (st.hr) null else Zones.zoneOf(st.startWatts, ftp)
         val zb = if (st.hr) null else Zones.zoneOf(st.endWatts, ftp)
@@ -243,6 +253,14 @@ class WorkoutDetailsActivity : AppearanceActivity() {
                 za?.let { a -> val b = zb ?: a; if (a == b) "Z$a" else "Z${minOf(a, b)}–${maxOf(a, b)}" },
             ).joinToString(" · ")
         }
+        return Triple(name, watts, detail)
+    }
+
+    /** One interval: a zone-coloured strip, its name and time; its watts, % of FTP and zone under them. */
+    private fun stepRow(json: JSONObject, st: PlanStep, plan: WorkoutPlan, palette: ZonePalette, night: Boolean, indent: Int): View {
+        val (name, watts, detail) = describe(json, st, plan)
+        val za = if (st.hr) null else Zones.zoneOf(st.startWatts, plan.ftp)
+        val zb = if (st.hr) null else Zones.zoneOf(st.endWatts, plan.ftp)
         val colors = (if (st.hr) listOf(getColor(Zones.hrBarColor(st.avgWatts, store.hrZones, plan.lthr))) else listOf(za ?: 1, zb ?: za ?: 1).map { ZonePalette.boosted(palette.fill(it, night), night) })
         val strip = View(this).apply {
             background = GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, (if (colors.size == 1) colors + colors else colors).toIntArray()).apply { cornerRadius = dp(3).toFloat() }
@@ -285,6 +303,84 @@ class WorkoutDetailsActivity : AppearanceActivity() {
         }
     }
 
+    /** A tap anywhere but the picture closes its bubble (the tap still does what it does). */
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        val pic = picture
+        if (ev.actionMasked == MotionEvent.ACTION_DOWN && pic?.selected != null) {
+            val r = android.graphics.Rect()
+            if (!pic.getGlobalVisibleRect(r) || !r.contains(ev.rawX.toInt(), ev.rawY.toInt())) pic.selected = null
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
+    /**
+     * The workout's picture (docs/design/details-chart): [PICTURE_H] dp on one scale for every workout,
+     * with [PICTURE_ROOM] dp above it for the bubble. A tap on a block keeps it in colour, fades the
+     * rest and shows its interval in a bubble pointing at it ([lines]: the bubble's two lines);
+     * a second tap on it closes it.
+     */
+    private inner class Picture(private val state: ScreenState, private val lines: (Int) -> Pair<String, String>) : View(this@WorkoutDetailsActivity) {
+        private val renderer = ChartRenderer(context)
+        private var bmp: Bitmap? = null
+        var selected: Int? = null
+            set(v) {
+                if (field == v) return
+                field = v; bmp = null
+                contentDescription = v?.let { lines(it).let { (a, b) -> "$a, $b" } } ?: getString(R.string.cd_chart)
+                invalidate(); (parent as? View)?.invalidate()   // the bubble may reach over the title
+            }
+        private val bubble = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = getColor(R.color.settings_title) }
+        private val line1 = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = getColor(R.color.settings_bg); textSize = sp(14f); typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        }
+        private val line2 = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = getColor(R.color.settings_bg); textSize = sp(13f); typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+        }
+
+        init {
+            contentDescription = getString(R.string.cd_chart)
+            isClickable = true
+        }
+
+        override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) { bmp = null }
+
+        override fun onDraw(canvas: Canvas) {
+            val room = dp(PICTURE_ROOM).toFloat()
+            val chart = bmp ?: renderer.render(state, width, height - room.toInt(), 1f, ChartRenderer.Style.CARD, ftpLine = true, sharedScale = true, selected = selected)
+                .also { bmp = it }
+            canvas.drawBitmap(chart, 0f, room, null)
+            val i = selected ?: return
+            val bar = renderer.bars.getOrNull(i) ?: return
+            val (a, b) = lines(i)
+            val pad = dp(12).toFloat()
+            val bw = (maxOf(line1.measureText(a), line2.measureText(b)) + 2 * pad).coerceAtMost(width.toFloat())
+            val bh = dp(50).toFloat()
+            val tip = dp(7).toFloat()
+            val cx = (bar.left + bar.right) / 2
+            val bx = (cx - bw / 2).coerceIn(0f, width - bw)
+            val by = room + bar.top - tip - bh
+            canvas.drawRoundRect(RectF(bx, by, bx + bw, by + bh), dp(10).toFloat(), dp(10).toFloat(), bubble)
+            canvas.drawPath(android.graphics.Path().apply {
+                moveTo(cx - tip, by + bh - 1); lineTo(cx + tip, by + bh - 1); lineTo(cx, by + bh + tip); close()
+            }, bubble)
+            canvas.drawText(a, bx + pad, by + dp(21), line1)
+            canvas.drawText(b, bx + pad, by + dp(41), line2)
+        }
+
+        override fun onTouchEvent(e: MotionEvent): Boolean {
+            if (e.actionMasked == MotionEvent.ACTION_UP) {
+                val i = ChartRenderer.stepAt(state.plan ?: return true, width, e.x)
+                selected = if (i == selected) null else i
+                performClick()
+            }
+            return true
+        }
+
+        override fun performClick(): Boolean = super.performClick()
+
+        private fun sp(v: Float) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, v, resources.displayMetrics)
+    }
+
     /** Debug builds: the example workout from the debug assets (the emulator has no intervals.icu). */
     private fun exampleJson(): String? {
         if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0 || !intent.getBooleanExtra(EXTRA_EXAMPLE, false)) return null
@@ -295,6 +391,9 @@ class WorkoutDetailsActivity : AppearanceActivity() {
         const val EXTRA_JSON = "json"
         const val EXTRA_SELECTED = "selected"
         const val EXTRA_EXAMPLE = "example"
+        /** The picture's height (dp; was 120) and the room above it for a bubble. */
+        private const val PICTURE_H = 80
+        private const val PICTURE_ROOM = 24
         private val DAY_FORMAT = DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())
         val ZONE_NAMES = listOf(R.string.zone1, R.string.zone2, R.string.zone3, R.string.zone4, R.string.zone5, R.string.zone6, R.string.zone7)
 

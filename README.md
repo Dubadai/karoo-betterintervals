@@ -23,8 +23,9 @@ you can jump forward **and back** between intervals.
   and two tiles (Lap avg and Cadence). **Settings › Workout screen** sets every spot: the top row,
   the line under the watts, and what each tile goes through when you tap it (lap or ride power,
   Lap NP, target, heart rate, cadence, calories, speed).
-- **Workout details** on the Workouts page: the picture, time, TSS, IF, NP, calories, the coach's
-  notes, time in zones and every interval, then **Select workout**.
+- **Workout details** on the Workouts page: the picture (one scale for every workout; tap a block
+  for its watts), time, TSS, IF, NP, calories, the coach's notes, time in zones and every
+  interval, then **Select workout**.
 - **Next up with ⏮ / ⏭:** a jump starts a 5-second countdown with beeps, so you can get ready.
 - **The whole workout as a chart** in zone colours with a "now" marker; tap it to zoom in.
 - **Pause** stops the interval timer (for traffic, say) while the ride keeps recording. One lap per

@@ -26,6 +26,11 @@ numbers (time, TSS, IF, average power, NP and estimated calories), the notes fro
 the time in each power zone, and every interval with its watts, % of FTP and zone (repeats grouped).
 **Select workout** (top right) picks it.
 
+Every workout's picture is drawn on the same scale, so you can compare them: the top is 130 % of
+your FTP and the FTP line always shows. Only a workout with higher steps (sprints) gets a taller
+scale, just enough for its highest step. Tap a block in the picture to see that interval: its name,
+time, watts, % of FTP and zone. Tap it again, or anywhere else, to close it.
+
 ### Changed on intervals.icu
 
 If you change the workout you're riding on intervals.icu and open the Workouts page mid-ride, an
