@@ -274,11 +274,19 @@ class SetupActivity : AppearanceActivity() {
         content.addView(
             row(
                 settingsButton(SettingsButton.MAIN, getString(R.string.back_to_ride)) { goToRide() }.apply {
-                    layoutParams = LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginEnd = dp(8) }
+                    layoutParams = LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginEnd = dp(8); gravity = Gravity.TOP }
                 },
-                settingsButton(SettingsButton.ADD, getString(if (loading) R.string.syncing else R.string.sync)) {
-                    if (!loading && store.hasCredentials) load(openWifiIfOffline = true)
-                }.apply { layoutParams = LinearLayout.LayoutParams(dp(96), dp(48)) },
+                // Sync, and under it when it last synced, or Offline (docs/design/sync-time, A)
+                LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    addView(
+                        settingsButton(SettingsButton.ADD, getString(if (loading) R.string.syncing else R.string.sync)) {
+                            if (!loading && store.hasCredentials) load(openWifiIfOffline = true)
+                        }.apply { layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(48)) },
+                    )
+                    syncNote()?.let { addView(it, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(4) }) }
+                    layoutParams = LinearLayout.LayoutParams(dp(96), WRAP_CONTENT).apply { gravity = Gravity.TOP }
+                },
             ).apply { setPadding(0, dp(8), 0, 0) },
         )
         planChangedCard()?.let { content.addView(it) }
@@ -363,44 +371,51 @@ class SetupActivity : AppearanceActivity() {
      * One line under the buttons: when it last synced, and when offline why, with Turn on for
      * Wi-Fi when it's off (apps can't switch it on themselves). Null when there's nothing to say.
      */
-    private fun syncLine(): View? {
+    /**
+     * Under the Sync button: when it last synced (grey), or Offline (amber) when there's Wi-Fi but no
+     * internet. Shrinks to fit the button's width ("Synced Tue 08:41").
+     */
+    private fun syncNote(): View? {
         val synced = store.lastSynced?.let {
             val time = if (it.toLocalDate() == LocalDate.now()) it.format(TIME_FORMAT) else it.format(DATE_TIME_FORMAT)
             getString(R.string.synced_at, time)
         }
-        val wifiOff = offline && !wifiEnabled()
-        val problem = when {
-            wifiOff -> getString(R.string.wifi_off)
-            offline -> getString(R.string.offline)
-            else -> null
+        val noInternet = offline && wifiEnabled()
+        val value = (if (noInternet) getString(R.string.offline) else synced) ?: return null
+        return TextView(this).apply {
+            text = value
+            gravity = Gravity.CENTER_HORIZONTAL
+            maxLines = 1
+            setTextColor(getColor(if (noInternet) R.color.settings_warn else R.color.settings_help))
+            if (noInternet) setTypeface(typeface, Typeface.BOLD)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+            setAutoSizeTextTypeUniformWithConfiguration(9, 12, 1, TypedValue.COMPLEX_UNIT_SP)
         }
-        if (synced == null && problem == null) return null
-        fun small(value: String, color: Int, bold: Boolean = false) = TextView(this).apply {
+    }
+
+    /** Wi-Fi off: its own line, the warning and Turn on (the time stays under Sync). */
+    private fun syncLine(): View? {
+        if (!offline || wifiEnabled()) return null
+        fun small(value: String, color: Int) = TextView(this).apply {
             text = value
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
             setTextColor(getColor(color))
-            if (bold) setTypeface(typeface, Typeface.BOLD)
+            setTypeface(typeface, Typeface.BOLD)
         }
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(2), dp(16), 0, dp(8))
-            synced?.let { addView(small(it, R.color.settings_help)) }
-            if (problem != null) {
-                if (synced != null) addView(small("  ·  ", R.color.settings_help))
-                addView(small(problem, R.color.settings_warn, bold = true))
-            }
-            if (wifiOff) {
-                addView(View(context), LinearLayout.LayoutParams(0, 0, 1f))
-                addView(
-                    small(getString(R.string.turn_on), R.color.segment_text_selected, bold = true).apply {
-                        background = rounded(R.color.segment_selected, 16)
-                        setPadding(dp(12), dp(5), dp(12), dp(5))
-                        isClickable = true
-                        setOnClickListener { openWifi() }
-                    },
-                )
-            }
+            addView(small(getString(R.string.wifi_off), R.color.settings_warn))
+            addView(View(context), LinearLayout.LayoutParams(0, 0, 1f))
+            addView(
+                small(getString(R.string.turn_on), R.color.segment_text_selected).apply {
+                    background = rounded(R.color.segment_selected, 16)
+                    setPadding(dp(12), dp(5), dp(12), dp(5))
+                    isClickable = true
+                    setOnClickListener { openWifi() }
+                },
+            )
         }
     }
 
