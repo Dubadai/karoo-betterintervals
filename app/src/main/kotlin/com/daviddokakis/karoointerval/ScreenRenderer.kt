@@ -86,13 +86,6 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         tiles.forEach { setBg(v, it, tileDrawable(outline, tonal)) }
     }
 
-    /** The heart icon swapped for the cadence icon, in the text colour (green reads as "on target"). */
-    private fun showCadenceIcon(v: RemoteViews, id: Int) {
-        v.setImageViewResource(id, R.drawable.ic_cadence)
-        v.setInt(id, "setColorFilter", color(R.color.text))
-        v.setContentDescription(id, context.getString(R.string.cadence))
-    }
-
     /** "CADENCE" / "LAP CAD", in capitals like the Karoo's labels. */
     private fun cadenceLabel(lap: Boolean): String =
         context.getString(if (lap) R.string.lap_cadence else R.string.cadence).uppercase()
@@ -163,7 +156,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         val hrStep = s.hrStep
         // Settings › Workout screen (docs/design/more-control): one or two values at the top, a line
         // under the watts, and two tiles that each go through the metrics switched on (tap).
-        val left = s.topRow ?: if (s.showsCadence) TopRow.CADENCE else TopRow.HEART_RATE
+        val left = s.topRow ?: TopRow.HEART_RATE
         // None (docs/design/empty-spots): no values at the top; a tile with nothing on is left out
         val tops = if (s.topRowNone) emptyList() else listOfNotNull(left, s.topRowRight?.takeIf { it != left })
         val leftItems = s.leftItems
@@ -500,29 +493,23 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setTextViewText(R.id.done_value_1, sum?.timeSec?.takeIf { it > 0 }?.let(::formatClock) ?: formatClock(plan.totalSec))
         v.setTextViewText(R.id.done_value_2, sum?.avgPower?.toString() ?: "--")
         v.setTextViewText(R.id.done_value_3, sum?.np?.toString() ?: "--")
-        if (s.showsCadence) {
-            v.setTextViewText(R.id.done_label_4, context.getString(R.string.avg_cadence))
-            v.setTextViewText(R.id.done_value_4, sum?.avgCadence?.toString() ?: "--")
-            showCadenceIcon(v, R.id.done_icon_4)
-        } else {
-            v.setTextViewText(R.id.done_value_4, sum?.avgHr?.toString() ?: "--")
-            // The heart in this mode's red (Dark / Light forced too), like the workout screen's
-            v.setInt(R.id.done_icon_4, "setColorFilter", color(R.color.heart_icon))
-        }
+        v.setTextViewText(R.id.done_value_4, sum?.avgHr?.toString() ?: "--")
+        // The heart in this mode's red (Dark / Light forced too), like the workout screen's
+        v.setInt(R.id.done_icon_4, "setColorFilter", color(R.color.heart_icon))
         applyTiles(v, listOf(R.id.done_tile_1, R.id.done_tile_2, R.id.done_tile_3, R.id.done_tile_4), s.tileOutline, R.drawable.bg_tile_tonal)
         // Each number fills its tile, like the Karoo's fields (tile padding 8dp each side, 5dp bottom)
         val doneW = config.viewSize.first / 2f - 24 * density
         val doneTexts = listOf(
             sum?.timeSec?.takeIf { it > 0 }?.let(::formatClock) ?: formatClock(plan.totalSec), sum?.avgPower?.toString() ?: "--",
-            sum?.np?.toString() ?: "--", (if (s.showsCadence) sum?.avgCadence else sum?.avgHr)?.toString() ?: "--",
+            sum?.np?.toString() ?: "--", sum?.avgHr?.toString() ?: "--",
         )
         // Drawn 1:1 like the Karoo's own fields (TileArt)
         val ink = color(R.color.text)
         val doneTileW = (config.viewSize.first - 22 * density) / 2f
-        val doneLabels = listOf(R.string.time, R.string.avg_power, R.string.done_np, if (s.showsCadence) R.string.avg_cadence else R.string.avg_hr)
+        val doneLabels = listOf(R.string.time, R.string.avg_power, R.string.done_np, R.string.avg_hr)
         val doneIcons = listOf(
             TileArt.Glyph(KarooType.Glyph.TIMER, ink), TileArt.Glyph(KarooType.Glyph.BOLT, ink), TileArt.Glyph(KarooType.Glyph.BOLT, ink),
-            if (s.showsCadence) TileArt.Glyph(KarooType.Glyph.CADENCE, color(R.color.text)) else TileArt.Glyph(KarooType.Glyph.HEART, color(R.color.text)),
+            TileArt.Glyph(KarooType.Glyph.HEART, color(R.color.text)),
         )
         listOf(R.id.done_tile_1_img, R.id.done_tile_2_img, R.id.done_tile_3_img, R.id.done_tile_4_img).forEachIndexed { i, img ->
             val ids = listOf(
@@ -570,7 +557,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             v.setViewVisibility(R.id.watts_empty, View.GONE)
         }
         // The top row as on the workout screen (Settings › Top row), drawn like BigWatts' heart-rate line
-        val left = s.topRow ?: if (s.showsCadence) TopRow.CADENCE else TopRow.HEART_RATE
+        val left = s.topRow ?: TopRow.HEART_RATE
         val tops = listOfNotNull(left, s.topRowRight?.takeIf { it != left })
         v.setViewVisibility(R.id.hr_icon, View.GONE)
         v.setViewVisibility(R.id.hr, View.GONE)
@@ -737,27 +724,19 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         fillValue(v, R.id.free_lap_avg, s.shownFreePower?.toString() ?: "--", freeW, 75 * density, 15f, 6 * density, -6 * density)
         v.setViewVisibility(R.id.th_free_karoo_3, if (s.freePower == FreePower.RIDE_AVG) View.GONE else View.VISIBLE)
         v.setOnClickPendingIntent(R.id.free_lap_tile, freePowerCycleIntent)
-        // HR tile: tap to go on: HR → LAP HR → RIDE HR. With cadence instead (Settings), the same
-        // tile shows CADENCE → LAP CAD → RIDE CAD.
-        v.setTextViewText(R.id.free_hr, s.shownSecond?.toString() ?: "--")
-        fillValue(v, R.id.free_hr, s.shownSecond?.toString() ?: "--", (config.viewSize.first - 6 * density) / 2f - 2 * density - 7 * density, 75 * density, 15f, 6 * density, -6 * density)
-        v.setTextViewText(
-            R.id.free_hr_label,
-            if (s.showsCadence) {
-                if (s.freeSecond == FreeSecond.RIDE) context.getString(R.string.ride_cadence).uppercase() else cadenceLabel(lap = s.freeSecond == FreeSecond.LAP)
-            } else {
-                context.getString(when (s.freeSecond) { FreeSecond.NOW -> R.string.hr; FreeSecond.LAP -> R.string.lap_hr; FreeSecond.RIDE -> R.string.ride_hr })
-            },
-        )
-        if (s.showsCadence) showCadenceIcon(v, R.id.free_hr_icon)
-        // LAP HR / LAP CAD: the lap arrow before the heart, like LAP AVG (green; black on a zone colour, below)
+        // HR tile: tap to go on: HR → LAP HR → RIDE HR
+        v.setTextViewText(R.id.free_hr, s.shownHr?.toString() ?: "--")
+        fillValue(v, R.id.free_hr, s.shownHr?.toString() ?: "--", (config.viewSize.first - 6 * density) / 2f - 2 * density - 7 * density, 75 * density, 15f, 6 * density, -6 * density)
+        val hrLabel = context.getString(when (s.freeSecond) { FreeSecond.NOW -> R.string.hr; FreeSecond.LAP -> R.string.lap_hr; FreeSecond.RIDE -> R.string.ride_hr })
+        v.setTextViewText(R.id.free_hr_label, hrLabel)
+        // LAP HR: the lap arrow before the heart, like LAP AVG (green; black on a zone colour, below)
         v.setViewVisibility(R.id.free_hr_lap_icon, if (s.freeSecond == FreeSecond.LAP) View.VISIBLE else View.GONE)
         v.setOnClickPendingIntent(R.id.free_hr_tile, lapHrToggleIntent)
 
         // The tile takes the Karoo's own colour for the heart rate zone it shows, like the Karoo's
-        // HR field with Zone Color on: black text and outline heart (cadence has no zones).
-        // No zone: like the Lap avg tile (Tiles setting).
-        val zoneBg = if (s.showsCadence) null else s.zoneOf(s.shownHr)?.let { hrZoneDrawable(it, s.hrZones.size) }
+        // HR field with Zone Color on: black text and outline heart. No zone: like the Lap avg tile
+        // (Tiles setting).
+        val zoneBg = s.zoneOf(s.shownHr)?.let { hrZoneDrawable(it, s.hrZones.size) }
         setBg(v, R.id.free_hr_tile, zoneBg ?: tileDrawable(s.tileOutline, freeTonal))
         if (zoneBg != null) {
             val ink = color(R.color.karoo_hr_text)
@@ -776,11 +755,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             val parts = listOfNotNull(
                 formatClock(time),
                 s.lastLapPowerAvg?.let { "$it W" },
-                if (s.showsCadence) {
-                    s.lastLapCadenceAvg?.takeIf { it > 0 }?.let { context.getString(R.string.rpm_value, it) }
-                } else {
-                    s.lastLapHrAvg?.takeIf { it > 0 }?.let { context.getString(R.string.bpm_value, it) }
-                },
+                s.lastLapHrAvg?.takeIf { it > 0 }?.let { context.getString(R.string.bpm_value, it) },
             ).joinToString(" · ")
             parts
         }
@@ -800,21 +775,14 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             empty = s.powerSensor.emptyText,
         )
         val hrInk = if (zoneBg != null) color(R.color.karoo_hr_text) else color(R.color.text)
-        val hrIcon = when {
-            s.showsCadence -> TileArt.Glyph(KarooType.Glyph.CADENCE, hrInk)
-            // The Karoo's outline heart, like its HR field; the red heart is the workout screen's
-            else -> TileArt.Glyph(KarooType.Glyph.HEART, hrInk)
-        }
+        // The Karoo's outline heart, like its HR field; the red heart is the workout screen's
+        val hrIcon = TileArt.Glyph(KarooType.Glyph.HEART, hrInk)
         tileArt(
             v, R.id.free_hr_img, listOf(R.id.free_hr_lap_icon, R.id.free_hr_icon, R.id.free_hr_label, R.id.free_hr), halfTileW, 75 * density,
             listOfNotNull(if (s.freeSecond == FreeSecond.LAP) TileArt.Glyph(KarooType.Glyph.LAP, hrInk) else null, hrIcon),
-            if (s.showsCadence) {
-                if (s.freeSecond == FreeSecond.RIDE) context.getString(R.string.ride_cadence) else cadenceLabel(lap = s.freeSecond == FreeSecond.LAP)
-            } else {
-                context.getString(when (s.freeSecond) { FreeSecond.NOW -> R.string.hr; FreeSecond.LAP -> R.string.lap_hr; FreeSecond.RIDE -> R.string.ride_hr })
-            },
-            s.shownSecond?.toString() ?: "--", hrInk,
-            empty = (if (s.showsCadence) s.cadenceSensor else s.hrSensor).emptyText,
+            hrLabel,
+            s.shownHr?.toString() ?: "--", hrInk,
+            empty = s.hrSensor.emptyText,
         )
         return v
     }

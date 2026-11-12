@@ -11,9 +11,6 @@ enum class Smoothing(val label: Int, val power: String, val cadence: String, val
     S10(R.string.smoothing_10s, DataType.Type.SMOOTHED_10S_AVERAGE_POWER, DataType.Type.SMOOTHED_10S_AVERAGE_CADENCE, R.string.power_name_10s),
 }
 
-/** Settings › Heart rate or cadence: what the HR spots on the screens show. */
-enum class SecondField { HEART_RATE, CADENCE }
-
 /**
  * Settings › Workout screen › Top row (one or two of these) and Under the watts (one, or none):
  * docs/design/more-control.

@@ -54,7 +54,12 @@ class PlanStore private constructor(context: Context) {
         get() = enumPref(KEY_FREE_POWER, FreePower.entries, FreePower.LAP_AVG)
         set(value) = prefs.edit().putString(KEY_FREE_POWER, value.name).apply()
 
-    private val _topRow = MutableStateFlow(prefs.getString(KEY_TOP_ROW, null)?.let { n -> TopRow.entries.firstOrNull { it.name == n } })
+    // A rider who had picked Cadence in the old "Heart rate or cadence" setting (gone in 0.10.3) and never
+    // set the top row keeps cadence there (docs/design/one-hr-setting)
+    private val _topRow = MutableStateFlow(
+        prefs.getString(KEY_TOP_ROW, null)?.let { n -> TopRow.entries.firstOrNull { it.name == n } }
+            ?: TopRow.CADENCE.takeIf { prefs.getString(KEY_SECOND_FIELD, null) == "CADENCE" },
+    )
 
     /** Settings › Top row (null until picked: each layout as it was). */
     val topRow: StateFlow<TopRow?> = _topRow
@@ -194,15 +199,6 @@ class PlanStore private constructor(context: Context) {
         _powerSmoothing.value = value
     }
 
-    private val _secondField = MutableStateFlow(enumPref(KEY_SECOND_FIELD, SecondField.entries, SecondField.HEART_RATE))
-
-    /** Settings › Heart rate or cadence: what the HR spots show. */
-    val secondField: StateFlow<SecondField> = _secondField
-
-    fun setSecondField(value: SecondField) {
-        prefs.edit().putString(KEY_SECOND_FIELD, value.name).apply()
-        _secondField.value = value
-    }
 
     private val _cadenceSmoothing = MutableStateFlow(enumPref(KEY_CADENCE_SMOOTHING, Smoothing.entries, Smoothing.INSTANT))
 
@@ -455,6 +451,7 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_PM_BANDS = "match_pm_bands"
         private const val KEY_PM_LAST = "match_pm_last"
         private const val KEY_POWER_SMOOTHING = "power_smoothing"
+        /** The old "Heart rate or cadence" setting, read once for the top row (see _topRow). */
         private const val KEY_SECOND_FIELD = "second_field"
         private const val KEY_CADENCE_SMOOTHING = "cadence_smoothing"
         private const val KEY_WEEK_JSON = "week_json"

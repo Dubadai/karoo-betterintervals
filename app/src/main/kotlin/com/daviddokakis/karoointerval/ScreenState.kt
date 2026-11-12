@@ -14,11 +14,6 @@ data class ScreenState(
     val heartRate: Int? = null,
     /** Cadence (rpm), smoothed per Settings › Cadence. */
     val cadence: Int? = null,
-    /** Karoo's lap and last-lap average cadence. */
-    val lapCadenceAvg: Int? = null,
-    val lastLapCadenceAvg: Int? = null,
-    /** Settings › Heart rate or cadence. */
-    val secondField: SecondField = SecondField.HEART_RATE,
     /** 0-based index of the current step. */
     val stepIndex: Int = 0,
     val elapsedInStepSec: Int = 0,
@@ -60,10 +55,9 @@ data class ScreenState(
     /** Free ride's tiles: which value each shows (tap to go on). */
     val freePower: FreePower = FreePower.LAP_AVG,
     val freeSecond: FreeSecond = FreeSecond.NOW,
-    /** The whole ride so far (free ride's tiles): average power, heart rate, cadence. */
+    /** The whole ride so far (free ride's tiles): average power and heart rate. */
     val rideAvgPower: Int? = null,
     val rideAvgHr: Int? = null,
-    val rideAvgCadence: Int? = null,
     /** Settings › Top row; null: as each layout has it (number styles: heart rate, gauge: target). */
     val topRow: TopRow? = null,
     /** Settings › Top row › Two: the second value at the top, or null for one value. */
@@ -177,19 +171,6 @@ data class ScreenState(
 
     /** Free ride: the heart rate the HR tile shows (now, the lap's or the ride's average). */
     val shownHr: Int? get() = when (freeSecond) { FreeSecond.NOW -> heartRate; FreeSecond.LAP -> lapHrAvg; FreeSecond.RIDE -> rideAvgHr }
-
-    /** Cadence instead of heart rate (Settings). */
-    val showsCadence: Boolean get() = secondField == SecondField.CADENCE
-
-    /** The value in the HR spots: heart rate or cadence, now. */
-    val secondValue: Int? get() = if (showsCadence) cadence else heartRate
-
-    /** Free ride's HR tile: now, the lap's or the ride's average (tap to go on), heart rate or cadence. */
-    val shownSecond: Int? get() = if (showsCadence) {
-        when (freeSecond) { FreeSecond.NOW -> cadence; FreeSecond.LAP -> lapCadenceAvg; FreeSecond.RIDE -> rideAvgCadence }
-    } else {
-        shownHr
-    }
 
     /** Free ride's power tile: the lap's average, the lap's NP or the ride's average. */
     val shownFreePower: Int? get() = when (freePower) { FreePower.LAP_AVG -> lapPowerAvg; FreePower.LAP_NP -> freeLapNp; FreePower.RIDE_AVG -> rideAvgPower }

@@ -151,7 +151,7 @@ object GalleryFields {
             "none-all" -> k.copy(indoor = true, topRowNone = true, underWatts = null, leftItems = emptyList(), rightItems = emptyList())
             "none-tiles-gauge" -> k.copy(wattsMode = WattsMode.GAUGE, leftItems = emptyList())
             "outline" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, tileOutline = true)
-            "cadence" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, secondField = SecondField.CADENCE)
+            "cadence" -> ExampleScreen.state(wattsMode = WattsMode.PLAIN, topRow = TopRow.CADENCE)
             // A workout with heart-rate targets only (as intervals.icu sends one: % of max HR, resolved to bpm)
             "hr-gauge" -> hrWorkout(WattsMode.GAUGE)
             // The Target tile tapped to %: as written, % of max HR ("% HR 82", Next up "2m @ 69% HR")

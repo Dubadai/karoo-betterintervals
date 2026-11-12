@@ -274,12 +274,9 @@ class WorkoutSession(
         collectInt(DataType.Type.AVERAGE_POWER_LAST_LAP) { v -> _state.update { it.copy(lastLapPowerAvg = v) } }
         collectInt(DataType.Type.AVERAGE_LAP_HR) { v -> _state.update { it.copy(lapHrAvg = v) } }
         collectInt(DataType.Type.AVERAGE_HR_LAST_LAP) { v -> _state.update { it.copy(lastLapHrAvg = v) } }
-        collectInt(DataType.Type.CADENCE_LAP) { v -> _state.update { it.copy(lapCadenceAvg = v) } }
-        collectInt(DataType.Type.AVERAGE_CADENCE_LAST_LAP) { v -> _state.update { it.copy(lastLapCadenceAvg = v) } }
         // The whole ride so far, for free ride's tiles
         collectInt(DataType.Type.AVERAGE_POWER) { v -> _state.update { it.copy(rideAvgPower = v) } }
         collectInt(DataType.Type.AVERAGE_HR) { v -> _state.update { it.copy(rideAvgHr = v) } }
-        collectInt(DataType.Type.AVERAGE_CADENCE) { v -> _state.update { it.copy(rideAvgCadence = v) } }
         // The right tile's other metrics (Settings › Right tile)
         collectInt(DataType.Type.CALORIES) { v -> _state.update { it.copy(calories = v) } }
         scope.launch {
@@ -317,7 +314,6 @@ class WorkoutSession(
         scope.launch { store.appearance.collect { a -> _state.update { it.copy(appearance = a) } } }
         scope.launch { store.powerSmoothing.collect { p -> _state.update { it.copy(powerSmoothing = p) } } }
         scope.launch { store.tileOutline.collect { on -> _state.update { it.copy(tileOutline = on) } } }
-        scope.launch { store.secondField.collect { f -> _state.update { it.copy(secondField = f) } } }
         scope.launch { store.topRow.collect { r -> _state.update { it.copy(topRow = r) } } }
         scope.launch { store.topRowRight.collect { r -> _state.update { it.copy(topRowRight = r) } } }
         scope.launch { store.zonePalette.collect { z -> _state.update { it.copy(zonePalette = z) } } }

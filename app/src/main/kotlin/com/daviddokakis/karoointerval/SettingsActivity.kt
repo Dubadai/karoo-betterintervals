@@ -114,25 +114,12 @@ class SettingsActivity : AppearanceActivity() {
         )
         form.addView(settingsDivider())
 
-        // Heart rate or cadence in the HR spots
-        form.addView(settingsHeading(R.drawable.ic_settings_heart, getString(R.string.second_field)))
-        form.addView(settingsIntro(getString(R.string.second_field_help)))
-        form.addView(
-            settingsSegmented(
-                named(R.string.heart_rate to SecondField.HEART_RATE, R.string.cadence to SecondField.CADENCE),
-                store.secondField.value,
-            ) { picked ->
-                store.setSecondField(picked)
-                render()
-            },
-        )
-        form.addView(settingsDivider())
 
         // Workout screen: what each spot shows, one row per spot opening its own page
         // (docs/design/more-control). The row's second line says what's picked now.
         form.addView(settingsHeading(R.drawable.ic_settings_layout, getString(R.string.workout_screen)))
         form.addView(settingsIntro(getString(R.string.workout_screen_help)))
-        val top = store.topRow.value ?: if (store.secondField.value == SecondField.CADENCE) TopRow.CADENCE else TopRow.HEART_RATE
+        val top = store.topRow.value ?: TopRow.HEART_RATE
         val topNames = if (store.topRowNone.value) getString(R.string.none) else listOfNotNull(top, store.topRowRight.value?.takeIf { it != top }).joinToString(", ") { topName(it) }
         val tileNames = { items: List<TileItem> -> items.joinToString(", ") { getString(SpotSettingsActivity.tileRow(it).second) }.ifEmpty { getString(R.string.none) } }
         listOf(
@@ -172,17 +159,16 @@ class SettingsActivity : AppearanceActivity() {
             },
         )
         form.addView(settingsDivider())
-        if (store.secondField.value == SecondField.CADENCE) {
-            form.addView(settingsHeading(R.drawable.ic_settings_cadence, getString(R.string.cadence_smoothing)))
-            form.addView(settingsIntro(getString(R.string.cadence_smoothing_help)))
-            form.addView(
-                settingsSegmented(Smoothing.entries.map { getString(it.label) to it }, store.cadenceSmoothing.value) { picked ->
-                    store.setCadenceSmoothing(picked)
-                    render()
-                },
-            )
-            form.addView(settingsDivider())
-        }
+        // Cadence smoothing: always (cadence is on the right tile by default)
+        form.addView(settingsHeading(R.drawable.ic_settings_cadence, getString(R.string.cadence_smoothing)))
+        form.addView(settingsIntro(getString(R.string.cadence_smoothing_help)))
+        form.addView(
+            settingsSegmented(Smoothing.entries.map { getString(it.label) to it }, store.cadenceSmoothing.value) { picked ->
+                store.setCadenceSmoothing(picked)
+                render()
+            },
+        )
+        form.addView(settingsDivider())
 
         // Trainer (indoors): ERG on an indoor ride profile (docs/design/indoor-erg)
         form.addView(settingsHeading(R.drawable.ic_settings_target, getString(R.string.erg_heading)))

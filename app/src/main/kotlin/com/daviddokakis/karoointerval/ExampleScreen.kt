@@ -23,12 +23,11 @@ object ExampleScreen {
         ftp = 280,
     )
 
-    /** Interval 4 of 10: 280 W (in range), 132 bpm or 88 rpm, lap average 282 W. */
+    /** Interval 4 of 10: 280 W (in range), 132 bpm, 88 rpm, lap average 282 W. */
     fun state(
         wattsMode: WattsMode,
         appearance: Appearance = Appearance.AUTO,
         tileOutline: Boolean = false,
-        secondField: SecondField = SecondField.HEART_RATE,
         notStarted: Boolean = false,
         topRow: TopRow? = null,
     ) = ScreenState(
@@ -44,7 +43,6 @@ object ExampleScreen {
         wattsMode = wattsMode,
         appearance = appearance,
         tileOutline = tileOutline,
-        secondField = secondField,
         notStarted = notStarted,
         topRow = topRow,
     )
