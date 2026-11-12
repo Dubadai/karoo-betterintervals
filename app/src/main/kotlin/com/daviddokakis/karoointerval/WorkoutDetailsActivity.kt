@@ -98,7 +98,7 @@ class WorkoutDetailsActivity : AppearanceActivity() {
         // The workout's picture: the rider's zone colours, ramps fading, FTP as a dashed line, on one
         // scale for every workout; a tap on a block shows its interval in a bubble
         val doc = event.optJSONObject("workout_doc")?.optJSONArray("steps")
-        val docSteps = doc?.let { leafSteps(it) }?.takeIf { it.size == plan.steps.size }
+        val docSteps = leafStepsOf(event, plan)
         picture = Picture(ScreenState(plan = plan, hrZones = store.hrZones, zonePalette = palette)) { i ->
             val st = plan.steps[i]
             val (name, watts, detail) = describe(docSteps?.get(i) ?: JSONObject(), st, plan)
@@ -216,28 +216,12 @@ class WorkoutDetailsActivity : AppearanceActivity() {
         }
     }
 
-    /** The workout's steps as the plan has them: repeats written out, steps without a time left out. */
-    private fun leafSteps(steps: JSONArray): List<JSONObject> = buildList {
-        for (i in 0 until steps.length()) {
-            val step = steps.optJSONObject(i) ?: continue
-            val children = step.optJSONArray("steps")
-            if (children != null) repeat(step.optInt("reps", 1).coerceAtLeast(1)) { addAll(leafSteps(children)) }
-            else if (step.optInt("duration", 0) > 0) add(step)
-        }
-    }
-
     /** An interval's name, its watts (or bpm) and its % of FTP and zone, for its row and the picture's bubble. */
     private fun describe(json: JSONObject, st: PlanStep, plan: WorkoutPlan): Triple<String, String, String> {
         val ftp = plan.ftp
         val za = if (st.hr) null else Zones.zoneOf(st.startWatts, ftp)
         val zb = if (st.hr) null else Zones.zoneOf(st.endWatts, ftp)
-        val name = when {
-            json.optString("text").isNotBlank() -> json.optString("text").trim()
-            json.optBoolean("warmup") -> getString(R.string.warm_up)
-            json.optBoolean("cooldown") -> getString(R.string.cool_down)
-            za != null -> getString(ZONE_NAMES[maxOf(za, zb ?: za) - 1])
-            else -> getString(R.string.heart_rate)
-        }
+        val name = stepName(json, st, ftp)
         val unit = if (st.hr) "bpm" else "W"
         val watts = when {
             st.isRamp -> "${st.startWatts} → ${st.endWatts} $unit"

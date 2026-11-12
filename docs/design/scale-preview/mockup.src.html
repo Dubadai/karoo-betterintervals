@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scale Preview</title>
+<style>
+@font-face { font-family: Plex; src: url(__FONT_REG__); font-weight: 400; }
+@font-face { font-family: Plex; src: url(__FONT_MED__); font-weight: 500; }
+@font-face { font-family: Plex; src: url(__FONT_SEMI__); font-weight: 600; }
+@font-face { font-family: Plex; src: url(__FONT_BOLD__); font-weight: 700; }
+@font-face { font-family: Relative; src: url(__RELATIVE__); }
+:root { --bg:#f6f5f2; --fg:#1d1d1b; --muted:#6b6a66; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; } }
+:root[data-theme="dark"] { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system, system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 28px; margin: 0 0 4px; } p { color: var(--muted); max-width: 72ch; }
+.flow { display:flex; flex-wrap:wrap; gap: 18px; } .step { flex: 0 1 240px; max-width: 240px; }
+.step canvas { display:block; max-width:100%; height:auto; } .step h3 { font-size: 15px; margin: 8px 0 2px; } .step p { font-size: 13.5px; margin: 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Scale workout: a preview before the start</h1>
+<p>The card is outlined (1 dp, the Outline tiles' grey) instead of tonal, so the page has less grey fill.</p>
+<p>The card under Scale workout (its watts before → after the scale) shows only while the workout runs.
+New: before the start it shows the first interval ("First up", like the ride screen's box), its name and time,
+and its watts before → after ("150 → 152 W", the unit once at the end, the running card too); a ramp as its range. Once the workout runs, the current interval as today.</p>
+<div class="flow">
+  <div class="step"><div id="now"></div><h3>Now, before the start</h3><p>No card: the scale shows only on the workout's card below (101%).</p></div>
+  <div class="step"><div id="ramp"></div><h3>New: a ramp first (warm-up)</h3><p>Its range before → after, the scaled watts in blue.</p></div>
+  <div class="step"><div id="steady"></div><h3>New: a steady step first</h3><p>One number before → after.</p></div>
+  <div class="step"><div id="plain"></div><h3>New: at 100%</h3><p>Only the watts, as the running card does.</p></div>
+  <div class="step"><div id="running"></div><h3>Running (as today)</h3><p>The current interval, its watts now.</p></div>
+</div>
+</main>
+<script>
+/*__KAROO_DEVICE_JS__*/
+const IMGS = "__IMGS__";
+const ICONS = "__ICONS__";
+const FRAME_PNG = '__FRAME__';
+const HASH = new URLSearchParams(location.hash.slice(1));
+const SHOT = HASH.get('shot'), THEME = HASH.get('theme') || 'light';
+const FRAME = +(HASH.get('frame') || 0), FRAMES = +(HASH.get('frames') || 1);
+const W = SHOT ? 1100 : 240;
+const BACKDROP = THEME === 'dark' ? 'linear-gradient(#120E0B,#3F342E)' : 'linear-gradient(#7E9CB4,#F1F4F6)';   // Night / Sky
+/*__KIT_JS__*/
+(async () => {
+  await Promise.all([400, 500, 600, 700].map(w => document.fonts.load(`${w} 20px Plex`))); await document.fonts.load('20px Relative');
+  const I = {}; for (const k of Object.keys(IMGS)) I[k] = await loadImg(IMGS[k]);
+  const dev = await KarooDevice.load({ frame: FRAME_PNG, screen: IMGS.status });
+  const put = (id, draw) => { if (SHOT && id !== SHOT) return;
+    const cv = dev.device(dev.screen({ draw: c => draw(c, 0) }), W);
+    if (SHOT) { document.body.innerHTML = ''; document.body.style.cssText = `margin:0;background:${BACKDROP};width:1300px;height:2000px;display:flex;align-items:center;justify-content:center`;
+      cv.style.width = '1100px'; document.body.append(cv); } else document.getElementById(id).append(cv); };
+
+  // The app's own colours (values / values-night)
+  const DK = THEME === 'dark';
+  const ERG_BG = DK ? '#043823' : '#B6EAD6', ADD_BG = DK ? '#214559' : '#9FB3BD', ADD_TEXT = DK ? '#F2F2F2' : '#1B2D2D', BLUE = DK ? '#0A84FF' : '#007AFF';
+  const SEL = DK ? '#9FB3BD' : '#9FB3BD', SEL_TEXT = '#1B2D2D';
+  const GEAR = new Path2D('M10.325,4.317c0.426,-1.756 2.924,-1.756 3.35,0a1.724,1.724 0,0 0,2.573 1.066c1.543,-0.94 3.31,0.826 2.37,2.37a1.724,1.724 0,0 0,1.065 2.572c1.756,0.426 1.756,2.924 0,3.35a1.724,1.724 0,0 0,-1.066 2.573c0.94,1.543 -0.826,3.31 -2.37,2.37a1.724,1.724 0,0 0,-2.572 1.065c-0.426,1.756 -2.924,1.756 -3.35,0a1.724,1.724 0,0 0,-2.573 -1.066c-1.543,0.94 -3.31,-0.826 -2.37,-2.37a1.724,1.724 0,0 0,-1.065 -2.572c-1.756,-0.426 -1.756,-2.924 0,-3.35a1.724,1.724 0,0 0,1.066 -2.573c-0.94,-1.543 0.826,-3.31 2.37,-2.37c1,0.608 2.296,0.07 2.572,-1.065z M9,12a3,3 0,1 0,6 0a3,3 0,0 0,-6 0');
+  const SYNC_W = 96 * D, BTN_H = 48 * D;
+
+  const header = { h: 64 * D, draw(c, y) {
+    c.fillStyle = C.text; c.font = F(700, 22 * D); c.fillText('Workouts', X0, y + 44 * D);
+    c.save(); c.translate(XR - 30 * D, y + 22 * D); c.scale(D * 1.05, D * 1.05); c.strokeStyle = C.text; c.lineWidth = 2; c.lineCap = 'round'; c.lineJoin = 'round'; c.stroke(GEAR); c.restore(); } };
+  const buttons = { h: 8 * D + BTN_H + 22 * D, draw(c, y) { const top = y + 8 * D, sx = XR - SYNC_W;
+    c.fillStyle = C.yellow; c.beginPath(); c.roundRect(X0, top, XW - SYNC_W - 8 * D, BTN_H, BTN_H / 2); c.fill();
+    c.fillStyle = C.mainText; c.font = F(600, 16 * D); c.textAlign = 'center'; c.fillText('Back to ride', X0 + (XW - SYNC_W - 8 * D) / 2, top + BTN_H / 2 + 11);
+    c.fillStyle = ADD_BG; c.beginPath(); c.roundRect(sx, top, SYNC_W, BTN_H, BTN_H / 2); c.fill();
+    c.fillStyle = ADD_TEXT; c.fillText('Sync', sx + SYNC_W / 2, top + BTN_H / 2 + 11);
+    c.font = F(400, 12 * D); c.fillStyle = C.help; c.fillText('Synced 11:37', sx + SYNC_W / 2, top + BTN_H + 17 * D); c.textAlign = 'left'; } };
+  const erg = { h: 10 * D + 22 * D + 74 * D + 14 * D, draw(c, y) {
+    c.fillStyle = C.help; c.font = F(400, 12 * D); c.fillText('Indoor ride', X0, y + 10 * D + 14 * D);
+    const top = y + 10 * D + 22 * D, h = 74 * D; c.fillStyle = ERG_BG; c.beginPath(); c.roundRect(X0, top, XW, h, 14 * D); c.fill();
+    icon(c, 'target', X0 + 14 * D, top + 14 * D, 20 * D, C.text);
+    c.fillStyle = C.text; c.font = F(400, 18 * D); c.fillText('ERG', X0 + 42 * D, top + 31 * D);
+    const sw = 34 * D, sh = 14 * D, sxx = XR - 14 * D - sw, sy = top + 24 * D - sh / 2;
+    c.fillStyle = '#0DBA75'; c.beginPath(); c.roundRect(sxx, sy, sw, sh, sh / 2); c.fill();
+    c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(sxx + sw - 10 * D, sy + sh / 2, 10 * D, 0, 7); c.fill();
+    c.fillStyle = C.help; c.font = F(400, 13 * D); c.fillText('Trainer 28436 · ERG READY', X0 + 14 * D, top + 60 * D); } };
+  // The preview card (SetupActivity.currentIntervalCard): title 13 sp, then "before → after" 20 sp bold, after in blue
+  const preview = (title, before, after) => ({ h: 10 * D + 18 * D + 4 * D + 26 * D + 12 * D + 10 * D, draw(c, y) { const h = this.h - 10 * D;
+    // Outlined, not tonal (less grey fill on the page): the app's Outline tile border, 1 dp #888780
+    c.strokeStyle = '#888780'; c.lineWidth = 1 * D; c.beginPath(); c.roundRect(X0 + 0.5 * D, y + 0.5 * D, XW - D, h - D, 14 * D); c.stroke();
+    c.fillStyle = C.text; c.font = F(400, 13 * D); c.fillText(title, X0 + 14 * D, y + 10 * D + 14 * D);
+    // 20 sp, shrinking to fit the card (a ramp's two ranges), as autosize does in the app
+    let sp = 20; const whole = before + (after ? ' → ' + after : ''); c.font = F(700, sp * D);
+    while (sp > 16 && c.measureText(whole).width > XW - 28 * D) { sp -= 0.5; c.font = F(700, sp * D); }
+    const by = y + 10 * D + 18 * D + 4 * D + 21 * D; c.fillText(before, X0 + 14 * D, by);
+    if (after) { const w1 = c.measureText(before).width, arrow = ' → ', w2 = c.measureText(arrow).width;
+      c.fillText(arrow, X0 + 14 * D + w1, by); c.fillStyle = BLUE; c.fillText(after, X0 + 14 * D + w1 + w2, by); } } });
+  const stepper = pct => ({ h: 6 * D + 40 * D + 6 * D + 14 * D, draw(c, y) { const h = 52 * D;
+    c.fillStyle = C.track; c.beginPath(); c.roundRect(X0, y, XW, h, 28 * D); c.fill();
+    for (const [x, sign] of [[X0 + 6 * D, '−'], [XR - 6 * D - 48 * D, '+']]) { c.fillStyle = SEL; c.beginPath(); c.roundRect(x, y + 6 * D, 48 * D, 40 * D, 20 * D); c.fill();
+      c.fillStyle = SEL_TEXT; c.font = F(400, 26 * D); c.textAlign = 'center'; c.fillText(sign, x + 24 * D, y + 6 * D + 29 * D); }
+    c.fillStyle = C.text; c.font = F(400, 20 * D); c.fillText(`${pct}%`, X0 + XW / 2, y + h / 2 + 13); c.textAlign = 'left'; } });
+
+  function workoutsPage(c, card, pct) {
+    const items = [header, buttons, erg, heading('power', 'Scale workout'), intro('Makes the workout harder or easier: its power targets in % of the plan.')];
+    if (card) items.push(card);
+    items.push(stepper(pct));
+    const form = layout(items);
+    c.fillStyle = C.bg; c.fillRect(0, 0, 480, 800);
+    // Scrolled so the Scale workout section shows whole, the Sync row just above it
+    clipForm(c, form, 50, form.at[2]);
+    statusBar(c, { time: '11:38' });
+  }
+  put('now', c => workoutsPage(c, null, 101));
+  put('ramp', c => workoutsPage(c, preview('First up · Warm-up 20:00', '120–179', '121–181 W'), 101));
+  put('steady', c => workoutsPage(c, preview('First up · Endurance 10:00', '150', '152 W'), 101));
+  put('plain', c => workoutsPage(c, preview('First up · Warm-up 20:00', '120–179 W', null), 100));
+  put('running', c => workoutsPage(c, preview('Current interval', '150', '152 W'), 101));
+})();
+</script>
+</body>
+</html>
