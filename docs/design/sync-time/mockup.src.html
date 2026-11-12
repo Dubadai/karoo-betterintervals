@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sync Time</title>
+<style>
+@font-face { font-family: Plex; src: url(__FONT_REG__); font-weight: 400; }
+@font-face { font-family: Plex; src: url(__FONT_MED__); font-weight: 500; }
+@font-face { font-family: Plex; src: url(__FONT_SEMI__); font-weight: 600; }
+@font-face { font-family: Plex; src: url(__FONT_BOLD__); font-weight: 700; }
+@font-face { font-family: Relative; src: url(__RELATIVE__); }
+:root { --bg:#f6f5f2; --fg:#1d1d1b; --muted:#6b6a66; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; } }
+:root[data-theme="dark"] { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system, system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 28px; margin: 0 0 4px; } h2 { font-size: 21px; margin: 36px 0 4px; } p { color: var(--muted); max-width: 72ch; }
+.flow { display:flex; flex-wrap:wrap; gap: 18px; } .step { flex: 0 1 240px; max-width: 240px; }
+.step canvas { display:block; max-width:100%; height:auto; } .step h3 { font-size: 15px; margin: 8px 0 2px; } .step p { font-size: 13.5px; margin: 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Workouts page: where "Synced" goes</h1>
+<p>"Synced 08:41" sits on its own between the ERG card and Scale workout, far from the Sync button it
+belongs to. Three places closer to it. A problem (Offline, Wi-Fi off) shows in the same place, in amber.</p>
+<div class="flow">
+  <div class="step"><div id="now"></div><h3>Now</h3><p>On its own line under the ERG card.</p></div>
+  <div class="step"><div id="under"></div><h3>A: under Sync</h3><p>A small line centred under the Sync button.</p></div>
+  <div class="step"><div id="inside"></div><h3>B: in the Sync button</h3><p>The button's second line: the time.</p></div>
+  <div class="step"><div id="title"></div><h3>C: by the title</h3><p>On the title's line, before the gear.</p></div>
+</div>
+<h2>Offline</h2>
+<div class="flow">
+  <div class="step"><div id="now-off"></div><h3>Now</h3></div>
+  <div class="step"><div id="under-off"></div><h3>A</h3></div>
+  <div class="step"><div id="inside-off"></div><h3>B</h3></div>
+  <div class="step"><div id="title-off"></div><h3>C</h3></div>
+</div>
+</main>
+<script>
+/*__KAROO_DEVICE_JS__*/
+const IMGS = "__IMGS__";
+const ICONS = "__ICONS__";
+const FRAME_PNG = '__FRAME__';
+const HASH = new URLSearchParams(location.hash.slice(1));
+const SHOT = HASH.get('shot'), THEME = HASH.get('theme') || 'light';
+const FRAME = +(HASH.get('frame') || 0), FRAMES = +(HASH.get('frames') || 1);
+const W = SHOT ? 1100 : 240;
+const BACKDROP = THEME === 'dark' ? 'linear-gradient(#120E0B,#3F342E)' : 'linear-gradient(#7E9CB4,#F1F4F6)';   // Night / Sky
+/*__KIT_JS__*/
+(async () => {
+  await Promise.all([400, 500, 600, 700].map(w => document.fonts.load(`${w} 20px Plex`))); await document.fonts.load('20px Relative');
+  const I = {}; for (const k of Object.keys(IMGS)) I[k] = await loadImg(IMGS[k]);
+  const dev = await KarooDevice.load({ frame: FRAME_PNG, screen: IMGS.status });
+  const put = (id, draw) => { if (SHOT && id !== SHOT) return;
+    const cv = dev.device(dev.screen({ draw: c => draw(c, 0) }), W);
+    if (SHOT) { document.body.innerHTML = ''; document.body.style.cssText = `margin:0;background:${BACKDROP};width:1300px;height:2000px;display:flex;align-items:center;justify-content:center`;
+      cv.style.width = '1100px'; document.body.append(cv); } else document.getElementById(id).append(cv); };
+
+  // The app's own colours (values / values-night)
+  const DK = THEME === 'dark';
+  const ERG_BG = DK ? '#043823' : '#B6EAD6', ADD_BG = DK ? '#214559' : '#9FB3BD', ADD_TEXT = DK ? '#F2F2F2' : '#1B2D2D', WARN = DK ? '#F0A63A' : '#B26A00';
+  const GEAR = new Path2D('M10.325,4.317c0.426,-1.756 2.924,-1.756 3.35,0a1.724,1.724 0,0 0,2.573 1.066c1.543,-0.94 3.31,0.826 2.37,2.37a1.724,1.724 0,0 0,1.065 2.572c1.756,0.426 1.756,2.924 0,3.35a1.724,1.724 0,0 0,-1.066 2.573c0.94,1.543 -0.826,3.31 -2.37,2.37a1.724,1.724 0,0 0,-2.572 1.065c-0.426,1.756 -2.924,1.756 -3.35,0a1.724,1.724 0,0 0,-2.573 -1.066c-1.543,0.94 -3.31,-0.826 -2.37,-2.37a1.724,1.724 0,0 0,-1.065 -2.572c-1.756,-0.426 -1.756,-2.924 0,-3.35a1.724,1.724 0,0 0,1.066 -2.573c-0.94,-1.543 0.826,-3.31 2.37,-2.37c1,0.608 2.296,0.07 2.572,-1.065z M9,12a3,3 0,1 0,6 0a3,3 0,0 0,-6 0');
+  const SYNC_W = 96 * D, BTN_H = 48 * D;
+
+  // where: now | under | inside | title; off: the Offline warning instead of (or with) the time
+  function workoutsPage(c, where, off) {
+    const time = 'Synced 08:41', warn = off ? 'Offline' : null;
+    const header = { h: 64 * D, draw(c, y) {
+      c.fillStyle = C.text; c.font = F(700, 22 * D); c.fillText('Workouts', X0, y + 44 * D);
+      c.save(); c.translate(XR - 30 * D, y + 22 * D); c.scale(D * 24 / 24 * 1.05, D * 24 / 24 * 1.05); c.strokeStyle = C.text; c.lineWidth = 2; c.lineCap = 'round'; c.lineJoin = 'round'; c.stroke(GEAR); c.restore();
+      if (where === 'title') { c.textAlign = 'right'; const rx = XR - 40 * D;
+        if (warn) { c.fillStyle = WARN; c.font = F(700, 13 * D); c.fillText(warn, rx, y + 42 * D); }
+        else { c.fillStyle = C.help; c.font = F(400, 13 * D); c.fillText(time, rx, y + 42 * D); }
+        c.textAlign = 'left'; } } };
+    const under = where === 'under';
+    const buttons = { h: 8 * D + BTN_H + (under ? 22 * D : 0), draw(c, y) { const top = y + 8 * D, sx = XR - SYNC_W;
+      c.fillStyle = C.yellow; c.beginPath(); c.roundRect(X0, top, XW - SYNC_W - 8 * D, BTN_H, BTN_H / 2); c.fill();
+      c.fillStyle = C.mainText; c.font = F(600, 16 * D); c.textAlign = 'center'; c.fillText('Back to ride', X0 + (XW - SYNC_W - 8 * D) / 2, top + BTN_H / 2 + 11);
+      c.fillStyle = ADD_BG; c.beginPath(); c.roundRect(sx, top, SYNC_W, BTN_H, BTN_H / 2); c.fill();
+      c.fillStyle = ADD_TEXT;
+      if (where === 'inside') { c.font = F(600, 15 * D); c.fillText('Sync', sx + SYNC_W / 2, top + 21 * D);
+        c.font = F(off ? 700 : 400, 11 * D); c.fillStyle = off ? WARN : ADD_TEXT; c.fillText(warn || '08:41', sx + SYNC_W / 2, top + 37 * D); }
+      else { c.font = F(600, 16 * D); c.fillText('Sync', sx + SYNC_W / 2, top + BTN_H / 2 + 11); }
+      if (under) { c.font = F(off ? 700 : 400, 12 * D); c.fillStyle = off ? WARN : C.help; c.fillText(warn || time, sx + SYNC_W / 2, top + BTN_H + 17 * D); }
+      c.textAlign = 'left'; } };
+    const erg = { h: 10 * D + 22 * D + 74 * D, draw(c, y) {
+      c.fillStyle = C.help; c.font = F(400, 12 * D); c.fillText('Indoor ride', X0, y + 10 * D + 14 * D);
+      const top = y + 10 * D + 22 * D, h = 74 * D; c.fillStyle = ERG_BG; c.beginPath(); c.roundRect(X0, top, XW, h, 14 * D); c.fill();
+      icon(c, 'target', X0 + 14 * D, top + 14 * D, 20 * D, C.text);
+      c.fillStyle = C.text; c.font = F(400, 18 * D); c.fillText('ERG', X0 + 42 * D, top + 31 * D);
+      // switch on: Karoo green track, white knob
+      const sw = 34 * D, sh = 14 * D, sxx = XR - 14 * D - sw, sy = top + 24 * D - sh / 2;
+      c.fillStyle = '#0DBA75'; c.beginPath(); c.roundRect(sxx, sy, sw, sh, sh / 2); c.fill();
+      c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(sxx + sw - 10 * D, sy + sh / 2, 10 * D, 0, 7); c.fill();
+      c.fillStyle = C.help; c.font = F(400, 13 * D); c.fillText('Trainer 28436 · ERG READY', X0 + 14 * D, top + 60 * D); } };
+    const line = { h: 16 * D + 18 * D + 8 * D, draw(c, y) { const by = y + 16 * D + 14 * D;
+      c.fillStyle = C.help; c.font = F(400, 13 * D); c.fillText(time, X0 + 2 * D, by);
+      if (warn) { const w = c.measureText(time + '  ·  ').width; c.fillText('  ·  ', X0 + 2 * D + c.measureText(time).width, by);
+        c.fillStyle = WARN; c.font = F(700, 13 * D); c.fillText(warn, X0 + 2 * D + w, by); } } };
+    const items = [header, buttons, erg];
+    if (where === 'now') items.push(line); else items.push(space(14 * D));
+    items.push(heading('power', 'Scale workout'), intro('Makes the workout harder or easier: its power targets in % of the plan.'));
+    const form = layout(items);
+    c.fillStyle = C.bg; c.fillRect(0, 0, 480, 800);
+    clipForm(c, form, 50, 0);
+    statusBar(c, { time: '08:41' });
+  }
+  for (const w of ['now', 'under', 'inside', 'title']) { put(w, c => workoutsPage(c, w, false)); put(`${w}-off`, c => workoutsPage(c, w, true)); }
+})();
+</script>
+</body>
+</html>
