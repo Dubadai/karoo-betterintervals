@@ -41,4 +41,4 @@ and screenshots from the Karoo 3 (`device/`). Newest work first.
 - `card-hint/`: a › disc on the workout cards says they open (D1, dark grey / light at night, built).
 - `sync-time/`: "Synced 08:41" under the Sync button (A, built).
 - `start-card/`: the START box starts under the gear's 64 dp tap area.
-- `one-hr-setting/`: Settings without "Heart rate or cadence"; Cadence smoothing always shown (mock).
+- `one-hr-setting/`: Settings without "Heart rate or cadence"; Cadence smoothing always shown (built).

@@ -44,17 +44,12 @@ BetterIntervals always looks like the Karoo's own data pages (there's no setting
 stroke; 3 s is quick; 5 s (default) is steady and keeps the gauge calm; 10 s is calmer still, for long, even efforts. The gauge's
 needle follows the same watts.
 
-## Heart rate or cadence
+## Cadence
 
-**Heart rate / Cadence**: what shows in the heart rate spots: next to the watts at the top, in the
-HR tile on the gauge screen, and in the free-ride HR tile (tap it for the lap's and the ride's average). With
-**Cadence**, a cadence icon replaces the heart, the free-ride tile has no heart-rate zone colour,
-and the last lap shows rpm instead of bpm.
+**Instant / 3 s / 5 s / 10 s**: how the cadence is smoothed wherever it shows (the top row, under the
+watts or a tile, set under Workout screen). **Instant** (default) is like the Karoo's own Cadence field.
 
-With Cadence picked, a **Cadence** row appears: **Instant** (default, like the Karoo's own Cadence
-field), **3 s**, **5 s** or **10 s**.
-
-<img src="images/settings-cadence.png" width="240" alt="Settings: Heart rate or cadence, Cadence smoothing"> <img src="images/workout-cadence.png" width="240" alt="Workout screen with cadence at the top">
+Free ride's second tile and the Workout done screen show heart rate.
 
 ## Workout screen
 
