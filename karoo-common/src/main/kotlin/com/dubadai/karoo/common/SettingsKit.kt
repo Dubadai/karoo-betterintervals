@@ -674,7 +674,7 @@ fun <T> Context.settingsRankList(
 /**
  * One choice from a list too long for [settingsSegmented] (kit 1.7.0, from UpAhead): a card per option
  * with its [title], an optional short [line] under it in the help colour, and a radio at the right. The
- * picked card gets a 3 dp ring in Apple system blue 4 dp outside it and a filled radio (our pick: with the
+ * picked card gets a 3 dp ring in Apple system blue 4 dp outside it (corners concentric with the card's) and a filled radio (our pick: with the
  * green switch, the one exception to Karoo-native colours). The ring's room is kept on every card, so
  * nothing moves on a tap; the ring hangs 4 dp into the page's side margin so the cards line up with the
  * page's other cards ([SettingsLayout] lets it draw there; a form nested in its own ViewGroup needs
@@ -690,7 +690,9 @@ fun <T> Context.settingsChoiceCards(options: List<Triple<String, String?, T>>, s
         val picked = value == selected
         val ring = android.widget.FrameLayout(context).apply {
             setPadding(px(4), px(4), px(4), px(4))
-            if (picked) background = android.graphics.drawable.GradientDrawable().apply { cornerRadius = px(20).toFloat(); setStroke(px(3), blue) }
+            // Concentric with the card (kit 1.8.5): the ring's outer edge is 4 dp out, so its corners are
+            // 20 + 4 = 24 dp; the stroke's middle line, which cornerRadius sets, is 1.5 dp in: 22.5 dp.
+            if (picked) background = android.graphics.drawable.GradientDrawable().apply { cornerRadius = 22.5f * resources.displayMetrics.density; setStroke(px(3), blue) }
             isClickable = true
             isSelected = picked
             contentDescription = if (line == null) title else "$title. $line"
