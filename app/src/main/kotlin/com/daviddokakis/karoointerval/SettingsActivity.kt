@@ -136,15 +136,14 @@ class SettingsActivity : AppearanceActivity() {
         form.addView(settingsHeading(R.drawable.ic_settings_colours, getString(R.string.zone_colours)))
         form.addView(settingsIntro(getString(R.string.zone_colours_help)))
         val palettes = listOf(ZonePalette.KAROO to R.string.zone_karoo, ZonePalette.ZWIFT to R.string.zone_zwift, ZonePalette.INTERVALS to R.string.zone_intervals)
-        val cards = settingsChoiceCards(palettes.map { (p, n) -> Triple(getString(n), null, p) }, store.zonePalette.value) { picked ->
+        // Each card shows its seven zones under its name (the kit's below slot, 1.9.0)
+        val night = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val cards = settingsChoiceCards(
+            palettes.map { (p, n) -> Triple(getString(n), null, p) }, store.zonePalette.value,
+            below = { p -> zoneStrip(p, night) },
+        ) { picked ->
             store.setZonePalette(picked)
             render()
-        }
-        // Each card shows its seven zones under its name
-        val night = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
-        palettes.forEachIndexed { i, (p, _) ->
-            val texts = ((cards.getChildAt(i) as? android.view.ViewGroup)?.getChildAt(0) as? android.view.ViewGroup)?.getChildAt(0) as? android.widget.LinearLayout
-            texts?.addView(zoneStrip(p, night))
         }
         form.addView(cards)
         form.addView(settingsDivider())

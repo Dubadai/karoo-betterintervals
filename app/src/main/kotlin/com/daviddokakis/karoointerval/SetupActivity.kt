@@ -581,13 +581,8 @@ class SetupActivity : AppearanceActivity() {
             )
         }
         var restart = false
-        val box = android.widget.CheckBox(this).apply {
-            text = getString(R.string.plan_restart)
-            textSize = 15f
-            setTextColor(getColor(R.color.settings_title))
-            buttonTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.settings_select_blue))
-            isChecked = false
-            setOnCheckedChangeListener { _, on -> restart = on }
+        // The kit's check row (1.9.0): the choice cards' grey ring, Apple blue with a white tick when on
+        val box = settingsCheckRow(getString(R.string.plan_restart), false) { on -> restart = on }.apply {
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(4) }
         }
         return LinearLayout(this).apply {
