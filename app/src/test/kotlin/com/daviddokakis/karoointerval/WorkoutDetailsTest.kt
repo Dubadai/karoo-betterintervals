@@ -36,6 +36,18 @@ class WorkoutDetailsTest {
         assertEquals(900, s.kcal)   // 250 W for an hour: 900 kJ
     }
 
+    @Test fun `a tap on the picture finds the step under it`() {
+        // 10 min, 20 min, 30 min on a 600 px picture: 100 px, 200 px, 300 px
+        val plan = WorkoutPlan("x", "Three", listOf(PlanStep(600, 150, 150), PlanStep(1200, 250, 250), PlanStep(1800, 180, 180)), ftp = 250)
+        assertEquals(0, ChartRenderer.stepAt(plan, 600, 0f))
+        assertEquals(0, ChartRenderer.stepAt(plan, 600, 99f))
+        assertEquals(1, ChartRenderer.stepAt(plan, 600, 101f))
+        assertEquals(2, ChartRenderer.stepAt(plan, 600, 301f))
+        assertEquals(2, ChartRenderer.stepAt(plan, 600, 600f))
+        assertEquals(2, ChartRenderer.stepAt(plan, 600, 700f))   // past the edge: the last step
+        assertNull(ChartRenderer.stepAt(WorkoutPlan("x", "Empty", emptyList(), ftp = 250), 600, 10f))
+    }
+
     @Test fun `intervals icu's own load and intensity win`() {
         val plan = WorkoutPlan("x", "FTP hour", listOf(PlanStep(3600, 250, 250)), ftp = 250)
         val s = WorkoutStats.of(plan, JSONObject().put("icu_training_load", 92).put("icu_intensity", 95.5))

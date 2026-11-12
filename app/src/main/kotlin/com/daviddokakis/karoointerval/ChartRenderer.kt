@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RectF
 import androidx.core.content.ContextCompat
 import kotlin.math.ceil
 
@@ -29,8 +30,21 @@ class ChartRenderer(private val context: Context) {
 
     private fun color(id: Int) = ContextCompat.getColor(context, id)
 
-    /** [ftpLine]: a dashed line at FTP with its watts (the workout details page). */
-    fun render(state: ScreenState, width: Int, height: Int, scale: Float, look: Style = Style.SCREEN, ftpLine: Boolean = false): Bitmap {
+    /** Each step's bar from the last [render] (left, top, right, bottom): the details page's taps and bubble. */
+    var bars: List<RectF> = emptyList()
+        private set
+
+    /**
+     * [ftpLine]: a dashed line at FTP with its watts (the workout details page).
+     * [sharedScale] (details page, docs/design/details-chart): every workout on one scale, the top at
+     * [SHARED_TOP] × FTP, or just over the highest step when that is higher, so the FTP line is always in.
+     * [selected]: that step keeps its colour, the others fade (a tap on the details page's picture).
+     */
+    fun render(
+        state: ScreenState, width: Int, height: Int, scale: Float, look: Style = Style.SCREEN, ftpLine: Boolean = false,
+        sharedScale: Boolean = false, selected: Int? = null,
+    ): Bitmap {
+        bars = emptyList()
         val card = look == Style.CARD
         // The screen chart has no panel: it's drawn on the page colour (follows light/dark mode).
         val bmp = Bitmap.createBitmap(width.coerceAtLeast(1), height.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
@@ -94,6 +108,8 @@ class ChartRenderer(private val context: Context) {
         val (floor, maxWatts, gridStep) = if (hrChart) {
             val low = steps.minOf { minOf(it.startWatts, it.endWatts) }
             Triple(minOf(80f, (low - 20) / 10 * 10f).coerceAtLeast(0f), (ceil(visibleMax * 1.05 / 10.0) * 10).toFloat().coerceAtLeast(100f), 50)
+        } else if (sharedScale && ftp != null && ftp > 0) {
+            Triple(0f, maxOf(SHARED_TOP * ftp, visibleMax * SHARED_PEAK_ROOM), 100)
         } else {
             Triple(0f, (ceil(visibleMax * 1.1 / 100.0) * 100).toFloat().coerceAtLeast(100f), 100)
         }
@@ -115,6 +131,7 @@ class ChartRenderer(private val context: Context) {
         }
         val gap = if (card) 0.5f * d else 0.75f * d
         var t = 0f
+        val boxes = ArrayList<RectF>(plan.steps.size)
         plan.steps.forEachIndexed { i, step ->
             val isTarget = !card && i == state.landTarget
             val current = !card && i == state.stepIndex
@@ -146,8 +163,10 @@ class ChartRenderer(private val context: Context) {
             val fillB = if (zB != null) contrast(palette.fill(zB, night)) else fillA
             val edgeA = zA?.let { palette.edge(it, night)?.let(::contrast) }
             val edgeB = zB?.let { palette.edge(it, night)?.let(::contrast) } ?: edgeA
+            boxes += RectF(x0, minOf(ys.first, ys.second), x1, bottom)
             // Every step in its zone colour (finished ones too); the jump target solid black/white.
-            val alpha = 255
+            // A tapped step on the details page: the others fade.
+            val alpha = if (selected != null && i != selected) FADED else 255
             fill.shader = null
             fill.color = if (isTarget) color(landColor) else fillA
             if (!isTarget && fillA != fillB) fill.shader = android.graphics.LinearGradient(x0, 0f, x1, 0f, fillA, fillB, android.graphics.Shader.TileMode.CLAMP)
@@ -167,8 +186,10 @@ class ChartRenderer(private val context: Context) {
             } else {
                 path
             }
+            fill.alpha = alpha
             canvas.drawPath(fillPath, fill)
             fill.shader = null
+            fill.alpha = 255
             (if (isTarget) null else edgeA)?.let { edge ->
                 // Karoo draws easy bars with a bright outline, just inside the bar.
                 val inset = edgePaint.strokeWidth / 2
@@ -199,6 +220,7 @@ class ChartRenderer(private val context: Context) {
             }
             t += step.durationSec
         }
+        bars = boxes
 
         if (ftpLine && ftp != null && !hrChart && ftp < maxWatts) {
             val fy = y(ftp)
@@ -234,6 +256,21 @@ class ChartRenderer(private val context: Context) {
     }
 
     companion object {
+        /** The details page's shared scale: the top is 130 % of FTP… */
+        const val SHARED_TOP = 1.3f
+        /** …or the highest step plus 5 % when that is higher (sprints). */
+        const val SHARED_PEAK_ROOM = 1.05f
+        /** A step that isn't the tapped one: 30 %. */
+        private const val FADED = 77
+
+        /** The step under [x] on a chart [width] wide that shows the whole workout (the card look). */
+        fun stepAt(plan: WorkoutPlan, width: Int, x: Float): Int? {
+            if (plan.steps.isEmpty() || plan.totalSec <= 0 || width <= 0) return null
+            val sec = (x / width * plan.totalSec).coerceIn(0f, plan.totalSec - 0.5f)
+            var t = 0
+            plan.steps.forEachIndexed { i, st -> t += st.durationSec; if (sec < t) return i }
+            return plan.steps.lastIndex
+        }
         /** Zoomed view shows this share of the interval's length before and after it… */
         private const val ZOOM_CONTEXT = 0.15
         /** …but at least / at most this many seconds. */

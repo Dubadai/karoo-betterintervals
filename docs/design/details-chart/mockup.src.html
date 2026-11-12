@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Details Chart</title>
+<style>
+@font-face { font-family: Plex; src: url(__FONT_REG__); font-weight: 400; }
+@font-face { font-family: Plex; src: url(__FONT_MED__); font-weight: 500; }
+@font-face { font-family: Plex; src: url(__FONT_SEMI__); font-weight: 600; }
+@font-face { font-family: Plex; src: url(__FONT_BOLD__); font-weight: 700; }
+@font-face { font-family: Relative; src: url(__RELATIVE__); }
+:root { --bg:#f6f5f2; --fg:#1d1d1b; --muted:#6b6a66; --line:#dcdad4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; --line:#34332f; } }
+:root[data-theme="dark"] { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; --line:#34332f; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system, system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 28px; margin: 0 0 4px; } h2 { font-size: 21px; margin: 40px 0 4px; } p { color: var(--muted); max-width: 72ch; margin: 4px 0 14px; }
+.label { font-weight: 600; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
+.flow { display:flex; flex-wrap:wrap; gap: 18px; } .step { flex: 0 1 240px; max-width: 240px; }
+.step canvas { display:block; max-width:100%; height:auto; } .step h3 { font-size: 15px; margin: 8px 0 2px; } .step p { font-size: 13.5px; margin: 0; }
+.opt { border-top: 1px solid var(--line); padding-top: 4px; }
+</style>
+</head>
+<body>
+<main>
+<h1>Workout details: the picture</h1>
+<p>Two changes to the workout's picture at the top of the details page: one scale for every workout, so workouts
+can be compared at a glance, and a tap on a block shows that interval's watts.</p>
+
+<h2>One scale for every workout</h2>
+<p>Now each picture is stretched to its own highest step, so an easy endurance ride looks as hard as a VO2 session,
+and the FTP line drops out when nothing reaches it. New: the top is always 130 % of FTP, so the FTP line sits at
+the same height on every workout. Only a workout that goes higher than that (sprints) makes the scale taller,
+just enough for its highest step, and the FTP line stays in. The picture is 80 dp tall instead of 120.</p>
+<div class="label">Now</div>
+<div class="flow">
+  <div class="step"><div id="now-tempo"></div><h3>Tempo 3 × 15</h3></div>
+  <div class="step"><div id="now-endurance"></div><h3>Endurance 2 h</h3><p>No FTP line: the scale tops out under it.</p></div>
+  <div class="step"><div id="now-vo2"></div><h3>VO2 max 5 × 4</h3></div>
+  <div class="step"><div id="now-sprints"></div><h3>Sprints 10 × 30 s</h3></div>
+</div>
+<div class="label">New</div>
+<div class="flow">
+  <div class="step"><div id="new-tempo"></div><h3>Tempo 3 × 15</h3></div>
+  <div class="step"><div id="new-endurance"></div><h3>Endurance 2 h</h3><p>Low and flat: it looks as easy as it is.</p></div>
+  <div class="step"><div id="new-vo2"></div><h3>VO2 max 5 × 4</h3><p>Over the FTP line, still on the same scale.</p></div>
+  <div class="step"><div id="new-sprints"></div><h3>Sprints 10 × 30 s</h3><p>Peaks above 130 %: the scale grows just enough.</p></div>
+</div>
+
+<h2>Tap a block to see its watts</h2>
+<p>Tap any block in the picture: it stays in its colour, the rest fade, and its interval shows with its time,
+watts, % of FTP and zone. Tap it again, or anywhere else, to close. Pick one:</p>
+<div class="flow">
+  <div class="step opt"><div id="tap-a-tempo"></div><h3>A: a bubble over the picture</h3><p>The page doesn't move; the bubble sits over the gap above the picture.</p></div>
+  <div class="step opt"><div id="tap-a-ramp"></div><h3>A: a ramp</h3><p>From and to: 120 → 180 W.</p></div>
+  <div class="step opt"><div id="tap-b-tempo"></div><h3>B: its row under the picture</h3><p>The same row as in Intervals; the tiles move down while it shows.</p></div>
+  <div class="step opt"><div id="tap-b-ramp"></div><h3>B: a ramp</h3></div>
+</div>
+</main>
+<script>
+/*__KAROO_DEVICE_JS__*/
+const IMGS = "__IMGS__";
+const ICONS = "__ICONS__";
+const FRAME_PNG = '__FRAME__';
+const HASH = new URLSearchParams(location.hash.slice(1));
+const SHOT = HASH.get('shot'), THEME = HASH.get('theme') || 'light';
+const FRAME = +(HASH.get('frame') || 0), FRAMES = +(HASH.get('frames') || 1);
+const W = SHOT ? 1100 : 240;
+const BACKDROP = THEME === 'dark' ? 'linear-gradient(#120E0B,#3F342E)' : 'linear-gradient(#7E9CB4,#F1F4F6)';   // Night / Sky
+/*__KIT_JS__*/
+(async () => {
+  await Promise.all([400, 500, 600, 700].map(w => document.fonts.load(`${w} 20px Plex`))); await document.fonts.load('20px Relative');
+  const I = {}; for (const k of Object.keys(IMGS)) I[k] = await loadImg(IMGS[k]);
+  const dev = await KarooDevice.load({ frame: FRAME_PNG, screen: IMGS.status });
+  const put = (id, draw) => { if (SHOT && id !== SHOT) return;
+    const cv = dev.device(dev.screen({ draw: c => draw(c, 0) }), W);
+    if (SHOT) { document.body.innerHTML = ''; document.body.style.cssText = `margin:0;background:${BACKDROP};width:1300px;height:2000px;display:flex;align-items:center;justify-content:center`;
+      cv.style.width = '1100px'; document.body.append(cv); } else document.getElementById(id).append(cv); };
+
+  // Karoo zone colours (the default palette) with the chart's +15 % contrast (ZonePalette.boosted)
+  const ZONES = ['#60EEB2', '#00B988', '#FFF500', '#FB8C65', '#FE581F', '#D60404', '#B700A2'].map(boost);
+  function boost(hex) { let [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0;
+    if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    let s = mx ? d / mx : 0, v = mx; const a = 0.15; s = Math.min(1, s * (1 + 1.5 * a)); v = v * (1 - 0.8 * a);
+    const f = n => { const k = (n + h) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
+    return `rgb(${[f(5), f(3), f(1)].map(x => Math.round(x * 255)).join(',')})`; }
+  const FTP = 280, LIMITS = [0.55, 0.75, 0.90, 1.05, 1.20, 1.50];
+  const zoneOf = w => { const p = w / FTP; const i = LIMITS.findIndex(l => p <= l); return i < 0 ? 6 : i; };
+  const clock = s => { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
+    return h ? `${h}:${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}` : `${m}:${String(ss).padStart(2, '0')}`; };
+  const short = s => { const h = Math.floor(s / 3600), m = Math.round(s % 3600 / 60); return h ? `${h}h${String(m).padStart(2, '0')}` : `${m}m`; };
+
+  // Four workouts at FTP 280: [seconds, from W, to W, name]
+  const rep = (n, a, b) => Array.from({ length: n }).flatMap(() => [a, b]);
+  const WORKOUTS = {
+    tempo: { name: 'W3.1 - Tempo 3 x 15', day: 'Fri 13 Nov', steps: [[1200, 120, 180, 'Warm-up'], ...rep(3, [900, 225, 225, 'Tempo'], [300, 160, 160, 'Endurance']),
+      [2700, 170, 170, 'Endurance'], [900, 150, 110, 'Cool-down']] },
+    endurance: { name: 'W3.2 - Endurance 2h', day: 'Sat 14 Nov', steps: [[600, 120, 170, 'Warm-up'], [6000, 175, 175, 'Endurance'], [600, 160, 110, 'Cool-down']] },
+    vo2: { name: 'W3.3 - VO2 max 5 x 4', day: 'Tue 17 Nov', steps: [[900, 120, 200, 'Warm-up'], ...rep(5, [240, 320, 320, 'VO2 max'], [240, 140, 140, 'Recovery']),
+      [900, 180, 180, 'Endurance'], [600, 150, 110, 'Cool-down']] },
+    sprints: { name: 'W3.4 - Sprints 10x30s', day: 'Thu 19 Nov', steps: [[900, 120, 200, 'Warm-up'], ...rep(10, [30, 600, 600, 'Sprint'], [270, 140, 140, 'Recovery']),
+      [600, 180, 180, 'Endurance'], [600, 150, 110, 'Cool-down']] },
+  };
+  for (const w of Object.values(WORKOUTS)) {
+    // NP as the app works it out: 30 s rolling power, to the 4th power
+    const sec = w.steps.flatMap(([d, a, b]) => Array.from({ length: d }, (_, i) => a + (b - a) * (i + 0.5) / d)), T = sec.length;
+    const sum = sec.reduce((a, p) => a + p, 0); let roll = 0, p4 = 0, n = 0;
+    sec.forEach((p, i) => { roll += p - (i >= 30 ? sec[i - 30] : 0); if (i >= 29) { p4 += (roll / 30) ** 4; n++; } });
+    const avg = sum / T, np = (p4 / n) ** 0.25, ifv = np / FTP;
+    Object.assign(w, { total: T, peak: Math.max(...w.steps.flatMap(s => [s[1], s[2]])),
+      stats: [['TIME', short(T)], ['TSS', String(Math.round(T * np * ifv / (FTP * 36)))], ['IF', ifv.toFixed(2)],
+        ['AVG POWER', String(Math.round(avg))], ['NP', String(Math.round(np))], ['CALORIES', String(Math.round(avg * T / 1000))]] });
+  }
+
+  // The picture. old: stretched to its own highest step (ChartRenderer today: ceil(peak × 1.1 / 100) × 100, FTP line only under the top).
+  // new: top = 130 % of FTP, or the highest step + 5 % when that's higher; the FTP line is always in.
+  function chart(c, x, y, w, h, wo, { old = false, sel = null } = {}) {
+    const max = old ? Math.max(100, Math.ceil(wo.peak * 1.1 / 100) * 100) : Math.max(1.3 * FTP, wo.peak * 1.05), k = w / wo.total; let t = 0;
+    const boxes = [];
+    wo.steps.forEach(([d, a, b], i) => { const x0 = x + t * k, x1 = Math.max(x0 + 2, x + (t + d) * k - (d * k > 6 ? 2 : 0)), ya = y + h - h * a / max, yb = y + h - h * b / max;
+      boxes.push({ x0, x1, top: Math.min(ya, yb) });
+      c.globalAlpha = sel === null || sel === i ? 1 : 0.3;
+      if (a !== b) { const g = c.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, ZONES[zoneOf(a)]); g.addColorStop(1, ZONES[zoneOf(b)]); c.fillStyle = g; }
+      else c.fillStyle = ZONES[zoneOf(a)];
+      c.beginPath(); c.moveTo(x0, y + h); c.lineTo(x0, ya); c.lineTo(x1, yb); c.lineTo(x1, y + h); c.closePath(); c.fill(); t += d; });
+    c.globalAlpha = 1;
+    if (FTP < max) { const fy = y + h - h * FTP / max; c.save(); c.strokeStyle = C.help; c.lineWidth = 2; c.setLineDash([6, 6]);
+      c.beginPath(); c.moveTo(x, fy); c.lineTo(x + w, fy); c.stroke(); c.restore();
+      c.fillStyle = C.help; c.font = F(500, 11 * D); c.textAlign = 'right'; c.fillText(`FTP ${FTP} W`, x + w, fy - y < 30 ? fy + 26 : fy - 8); c.textAlign = 'left'; }
+    return boxes;
+  }
+  const watts = ([, a, b]) => a === b ? `${a} W` : `${a} → ${b} W`;
+  const detail = ([, a, b]) => { const pct = v => Math.round(100 * v / FTP), za = zoneOf(a) + 1, zb = zoneOf(b) + 1;
+    return (a === b ? `${pct(a)} % FTP` : `${pct(a)}–${pct(b)} % FTP`) + ` · ${za === zb ? 'Z' + za : 'Z' + Math.min(za, zb) + '–' + Math.max(za, zb)}`; };
+
+  // A: a bubble over the tapped block (dark, the page's text colour), its pointer on the block's top
+  function bubble(c, box, step) {
+    const l1 = `${step[3]} · ${clock(step[0])}`, l2 = `${watts(step)} · ${detail(step)}`;
+    c.font = F(600, 14 * D); const w1 = c.measureText(l1).width; c.font = F(400, 13 * D); const w2 = c.measureText(l2).width;
+    const bw = Math.max(w1, w2) + 2 * 14 * D, bh = 96, cx = (box.x0 + box.x1) / 2;
+    const bx = Math.min(XR - bw, Math.max(X0, cx - bw / 2)), by = box.top - 14 - bh;
+    c.fillStyle = C.text; c.beginPath(); c.roundRect(bx, by, bw, bh, 18); c.fill();
+    c.beginPath(); c.moveTo(cx - 12, by + bh - 1); c.lineTo(cx + 12, by + bh - 1); c.lineTo(cx, by + bh + 12); c.closePath(); c.fill();
+    c.fillStyle = C.bg; c.font = F(600, 14 * D); c.fillText(l1, bx + 14 * D, by + 40);
+    c.font = F(400, 13 * D); c.fillText(l2, bx + 14 * D, by + 78);
+  }
+  // B: the interval's row, as in Intervals: a zone-coloured strip, name and time, watts, % FTP and zone
+  const stepRow = step => ({ h: 112, draw(c, y) { const [d, a, b, name] = step, x = X0;
+    if (a !== b) { const g = c.createLinearGradient(0, y + 14, 0, y + 86); g.addColorStop(0, ZONES[zoneOf(b)]); g.addColorStop(1, ZONES[zoneOf(a)]); c.fillStyle = g; }
+    else c.fillStyle = ZONES[zoneOf(a)];
+    c.beginPath(); c.roundRect(x, y + 14, 10, 72, 5); c.fill();
+    c.fillStyle = C.text; c.font = F(500, 16 * D); c.fillText(name, x + 28, y + 44);
+    c.font = F(600, 16 * D); c.textAlign = 'right'; c.fillText(clock(d), XR, y + 44); c.textAlign = 'left';
+    c.font = F(600, 14 * D); const wt = watts(step); c.fillText(wt, x + 28, y + 82); const ww = c.measureText(wt).width;
+    c.fillStyle = C.help; c.font = F(400, 13 * D); c.fillText(detail(step), x + 28 + ww + 16, y + 82); } });
+
+  // ---- Page pieces ----
+  const titleBlock = wo => ({ h: 150, draw(c, y) { c.fillStyle = C.text; c.font = F(700, 22 * D); c.fillText(wo.name, X0, y + 56);
+    c.fillStyle = C.help; c.font = F(400, 13 * D); c.fillText(`${wo.day} · ${clock(wo.total)}`, X0, y + 104); } });
+  const chartBlock = (wo, opts) => { const ch = (opts.old ? 120 : 80) * D; return { h: ch + 40, draw(c, y) {
+    const boxes = chart(c, X0, y + 16, XW, ch, wo, opts);
+    if (opts.sel !== null && opts.sel !== undefined && opts.tap === 'a') bubble(c, boxes[opts.sel], wo.steps[opts.sel]); } }; };
+  const statGrid = wo => ({ h: 2 * 112 + 12 + 28, draw(c, y) { const g = 12, w = (XW - 2 * g) / 3, h = 112;
+    let fp = 50; c.font = `${fp}px Relative`; while (Math.max(...wo.stats.map(([, v]) => c.measureText(v).width)) > w - 30) { fp--; c.font = `${fp}px Relative`; }
+    wo.stats.forEach(([l, v], i) => { const x = X0 + (i % 3) * (w + g), ty = y + 8 + Math.floor(i / 3) * (h + g);
+      c.fillStyle = C.track; c.beginPath(); c.roundRect(x, ty, w, h, 18); c.fill();
+      c.fillStyle = C.help; c.font = F(500, 11 * D); c.fillText(l, x + 16, ty + 38);
+      c.fillStyle = C.text; c.font = `${fp}px Relative`; c.fillText(v, x + 16, ty + 94); }); } });
+
+  // The page: ← on the left, Select workout (the page's one yellow button) on the right of the bar.
+  // The bubble may reach over the bar's edge, so the form is drawn last under a clip that starts at the bar.
+  function detailsPage(c, wo, opts = {}) {
+    const items = [titleBlock(wo), chartBlock(wo, opts)];
+    if (opts.tap === 'b' && opts.sel !== null && opts.sel !== undefined) items.push(stepRow(wo.steps[opts.sel]));
+    items.push(statGrid(wo), divider);
+    const form = layout(items);
+    c.fillStyle = C.bg; c.fillRect(0, 50, 480, 750);
+    clipForm(c, form, 146, 0);
+    c.fillStyle = C.bg; c.fillRect(0, 50, 480, 96);
+    icon(c, 'back', 30, 83, 45);
+    c.font = F(600, 15 * D); const tw = c.measureText('Select workout').width, pw = tw + 2 * 18 * D, ph = 38 * D, px = XR - pw, py = 98 - ph / 2;
+    c.fillStyle = C.yellow; c.beginPath(); c.roundRect(px, py, pw, ph, ph / 2); c.fill();
+    c.fillStyle = C.mainText; c.textAlign = 'center'; c.fillText('Select workout', px + pw / 2, py + ph / 2 + 10); c.textAlign = 'left';
+  }
+  for (const k of Object.keys(WORKOUTS)) {
+    put(`now-${k}`, c => detailsPage(c, WORKOUTS[k], { old: true }));
+    put(`new-${k}`, c => detailsPage(c, WORKOUTS[k]));
+  }
+  put('tap-a-tempo', c => detailsPage(c, WORKOUTS.tempo, { tap: 'a', sel: 3 }));
+  put('tap-a-ramp', c => detailsPage(c, WORKOUTS.tempo, { tap: 'a', sel: 0 }));
+  put('tap-b-tempo', c => detailsPage(c, WORKOUTS.tempo, { tap: 'b', sel: 3 }));
+  put('tap-b-ramp', c => detailsPage(c, WORKOUTS.tempo, { tap: 'b', sel: 0 }));
+})();
+</script>
+</body>
+</html>
