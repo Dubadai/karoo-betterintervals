@@ -1,5 +1,7 @@
 package com.daviddokakis.karoointerval
 
+import com.dubadai.karoo.common.*
+
 import android.os.SystemClock
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.DataType
