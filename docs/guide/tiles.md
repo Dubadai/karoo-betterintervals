@@ -5,8 +5,8 @@ The two tiles under the progress bar each show what you switch on in
 the left one shows **Lap avg** and the right one **Cadence**.
 
 Each tile can show **Lap avg**, **Lap NP**, **Ride avg**, **Target**, **Heart rate**, **Cadence**,
-**Calories** and **Speed**. With two or more switched on, tap the tile to go to the next one: dots
-down its left edge say which one it shows. The Karoo remembers where you were between rides.
+**Calories** and **Speed**. With two or more switched on, tap the tile to go to the next one; its
+icon and name say which one it shows, as on the Karoo's own fields. The Karoo remembers where you were between rides.
 Switch everything off on a tile to leave it out: the other tile gets the whole width, and with
 both off the watts get the room.
 
