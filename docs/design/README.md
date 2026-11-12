@@ -42,3 +42,4 @@ and screenshots from the Karoo 3 (`device/`). Newest work first.
 - `sync-time/`: "Synced 08:41" under the Sync button (A, built).
 - `start-card/`: the START box starts under the gear's 64 dp tap area.
 - `one-hr-setting/`: Settings without "Heart rate or cadence"; Cadence smoothing always shown (built).
+- `scale-preview/`: the Scale workout card before the start (first interval, before → after), outlined (built).

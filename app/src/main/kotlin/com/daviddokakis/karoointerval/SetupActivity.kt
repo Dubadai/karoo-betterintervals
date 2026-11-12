@@ -607,28 +607,68 @@ class SetupActivity : AppearanceActivity() {
      * Above Scale workout's % while a workout runs: what the current interval's target is now, from
      * its target at 100 % (the same size, the new one in the choice cards' blue).
      */
+    /**
+     * Under Scale workout (docs/design/scale-preview): the interval's watts before → after the scale.
+     * Before the start the first interval ("First up · Warm-up 20:00"), while running the current one;
+     * a ramp before the start as its range. Outlined, not tonal. None for a heart-rate step.
+     */
     private fun currentIntervalCard(): View? {
-        val st = IntervalExtension.session?.state?.value ?: return null
-        if (st.notStarted || st.finished) return null
-        val step = st.currentStep?.takeIf { !it.hr } ?: return null
-        val pct = st.plan?.scalePct ?: 100
-        val now = step.targetAt(st.elapsedInStepSec)
-        val was = kotlin.math.round(now * 100.0 / pct).toInt()
+        val st = IntervalExtension.session?.state?.value
+        if (st?.finished == true) return null
+        val pct: Int
+        val title: String
+        val before: String
+        val after: String
+        if (st != null && !st.notStarted) {
+            val step = st.currentStep?.takeIf { !it.hr } ?: return null
+            pct = st.plan?.scalePct ?: 100
+            val now = step.targetAt(st.elapsedInStepSec)
+            title = getString(R.string.current_interval)
+            before = kotlin.math.round(now * 100.0 / pct).toInt().toString()
+            after = now.toString()
+        } else {
+            // Not started: the plan as loaded (unscaled) and its first step
+            val plan = store.plan.value?.takeIf { !it.hrOnly } ?: return null
+            val first = plan.steps.firstOrNull()?.takeIf { !it.hr } ?: return null
+            pct = store.scalePct.value
+            val json = week.firstOrNull { it.plan.id == plan.id }?.json ?: store.selectedJson
+            val name = stepName(leafStepsOf(json?.let { runCatching { org.json.JSONObject(it) }.getOrNull() }, plan)?.firstOrNull(), first, plan.ftp)
+            title = "${getString(R.string.first_up)} · $name ${formatClock(first.durationSec)}"
+            fun w(s: PlanStep) = if (s.isRamp) "${s.startWatts}–${s.endWatts}" else s.avgWatts.toString()
+            before = w(first)
+            after = w(first.scaled(pct))
+        }
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(14), dp(10), dp(14), dp(12))
-            background = rounded(R.color.segment_track, 14)
+            // Outlined like the Outline tiles (1 dp, their grey), not tonal: less grey fill on the page
+            background = GradientDrawable().apply {
+                cornerRadius = dp(14).toFloat()
+                setStroke(dp(1), getColor(R.color.done))
+            }
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { bottomMargin = dp(10) }
-            addView(text(getString(R.string.current_interval), 13f).apply { setTextColor(getColor(R.color.settings_title)) })
+            addView(text(title, 13f).apply { setTextColor(getColor(R.color.settings_title)); maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END })
+            // "150 → 152 W", the unit once; at 100% only the watts. The scaled watts in blue.
             val line = android.text.SpannableStringBuilder()
-            line.append("$was W")
-            if (pct != 100) {
-                line.append("  →  ")
+            if (pct == 100) {
+                line.append("$after W")
+            } else {
+                line.append("$before → ")
                 val at = line.length
-                line.append("$now W")
+                line.append("$after W")
                 line.setSpan(android.text.style.ForegroundColorSpan(getColor(R.color.settings_select_blue)), at, line.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
-            addView(text("", 20f, bold = true).apply { text = line; setTextColor(getColor(R.color.settings_title)); setPadding(0, dp(4), 0, 0) })
+            addView(
+                text("", 20f, bold = true).apply {
+                    text = line
+                    setTextColor(getColor(R.color.settings_title))
+                    setPadding(0, dp(4), 0, 0)
+                    maxLines = 1
+                    // A ramp's two ranges: shrink to fit the card (20 → 16 sp)
+                    setAutoSizeTextTypeUniformWithConfiguration(16, 20, 1, TypedValue.COMPLEX_UNIT_SP)
+                },
+                LinearLayout.LayoutParams(MATCH_PARENT, dp(32)),
+            )
         }
     }
 

@@ -43,9 +43,10 @@ carries on where it is. Tick **Restart workout with new targets** to start the n
 
 While a workout is loaded, **Scale workout** sits above it: − and + make every power target 1%
 easier or harder (100% is the workout as planned). The card shows the scale and its shape grows
-or shrinks with it, and the ride screen uses the scaled watts at once (the card above the − and +
-shows the current interval's watts before → after): where you are in the
-workout doesn't change. Heart-rate targets aren't scaled. Picking another workout starts it at
+or shrinks with it, and the ride screen uses the scaled watts at once: where you are in the
+workout doesn't change. The outlined card above the − and + shows the watts before → after: before
+the start the first interval's ("First up · Warm-up 20:00", a ramp as its range, e.g. 120–179 → 121–181 W),
+while you ride the current interval's. Heart-rate targets aren't scaled. Picking another workout starts it at
 100%.
 
 ## Offline
