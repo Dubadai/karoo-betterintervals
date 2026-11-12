@@ -309,12 +309,13 @@ class SetupActivity : AppearanceActivity() {
                     render()
                 }.apply {
                     background = rounded(R.color.remove_tonal, 28)
-                    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(48)).apply { topMargin = dp(8) }
+                    // The room under it is the button's own: the kit's divider sets its own top margin (0)
+                    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(48)).apply { topMargin = dp(8); bottomMargin = dp(16) }
                 },
             )
             content.addView(
                 settingsDivider().apply {
-                    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(1)).apply { topMargin = dp(16); bottomMargin = dp(8) }
+                    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(1)).apply { bottomMargin = dp(8) }
                 },
             )
         }
@@ -486,7 +487,8 @@ class SetupActivity : AppearanceActivity() {
         gravity = Gravity.CENTER_VERTICAL
         background = rounded(R.color.segment_track, 28)
         setPadding(dp(6), dp(6), dp(6), dp(6))
-        layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+        // 14 dp under it, like the kit's segmented control: the divider below leaves no room itself
+        layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { bottomMargin = dp(14) }
         fun step(icon: Int, description: Int, delta: Int) = FrameLayout(this@SetupActivity).apply {
             background = rounded(R.color.segment_selected, 20)
             contentDescription = getString(description)
