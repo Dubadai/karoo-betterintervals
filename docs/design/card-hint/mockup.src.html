@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Card Hint</title>
+<style>
+@font-face { font-family: Plex; src: url(__FONT_REG__); font-weight: 400; }
+@font-face { font-family: Plex; src: url(__FONT_MED__); font-weight: 500; }
+@font-face { font-family: Plex; src: url(__FONT_SEMI__); font-weight: 600; }
+@font-face { font-family: Plex; src: url(__FONT_BOLD__); font-weight: 700; }
+@font-face { font-family: Relative; src: url(__RELATIVE__); }
+:root { --bg:#f6f5f2; --fg:#1d1d1b; --muted:#6b6a66; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; } }
+:root[data-theme="dark"] { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system, system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 28px; margin: 0 0 4px; } p { color: var(--muted); max-width: 72ch; }
+.flow { display:flex; flex-wrap:wrap; gap: 18px; } .step { flex: 0 1 240px; max-width: 240px; }
+.step canvas { display:block; max-width:100%; height:auto; } .step h3 { font-size: 15px; margin: 8px 0 2px; } .step p { font-size: 13.5px; margin: 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Workout cards: show they open</h1>
+<p>A tap on a workout card opens its details, but nothing on the card says so. Two ways to show it,
+both in the card's top right corner next to the name, in the grey of the card's small text.</p>
+<div class="flow">
+  <div class="step"><div id="now"></div><h3>Now</h3><p>Nothing says the card opens.</p></div>
+  <div class="step"><div id="info"></div><h3>A: ⓘ</h3><p>The workout screen's info sign: "more about this".</p></div>
+  <div class="step"><div id="chevron"></div><h3>B: ›</h3><p>The kit's sign for "opens a page", as on the settings rows and list cards.</p></div>
+  <div class="step"><div id="ring"></div><h3>B2: › in a ring</h3><p>Smaller (12 dp) in a thin 22 dp ring, the card's grey.</p></div>
+  <div class="step"><div id="disc"></div><h3>B3: › on a disc</h3><p>Smaller (12 dp) on a 22 dp disc in the page colour.</p></div>
+</div>
+<h2 style="font-size:21px;margin:36px 0 4px">B3 in other colours, the › centred</h2>
+<p>The disc picked: three colour pairs from the Karoo's own palette, the › drawn on the disc's middle.</p>
+<div class="flow">
+  <div class="step"><div id="tonal"></div><h3>C1: Karoo blue-grey</h3><p>The kit's tonal button colour (the Karoo's light-blue pill), dark ›; night: deep blue, white ›.</p></div>
+  <div class="step"><div id="grey"></div><h3>C2: grey</h3><p>The card's small-text grey, white › (night: light grey, black ›).</p></div>
+  <div class="step"><div id="blue"></div><h3>C3: blue</h3><p>The selection blue of the current card's ring, white ›.</p></div>
+</div>
+<h2 style="font-size:21px;margin:36px 0 4px">Dark grey by day, light at night</h2>
+<p>The disc in the Karoo's greys: dark with a white › in light mode, light with a black › in dark mode.</p>
+<div class="flow">
+  <div class="step"><div id="dark1"></div><h3>D1: darkest</h3><p>#313131 and white ›; night #F2F2F2 (the text colour) and black ›.</p></div>
+  <div class="step"><div id="dark2"></div><h3>D2: a step softer</h3><p>#484848 and white ›; night #BCBCBC and black ›.</p></div>
+</div>
+</main>
+<script>
+/*__KAROO_DEVICE_JS__*/
+const IMGS = "__IMGS__";
+const ICONS = "__ICONS__";
+const FRAME_PNG = '__FRAME__';
+const HASH = new URLSearchParams(location.hash.slice(1));
+const SHOT = HASH.get('shot'), THEME = HASH.get('theme') || 'light';
+const FRAME = +(HASH.get('frame') || 0), FRAMES = +(HASH.get('frames') || 1);
+const W = SHOT ? 1100 : 240;
+const BACKDROP = THEME === 'dark' ? 'linear-gradient(#120E0B,#3F342E)' : 'linear-gradient(#7E9CB4,#F1F4F6)';   // Night / Sky
+/*__KIT_JS__*/
+(async () => {
+  await Promise.all([400, 500, 600, 700].map(w => document.fonts.load(`${w} 20px Plex`))); await document.fonts.load('20px Relative');
+  const I = {}; for (const k of Object.keys(IMGS)) I[k] = await loadImg(IMGS[k]);
+  const dev = await KarooDevice.load({ frame: FRAME_PNG, screen: IMGS.status });
+  const put = (id, draw) => { if (SHOT && id !== SHOT) return;
+    const cv = dev.device(dev.screen({ draw: c => draw(c, 0) }), W);
+    if (SHOT) { document.body.innerHTML = ''; document.body.style.cssText = `margin:0;background:${BACKDROP};width:1300px;height:2000px;display:flex;align-items:center;justify-content:center`;
+      cv.style.width = '1100px'; document.body.append(cv); } else document.getElementById(id).append(cv); };
+
+  // The app's own colours (values / values-night): the picked card's tint and ring, Remove's tonal red
+  const DK = THEME === 'dark';
+  const TINT = DK ? '#0F2440' : '#E8F2FF', RING = DK ? '#0A84FF' : '#007AFF', REMOVE_BG = DK ? '#3D1F1C' : '#FBE4E2', REMOVE = '#D34343';
+  const ZONES = ['#60EEB2', '#00B988', '#FFF500', '#FB8C65', '#FE581F', '#D60404', '#B700A2'];
+  const FTP = 280, LIMITS = [0.55, 0.75, 0.90, 1.05, 1.20, 1.50];
+  const zoneOf = w => { const p = w / FTP; const i = LIMITS.findIndex(l => p <= l); return i < 0 ? 6 : i; };
+  const rep = (n, a, b) => Array.from({ length: n }).flatMap(() => [a, b]);
+  const LT1 = [[600, 120, 170], ...rep(3, [900, 200, 200], [300, 160, 160]), [600, 230, 230], [300, 160, 160], [300, 240, 240], [600, 150, 150]];
+  const STAIR = [[900, 120, 180], ...rep(4, [300, 170, 170], [180, 230, 230]), [120, 260, 260], [180, 280, 280], [120, 250, 250], [900, 170, 170], [600, 150, 110]];
+  const ENDU = [[600, 120, 170], [4200, 175, 175], [600, 160, 110]];
+
+  // A workout card (SetupActivity.card): name, its picture (48 dp), time · day · scale; the picked one tinted with the blue ring
+  const P = 12 * D;
+  function card(name, steps, foot, { picked = false, hint = null } = {}) { const h = 10 * D + 28 * D + 48 * D + 6 * D + 20 * D + 10 * D;
+    return { h: h + (picked ? 0 : 8 * D), draw(c, y) {
+      if (picked) { const r = 3.5 * D; c.strokeStyle = RING; c.lineWidth = 3 * D; c.beginPath(); c.roundRect(X0 - r, y - r, XW + 2 * r, h + 2 * r, 20 * D + r); c.stroke(); }
+      c.fillStyle = picked ? TINT : C.track; c.beginPath(); c.roundRect(X0, y, XW, h, 20 * D); c.fill();
+      c.fillStyle = C.text; c.font = F(700, 16 * D); c.fillText(name, X0 + P, y + 10 * D + 20 * D);
+      // The hint, top right on the name's line. A / B: 20 dp. B2 / B3: a 22 dp circle with a 12 dp › in it,
+      // B2 a thin ring in the card's grey, B3 a disc in the page colour
+      if (hint === 'info' || hint === 'chevron') icon(c, hint, XR - P - 20 * D, y + 10 * D + 3 * D, 20 * D, C.help);
+      if (hint === 'ring' || hint === 'disc') { const r = 11 * D, cx = XR - P - r + 2 * D, cy = y + 10 * D + 13 * D;
+        c.beginPath(); c.arc(cx, cy, r, 0, 7);
+        if (hint === 'disc') { c.fillStyle = C.bg; c.fill(); } else { c.strokeStyle = C.help; c.lineWidth = 1.5 * D; c.beginPath(); c.arc(cx, cy, r - 0.75 * D, 0, 7); c.stroke(); }
+        icon(c, 'chevron', cx - 6 * D + 1 * D, cy - 6 * D, 12 * D, hint === 'disc' ? C.text : C.help); }
+      // C1–C3: the disc in other colours, its › drawn centred on the disc (the kit icon sits 0.5 dp right of
+      // its box, and was moved 1 dp more): 3.5 × 7 dp, 1.75 dp stroke, its middle 0.25 dp right of the disc's
+      // (a › looks heavier on its left arms, so a hair to the right reads as centred)
+      const DISC = { tonal: DK ? ['#214559', '#F2F2F2'] : ['#9FB3BD', '#1B2D2D'], grey: DK ? ['#BCBCBC', '#000000'] : ['#636363', '#FFFFFF'],
+        blue: DK ? ['#0A84FF', '#FFFFFF'] : ['#007AFF', '#FFFFFF'],
+        // D1 / D2: dark grey by day, light at night (the Karoo's greys), the › in the opposite tone
+        dark1: DK ? ['#F2F2F2', '#000000'] : ['#313131', '#FFFFFF'], dark2: DK ? ['#BCBCBC', '#000000'] : ['#484848', '#FFFFFF'] }[hint];
+      if (DISC) { const r = 11 * D, cx = XR - P - r + 2 * D, cy = y + 10 * D + 13 * D, w = 3.5 * D, hh = 3.5 * D, mx = cx + 0.25 * D;
+        c.fillStyle = DISC[0]; c.beginPath(); c.arc(cx, cy, r, 0, 7); c.fill();
+        c.strokeStyle = DISC[1]; c.lineWidth = 1.75 * D; c.lineCap = 'round'; c.lineJoin = 'round';
+        c.beginPath(); c.moveTo(mx - w / 2, cy - hh); c.lineTo(mx + w / 2, cy); c.lineTo(mx - w / 2, cy + hh); c.stroke(); }
+      const tx = X0 + P, tw = XW - 2 * P, ty = y + 10 * D + 28 * D, th = 48 * D, total = steps.reduce((a, s) => a + s[0], 0), max = Math.max(...steps.flatMap(s => [s[1], s[2]])) * 1.1;
+      let t = 0; steps.forEach(([d, a, b]) => { const x0 = tx + t * tw / total, x1 = tx + (t + d) * tw / total - 1.5;
+        if (a !== b) { const g = c.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, ZONES[zoneOf(a)]); g.addColorStop(1, ZONES[zoneOf(b)]); c.fillStyle = g; } else c.fillStyle = ZONES[zoneOf(a)];
+        c.beginPath(); c.moveTo(x0, ty + th); c.lineTo(x0, ty + th - th * a / max); c.lineTo(x1, ty + th - th * b / max); c.lineTo(x1, ty + th); c.closePath(); c.fill(); t += d; });
+      c.fillStyle = C.help; c.font = F(400, 13 * D); c.fillText(foot, X0 + P, ty + th + 6 * D + 15 * D);
+    } }; }
+  const remove = { h: 8 * D + 48 * D + 16 * D, draw(c, y) { const top = y + 8 * D, h = 48 * D;
+    c.fillStyle = REMOVE_BG; c.beginPath(); c.roundRect(X0, top, XW, h, h / 2); c.fill();
+    c.fillStyle = REMOVE; c.font = F(600, 16 * D); c.textAlign = 'center'; c.fillText('Remove workout', X0 + XW / 2, top + h / 2 + 11); c.textAlign = 'left'; } };
+  const day = t => ({ h: 22 * D + 14 * D, draw(c, y) { c.fillStyle = C.help; c.font = F(400, 14 * D); c.fillText(t, X0, y + 26 * D); } });
+
+  function workoutsPage(c, hint) {
+    const form = layout([
+      heading('intro', 'Current workout'),
+      card('LT1 - Increasing (Long)', LT1, '1:45:00 · Today · 101%', { picked: true, hint }), remove,
+      { h: 2 + 8 * D, draw(c, y) { c.fillStyle = C.div; c.fillRect(X0, y, XW, 2); } },
+      day('Sat 14 Nov'), card('W7.1 - Stair Climb', STAIR, '2:30:00', { hint }),
+      day('Mon 16 Nov'), card('W7.2 - Endurance', ENDU, '1:30:00', { hint }),
+    ]);
+    c.fillStyle = C.bg; c.fillRect(0, 0, 480, 800);
+    clipForm(c, form, 60, 0);
+    statusBar(c, { time: '08:14' });
+  }
+  put('now', c => workoutsPage(c, null));
+  put('info', c => workoutsPage(c, 'info'));
+  put('chevron', c => workoutsPage(c, 'chevron'));
+  put('ring', c => workoutsPage(c, 'ring'));
+  put('disc', c => workoutsPage(c, 'disc'));
+  for (const k of ['tonal', 'grey', 'blue', 'dark1', 'dark2']) put(k, c => workoutsPage(c, k));
+})();
+</script>
+</body>
+</html>
