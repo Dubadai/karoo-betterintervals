@@ -7,8 +7,8 @@ app list. ⚙ on the Workouts page opens [Settings](settings.md).
 
 <img src="images/workouts.png" width="240" alt="Workouts page"> <img src="images/workouts-week.png" width="240" alt="This week's workouts">
 
-- **Sync** loads this week's planned workouts from intervals.icu. The page shows when it last
-  synced.
+- **Sync** loads this week's planned workouts from intervals.icu. When it last synced shows right
+  under the button (or **Offline** in amber when there's Wi-Fi but no internet).
 - Today's workouts come first, then the coming days, then the days already past this week.
 - Each card shows the workout's name, its shape in zone colours, its length and its day.
 - Tap a card (the › in its corner) for its [details](#workout-details); **Select workout** there picks it and takes you
