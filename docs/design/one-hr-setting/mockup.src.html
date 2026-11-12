@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heart Rate Setting</title>
+<style>
+@font-face { font-family: Plex; src: url(__FONT_REG__); font-weight: 400; }
+@font-face { font-family: Plex; src: url(__FONT_MED__); font-weight: 500; }
+@font-face { font-family: Plex; src: url(__FONT_SEMI__); font-weight: 600; }
+@font-face { font-family: Plex; src: url(__FONT_BOLD__); font-weight: 700; }
+@font-face { font-family: Relative; src: url(__RELATIVE__); }
+:root { --bg:#f6f5f2; --fg:#1d1d1b; --muted:#6b6a66; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; } }
+:root[data-theme="dark"] { --bg:#161615; --fg:#ecebe7; --muted:#a3a29c; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 -apple-system, system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 28px; margin: 0 0 4px; } h2 { font-size: 21px; margin: 36px 0 4px; } p { color: var(--muted); max-width: 72ch; }
+.flow { display:flex; flex-wrap:wrap; gap: 18px; } .step { flex: 0 1 240px; max-width: 240px; }
+.step canvas { display:block; max-width:100%; height:auto; } .step h3 { font-size: 15px; margin: 8px 0 2px; } .step p { font-size: 13.5px; margin: 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Settings: without "Heart rate or cadence"</h1>
+<p>Since every spot on the workout screen is set on its own (Workout screen), "Heart rate or cadence" no
+longer changes the workout screen. It still picked heart rate or cadence for the free ride's second tile and
+the Workout done screen's fourth number, and it hid Cadence smoothing unless Cadence was picked, though cadence
+is on the right tile by default. The proposal: the setting goes, Cadence smoothing always shows, and free
+ride and Workout done keep heart rate (as they are by default today).</p>
+
+<h2>Settings</h2>
+<div class="flow">
+  <div class="step"><div id="before-top"></div><h3>Now</h3><p>"Heart rate or cadence" between Tiles and Workout screen.</p></div>
+  <div class="step"><div id="after-top"></div><h3>New</h3><p>Gone: Tiles, then Workout screen.</p></div>
+  <div class="step"><div id="before-smooth"></div><h3>Now</h3><p>Only Power smoothing: Cadence hides unless "Cadence" is picked above.</p></div>
+  <div class="step"><div id="after-smooth"></div><h3>New</h3><p>Power, then Cadence, always.</p></div>
+</div>
+
+<h2>Unchanged: heart rate, as today by default</h2>
+<div class="flow">
+  <div class="step"><div id="free"></div><h3>Free ride</h3><p>The second tile: HR → LAP HR → RIDE HR on a tap.</p></div>
+  <div class="step"><div id="done"></div><h3>Workout done</h3><p>The fourth number: Avg HR.</p></div>
+</div>
+</main>
+<script>
+/*__KAROO_DEVICE_JS__*/
+const IMGS = "__IMGS__";
+const ICONS = "__ICONS__";
+const FRAME_PNG = '__FRAME__';
+const HASH = new URLSearchParams(location.hash.slice(1));
+const SHOT = HASH.get('shot'), THEME = HASH.get('theme') || 'light';
+const FRAME = +(HASH.get('frame') || 0), FRAMES = +(HASH.get('frames') || 1);
+const W = SHOT ? 1100 : 240;
+const BACKDROP = THEME === 'dark' ? 'linear-gradient(#120E0B,#3F342E)' : 'linear-gradient(#7E9CB4,#F1F4F6)';   // Night / Sky
+/*__KIT_JS__*/
+(async () => {
+  await Promise.all([400, 500, 600, 700].map(w => document.fonts.load(`${w} 20px Plex`))); await document.fonts.load('20px Relative');
+  const I = {}; for (const k of Object.keys(IMGS)) I[k] = await loadImg(IMGS[k]);
+  const dev = await KarooDevice.load({ frame: FRAME_PNG, screen: IMGS.status });
+  const put = (id, draw) => { if (SHOT && id !== SHOT) return;
+    const cv = dev.device(dev.screen({ draw: c => draw(c, 0) }), W);
+    if (SHOT) { document.body.innerHTML = ''; document.body.style.cssText = `margin:0;background:${BACKDROP};width:1300px;height:2000px;display:flex;align-items:center;justify-content:center`;
+      cv.style.width = '1100px'; document.body.append(cv); } else document.getElementById(id).append(cv); };
+
+  // A Workout screen row (settingsNavRow): icon, name, what it shows, ›
+  const nav = (ic, t, sub) => { const r = textRow(ic, t, sub); return { h: r.h, draw(c, y) { r.draw(c, y); icon(c, 'chevron', XR - 36, y + 38, 36, C.help); } }; };
+  const SMOOTH = ['Instant', '3 s', '5 s', '10 s'];
+  function settings(after) {
+    return layout([
+      heading('tiles', 'Tiles'), intro('How Lap avg, Target and Heart rate sit on the workout screen: a grey fill, or a thin border like Next up.'),
+      seg(['Tonal', 'Outline'], 0), divider,
+      ...(after ? [] : [heading('heart', 'Heart rate or cadence'), intro('What shows next to the watts and in the HR tile.'), seg(['Heart rate', 'Cadence'], 0), divider]),
+      heading('layout', 'Workout screen'), intro('What each spot on the workout screen shows.'),
+      nav('top_row', 'Top row', 'Heart rate'), nav('under', 'Under the watts', 'Target'), nav('one_tile', 'Left tile', 'Lap avg'), nav('one_tile', 'Right tile', 'Cadence'), divider,
+      heading('power', 'Power'), intro('The big watts: instant, or averaged over 3, 5 or 10 seconds. 3 s is steady and still quick.'), seg(SMOOTH, 1), divider,
+      ...(after ? [heading('cadence', 'Cadence'), intro('The cadence: instant, or averaged over 3, 5 or 10 seconds.'), seg(SMOOTH, 0), divider] : []),
+      heading('target', 'Indoor ERG'), intro('The trainer follows the workout’s targets.'), space(200),
+    ]);
+  }
+  const at = (form, title) => form.items.findIndex(it => it.title === title);
+  // headings carry their title so a screen can scroll to them
+  const H = heading; heading = (ic, t) => Object.assign(H(ic, t), { title: t });
+  for (const after of [false, true]) {
+    const k = after ? 'after' : 'before';
+    put(`${k}-top`, c => { const f = settings(after); page(c, { title: 'Settings', form: f, scrollTo: at(f, 'Tiles') }); });
+    put(`${k}-smooth`, c => { const f = settings(after); page(c, { title: 'Settings', form: f, scrollTo: at(f, 'Power') }); });
+  }
+  put('free', c => c.drawImage(I[`free_${THEME}`], 0, 0, 480, 800));
+  put('done', c => c.drawImage(I[`done_${THEME}`], 0, 0, 480, 800));
+})();
+</script>
+</body>
+</html>

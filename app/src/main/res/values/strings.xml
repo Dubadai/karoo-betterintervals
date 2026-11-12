@@ -47,7 +47,6 @@
     <string name="lap_hr">Lap HR</string>
     <string name="ride_avg">Ride avg</string>
     <string name="ride_hr">Ride HR</string>
-    <string name="ride_cadence">Ride cad</string>
     <string name="top_row">Top row</string>
     <string name="top_row_help">Nothing, one value, or two side by side, between the gear and ⓘ.</string>
     <string name="top_row_one">One</string>
@@ -103,14 +102,11 @@
     <string name="smoothing_3s">3 s</string>
     <string name="smoothing_5s">5 s</string>
     <string name="smoothing_10s">10 s</string>
-    <string name="second_field">Heart rate or cadence</string>
-    <string name="second_field_help">What shows next to the watts and in the HR tile.</string>
     <string name="cadence">Cadence</string>
     <string name="cadence_short">CAD</string>
     <string name="lap_cadence">Lap cad</string>
     <string name="cadence_smoothing">Cadence</string>
     <string name="cadence_smoothing_help">The cadence: instant, or averaged over 3, 5 or 10 seconds.</string>
-    <string name="rpm_value">%1$d rpm</string>
     <string name="example_description">Example of the workout screen with these settings: interval 4 of 10 at 280 watts.</string>
     <string name="start_workout">Start workout</string>
     <string name="first_up">First up</string>
@@ -171,7 +167,6 @@
     <string name="avg_power">Avg power</string>
     <string name="done_np">NP</string>
     <string name="avg_hr">Avg HR</string>
-    <string name="avg_cadence">Avg cad</string>
     <string name="starting_with">Starting with</string>
     <string name="start_at">Start at %1$d / %2$d</string>
     <string name="off">Off</string>

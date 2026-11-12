@@ -64,7 +64,7 @@ class SpotSettingsActivity : AppearanceActivity() {
     /** One value or two; each heart rate, cadence, target, calories or speed (the right one not the left's). */
     private fun topRow() {
         form.addView(settingsIntro(getString(R.string.top_row_help)))
-        val left = store.topRow.value ?: if (store.secondField.value == SecondField.CADENCE) TopRow.CADENCE else TopRow.HEART_RATE
+        val left = store.topRow.value ?: TopRow.HEART_RATE
         val right = store.topRowRight.value?.takeIf { it != left }
         val none = store.topRowNone.value
         val count = when { none -> 0; right != null -> 2; else -> 1 }
@@ -166,7 +166,7 @@ class SpotSettingsActivity : AppearanceActivity() {
 
 /** The Example card's workout screen with this rider's settings (Settings and its spot pages). */
 fun PlanStore.exampleState(): ScreenState = ExampleScreen.state(
-    wattsMode, appearance.value, tileOutline = tileOutline.value, secondField = secondField.value, topRow = topRow.value,
+    wattsMode, appearance.value, tileOutline = tileOutline.value, topRow = topRow.value,
 ).copy(
     topRowRight = topRowRight.value, topRowNone = topRowNone.value, leftItems = leftItems.value, rightItems = rightItems.value, underWatts = underWatts.value,
     zonePalette = zonePalette.value, calories = 412, speedMs = 8.7, lapNp = 268, rideAvgPower = 236,
