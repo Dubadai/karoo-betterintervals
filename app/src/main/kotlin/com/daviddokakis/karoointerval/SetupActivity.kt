@@ -561,14 +561,16 @@ class SetupActivity : AppearanceActivity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(14), dp(12), dp(14), dp(14))
             background = rounded(R.color.settings_warn_bg, 14)
-            // The icon next to the title; the line under it starts with the title
+            // The icon next to the title, centred on its capital letters (kit 1.8.7); the line under it
+            // starts with the title
+            val title = text(getString(R.string.plan_changed_title), 16f, bold = true).apply {
+                setTextColor(ink)
+                layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { marginStart = dp(10) }
+            }
             addView(
                 row(
-                    settingsIcon(R.drawable.ic_settings_update, 22).apply { setColorFilter(ink) },
-                    text(getString(R.string.plan_changed_title), 16f, bold = true).apply {
-                        setTextColor(ink)
-                        layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { marginStart = dp(10) }
-                    },
+                    settingsIcon(R.drawable.ic_settings_update, 22).apply { setColorFilter(ink); centreOnCaps(title) },
+                    title,
                 ),
             )
             addView(
@@ -579,13 +581,8 @@ class SetupActivity : AppearanceActivity() {
             )
         }
         var restart = false
-        val box = android.widget.CheckBox(this).apply {
-            text = getString(R.string.plan_restart)
-            textSize = 15f
-            setTextColor(getColor(R.color.settings_title))
-            buttonTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.settings_select_blue))
-            isChecked = false
-            setOnCheckedChangeListener { _, on -> restart = on }
+        // The kit's check row (1.9.0): the choice cards' grey ring, Apple blue with a white tick when on
+        val box = settingsCheckRow(getString(R.string.plan_restart), false) { on -> restart = on }.apply {
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(4) }
         }
         return LinearLayout(this).apply {
