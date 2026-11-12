@@ -1411,8 +1411,11 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         const val FLAME = "M19,3C24.5,9.5 31,14.5 31,23C31,29.9 25.6,35 19,35C12.4,35 7,29.9 7,23C7,18.2 9.4,14.6 12.6,12C12.4,15.8 13.9,18.6 16.8,19.8C15.6,13.9 16.6,8.2 19,3ZM19,15.5C17.8,19.5 14.8,21.5 14.8,25.5C14.8,28.4 16.7,30.6 19,30.6C21.3,30.6 23.2,28.4 23.2,25.5C23.2,21.5 20.2,19.5 19,15.5Z"
         /** A full-page field on the Karoo 3 (721 px) in dp. */
         private const val FULL_FIELD_DP = 721f / 1.875f
-        /** On a full page the indoor START box grows by this into the big watts' room. */
-        private const val INDOOR_BOX_EXTRA_DP = 46f
+        /**
+         * On a full page the indoor START box grows by this into the big watts' room: 24 dp, so its top
+         * stays under the gear's 64 dp tap area (46 dp reached 21 dp into it, docs/design/start-card).
+         */
+        private const val INDOOR_BOX_EXTRA_DP = 24f
         /** Indoor start's top row (three items): icons closer to their values than the usual 0.3. */
         private const val INDOOR_ICON_GAP = 0.14f
         /** The Karoo's PAUSE / "Searching GPS…" strip over a field's top, about 40 px on a Karoo 3. */
