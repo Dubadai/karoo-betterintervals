@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A workout card opens its details (docs/design/card-hint, D1): a 22 dp disc, dark grey by day and
+     light at night, with a › drawn on its middle (3.5 × 7 dp, a hair right of centre so it reads centred). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp" android:height="22dp"
+    android:viewportWidth="22" android:viewportHeight="22">
+    <path
+        android:fillColor="@color/card_open_disc"
+        android:pathData="M11,0a11,11 0,1 1,0 22a11,11 0,1 1,0 -22z" />
+    <path
+        android:pathData="M9.5,7.5L13,11L9.5,14.5"
+        android:strokeColor="@color/card_open_arrow"
+        android:strokeWidth="1.75"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+</vector>

@@ -309,8 +309,9 @@ class SetupActivity : AppearanceActivity() {
                     render()
                 }.apply {
                     background = rounded(R.color.remove_tonal, 28)
-                    // The room under it is the button's own: the kit's divider sets its own top margin (0)
-                    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(48)).apply { topMargin = dp(8); bottomMargin = dp(16) }
+                    // 14 dp above it: the current card's ring hangs 5 dp below the card. The room under it is
+                    // the button's own: the kit's divider sets its own top margin (0)
+                    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(48)).apply { topMargin = dp(14); bottomMargin = dp(16) }
                 },
             )
             content.addView(
@@ -444,7 +445,20 @@ class SetupActivity : AppearanceActivity() {
             orientation = LinearLayout.VERTICAL
             background = rounded(if (loaded) R.color.select_tint else R.color.segment_track, 20)
             setPadding(dp(12), dp(10), dp(12), dp(10))
-            addView(text(plan.name, 16f, bold = true).apply { setPadding(0, 0, 0, dp(6)) })
+            // The name, and a › disc at its right when the card opens its details (docs/design/card-hint)
+            addView(
+                LinearLayout(this@SetupActivity).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    setPadding(0, 0, 0, dp(6))
+                    addView(text(plan.name, 16f, bold = true), LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+                    if (onClick != null) {
+                        addView(
+                            ImageView(this@SetupActivity).apply { setImageResource(R.drawable.ic_card_open); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
+                            LinearLayout.LayoutParams(dp(22), dp(22)).apply { marginStart = dp(8); gravity = Gravity.TOP },
+                        )
+                    }
+                },
+            )
             addView(thumbnail(plan))
             val day = date?.takeIf { loaded }?.let { if (it == LocalDate.now()) getString(R.string.today) else it.format(DAY_FORMAT) }
             val scale = plan.scalePct.takeIf { it != 100 && !plan.hrOnly }?.let { getString(R.string.scale_pct, it) }
