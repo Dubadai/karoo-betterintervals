@@ -11,7 +11,7 @@ app list. ⚙ on the Workouts page opens [Settings](settings.md).
   synced.
 - Today's workouts come first, then the coming days, then the days already past this week.
 - Each card shows the workout's name, its shape in zone colours, its length and its day.
-- Tap a card for its [details](#workout-details); **Select workout** there picks it and takes you
+- Tap a card (the › in its corner) for its [details](#workout-details); **Select workout** there picks it and takes you
   back to the ride screen.
 - **Remove workout** takes the current workout off, so the ride screen shows the
   [free-ride screen](free-ride.md).

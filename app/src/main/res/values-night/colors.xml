@@ -84,6 +84,9 @@
          faint blue, and the red tonal Remove button (design: docs/design/workouts-page/kit-look) -->
     <color name="select_blue">#FF0A84FF</color>
     <color name="select_tint">#FF0F2440</color>
+    <!-- The › disc on a workout card (opens its details): dark grey by day, light at night -->
+    <color name="card_open_disc">#FFF2F2F2</color>
+    <color name="card_open_arrow">#FF000000</color>
     <color name="remove_tonal">#FF3D1F1C</color>
     <!-- Indoor ERG pill (docs/design/indoor-erg) -->
     <color name="erg_on_bg">#FF123A2A</color>

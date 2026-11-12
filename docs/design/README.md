@@ -37,3 +37,5 @@ and screenshots from the Karoo 3 (`device/`). Newest work first.
 - `intervals-z7/`: options for the intervals.icu palette's Z7 instead of grey (preview).
 - `empty-spots/`: None for every spot; what's left grows (mock).
 - `details-chart/`: the details picture on one scale for every workout, 80 dp; tap a block for its watts (A, the bubble, built).
+- `native-tiles/`: tiles with their own icon instead of dots; room above the Workouts page dividers.
+- `card-hint/`: a › disc on the workout cards says they open (D1, dark grey / light at night, built).

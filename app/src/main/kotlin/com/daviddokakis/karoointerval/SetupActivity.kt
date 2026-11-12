@@ -309,12 +309,14 @@ class SetupActivity : AppearanceActivity() {
                     render()
                 }.apply {
                     background = rounded(R.color.remove_tonal, 28)
-                    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(48)).apply { topMargin = dp(8) }
+                    // 14 dp above it: the current card's ring hangs 5 dp below the card. The room under it is
+                    // the button's own: the kit's divider sets its own top margin (0)
+                    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(48)).apply { topMargin = dp(14); bottomMargin = dp(16) }
                 },
             )
             content.addView(
                 settingsDivider().apply {
-                    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(1)).apply { topMargin = dp(16); bottomMargin = dp(8) }
+                    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(1)).apply { bottomMargin = dp(8) }
                 },
             )
         }
@@ -443,7 +445,20 @@ class SetupActivity : AppearanceActivity() {
             orientation = LinearLayout.VERTICAL
             background = rounded(if (loaded) R.color.select_tint else R.color.segment_track, 20)
             setPadding(dp(12), dp(10), dp(12), dp(10))
-            addView(text(plan.name, 16f, bold = true).apply { setPadding(0, 0, 0, dp(6)) })
+            // The name, and a › disc at its right when the card opens its details (docs/design/card-hint)
+            addView(
+                LinearLayout(this@SetupActivity).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    setPadding(0, 0, 0, dp(6))
+                    addView(text(plan.name, 16f, bold = true), LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+                    if (onClick != null) {
+                        addView(
+                            ImageView(this@SetupActivity).apply { setImageResource(R.drawable.ic_card_open); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
+                            LinearLayout.LayoutParams(dp(22), dp(22)).apply { marginStart = dp(8); gravity = Gravity.TOP },
+                        )
+                    }
+                },
+            )
             addView(thumbnail(plan))
             val day = date?.takeIf { loaded }?.let { if (it == LocalDate.now()) getString(R.string.today) else it.format(DAY_FORMAT) }
             val scale = plan.scalePct.takeIf { it != 100 && !plan.hrOnly }?.let { getString(R.string.scale_pct, it) }
@@ -486,7 +501,8 @@ class SetupActivity : AppearanceActivity() {
         gravity = Gravity.CENTER_VERTICAL
         background = rounded(R.color.segment_track, 28)
         setPadding(dp(6), dp(6), dp(6), dp(6))
-        layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+        // 14 dp under it, like the kit's segmented control: the divider below leaves no room itself
+        layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { bottomMargin = dp(14) }
         fun step(icon: Int, description: Int, delta: Int) = FrameLayout(this@SetupActivity).apply {
             background = rounded(R.color.segment_selected, 20)
             contentDescription = getString(description)

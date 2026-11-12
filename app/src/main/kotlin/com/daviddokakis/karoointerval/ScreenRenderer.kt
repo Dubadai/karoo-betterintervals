@@ -256,8 +256,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             v.setContentDescription(R.id.top_img, topItems.joinToString(", ") { it.text })
         }
 
-        // Both tiles drawn 1:1 like the Karoo's own fields (75dp: a native 140 px tile). Two or more
-        // metrics: no icon, dots down the left edge say which one this is; a tap goes to the next.
+        // Both tiles drawn 1:1 like the Karoo's own fields (75dp: a native 140 px tile), always with
+        // the metric's own icon and label, as the Karoo draws them (no dots: docs/design/native-tiles).
+        // Two or more metrics: a tap goes to the next.
         // One Target: a tap shows the target or its range (power), bpm or % of LTHR (heart rate).
         val ink = color(R.color.text)
         val landing = s.landStep?.takeIf { tops.firstOrNull() != TopRow.TARGET }?.targetAt(0)?.toString()
@@ -265,7 +266,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         val tileRow = if (leftShow == null && rightShow == null) View.GONE else View.VISIBLE
         v.setViewVisibility(R.id.tiles_row, tileRow)
         val tileW = if (leftShow == null || rightShow == null) config.viewSize.first - 6 * density else halfTileW
-        fun tile(container: Int, img: Int, hide: List<Int>, items: List<TileItem>, index: Int, show: TileShow?, cycle: PendingIntent) {
+        fun tile(container: Int, img: Int, hide: List<Int>, items: List<TileItem>, show: TileShow?, cycle: PendingIntent) {
             v.setViewVisibility(container, if (show == null) View.GONE else View.VISIBLE)
             if (show == null) return
             v.setTextViewText(hide[2], show.label)
@@ -279,15 +280,14 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             )
             tileArt(
                 v, img, hide, tileW, 75 * density,
-                if (items.size >= 2) emptyList() else show.icons,
+                show.icons,
                 show.label, show.value, ink,
                 landing = landing?.takeIf { show.item == TileItem.TARGET },
                 empty = show.empty,
-                dots = items.takeIf { it.size >= 2 }?.let { it.size to index.coerceIn(0, it.lastIndex) },
             )
         }
-        tile(R.id.lap_tile, R.id.lap_tile_img, listOf(R.id.icon_lap, R.id.icon_bolt, R.id.lap_avg_label, R.id.lap_avg), leftItems, s.leftIndex, leftShow, lapNpToggleIntent)
-        tile(R.id.tile2, R.id.tile2_img, listOf(R.id.tile2_icon, R.id.tile2_icon2, R.id.tile2_label, R.id.tile2_value), rightItems, s.rightIndex, rightShow, rightCycleIntent)
+        tile(R.id.lap_tile, R.id.lap_tile_img, listOf(R.id.icon_lap, R.id.icon_bolt, R.id.lap_avg_label, R.id.lap_avg), leftItems, leftShow, lapNpToggleIntent)
+        tile(R.id.tile2, R.id.tile2_img, listOf(R.id.tile2_icon, R.id.tile2_icon2, R.id.tile2_label, R.id.tile2_value), rightItems, rightShow, rightCycleIntent)
 
         // Pause / resume (top right). Paused by you: green half-pill with a filled play symbol.
         // Ride paused by Karoo: hidden, since the workout resumes with the ride.
@@ -907,22 +907,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
     private fun tileArt(
         v: RemoteViews, img: Int, hide: List<Int>, w: Float, h: Float, icons: List<TileArt.Glyph>, label: String, value: String,
         ink: Int = color(R.color.text), landing: String? = null, arrowColor: Int = 0, empty: String? = null,
-        /** (how many, which): dots down the left edge, centred on the tile's height (the right tile's metrics). */
-        dots: Pair<Int, Int>? = null,
     ) {
         val k = density / 1.875f
         val bmp = TileArt.draw(res, w.roundToInt(), h.roundToInt(), k, icons, label.uppercase(), value, ink, ink, landing, arrowColor, empty)
-        if (dots != null) {
-            val (n, at) = dots
-            val c = android.graphics.Canvas(bmp)
-            val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-            val step = 13f * k; val r = 4.5f * k; val x = 18f * k
-            val y0 = bmp.height / 2f - (n - 1) * step / 2f
-            for (i in 0 until n) {
-                p.color = if (i == at) ink else (ink and 0x00FFFFFF) or 0x55000000
-                c.drawCircle(x, y0 + i * step, r, p)
-            }
-        }
         v.setImageViewBitmap(img, bmp)
         v.setContentDescription(img, "$label ${empty ?: value}")
         hide.forEach { v.setViewVisibility(it, View.GONE) }
