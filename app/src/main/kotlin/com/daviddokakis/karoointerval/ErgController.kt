@@ -1,5 +1,7 @@
 package com.daviddokakis.karoointerval
 
+import com.dubadai.karoo.common.*
+
 import android.content.Context
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.ActiveRideProfile
