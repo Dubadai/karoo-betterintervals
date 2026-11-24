@@ -347,6 +347,7 @@
                     <TextView
                         android:fontFamily="ibm-plex-sans-condensed"
                         android:id="@+id/next_label"
+                android:ellipsize="end"
                         android:textAllCaps="true"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

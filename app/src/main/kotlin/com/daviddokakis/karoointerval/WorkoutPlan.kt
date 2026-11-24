@@ -14,6 +14,9 @@ import kotlin.math.roundToInt
  * [pctUnit]: a heart-rate step written as a percentage, "%hr" (of max HR, "85% HR") or "%lthr"
  * ("95% LTHR"), with the written numbers: [pctLow]..[pctHigh] for a range or a ramp, else both
  * the same. Shown as written when the Target tile is tapped to %.
+ * [cues]: the coach's words for the step (intervals.icu step text, "- Hold steady 20m 90%"), each
+ * from its second into the step: the step's own text from 0 s, timed prompts later. A step in a
+ * repeat without its own text gets the block's ("Main set 1/2"). Shown on the workout screen.
  */
 data class PlanStep(
     val durationSec: Int,
@@ -27,7 +30,13 @@ data class PlanStep(
     val pctUnit: String? = null,
     val pctLow: Int? = null,
     val pctHigh: Int? = null,
+    val cues: List<Cue> = emptyList(),
 ) {
+    /** The coach's words in force [elapsedSec] into the step: the last cue that has started and not ended. */
+    fun cueAt(elapsedSec: Int): String? = cues.lastOrNull { it.atSec <= elapsedSec && (it.endSec == null || elapsedSec < it.endSec) }?.text
+
+    /** The step's first words, for NEXT UP and FIRST UP. */
+    val cue: String? get() = cues.firstOrNull()?.text
     val avgWatts: Int get() = (startWatts + endWatts) / 2
     val isRamp: Boolean get() = ramp && startWatts != endWatts
 
@@ -67,6 +76,9 @@ data class PlanStep(
         const val HR_TOLERANCE = 0.03
     }
 }
+
+/** Words for the rider from [atSec] seconds into the step, until [endSec] if the coach gave a length. */
+data class Cue(val atSec: Int, val text: String, val endSec: Int? = null)
 
 /**
  * A workout loaded from intervals.icu, run by this app (not by Karoo's workout player).

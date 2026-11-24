@@ -73,19 +73,49 @@ class IntervalsIcu(private val athleteId: String, private val apiKey: String) {
             )
         }
 
-        private fun addSteps(array: JSONArray, ftp: Int?, lthr: Int?, out: MutableList<PlanStep>) {
+        private fun addSteps(array: JSONArray, ftp: Int?, lthr: Int?, out: MutableList<PlanStep>, block: String? = null) {
             for (i in 0 until array.length()) {
                 val step = array.optJSONObject(i) ?: continue
                 val children = step.optJSONArray("steps")
                 if (children != null) {
-                    // Repeat block, e.g. "3x": expand it into its individual steps.
-                    repeat(step.optInt("reps", 1).coerceAtLeast(1)) { addSteps(children, ftp, lthr, out) }
+                    // Repeat block, e.g. "3x": expand it into its individual steps. Its words
+                    // ("Main set 2x") go on its steps that have none, with the round: "Main set 1/2".
+                    val reps = step.optInt("reps", 1).coerceAtLeast(1)
+                    val name = textOf(step)
+                    for (r in 1..reps) addSteps(children, ftp, lthr, out, name?.let { if (reps > 1) "$it $r/$reps" else it })
                     continue
                 }
                 val duration = step.optInt("duration", 0)
                 if (duration <= 0) continue // distance-based or empty steps aren't supported yet
-                out += stepOf(step, duration, ftp, lthr)
+                val s = stepOf(step, duration, ftp, lthr)
+                out += if (s.cues.isEmpty() && block != null) s.copy(cues = listOf(Cue(0, block))) else s
             }
+        }
+
+        /** A step's or block's words, without a block's "2x". */
+        private fun textOf(step: JSONObject): String? =
+            step.optString("text").trim().replace(Regex("""\s*\d+\s*[xX]$"""), "").takeIf { it.isNotBlank() }
+
+        /** The step's words as cues: its text from 0 s, timed prompts from their second. */
+        internal fun cuesOf(step: JSONObject): List<Cue> = textOf(step)?.let { cuesOfText(it) }.orEmpty()
+
+        /**
+         * intervals.icu keeps timed prompts in the step's text with their markers ("Get ready 30^Surge
+         * now!", seen 2026-11-24): `offset^` or `offset^length` before each later prompt, in seconds
+         * (forum.intervals.icu/t/96016). The text before the first marker is the prompt from 0 s.
+         */
+        fun cuesOfText(text: String): List<Cue> {
+            val marks = Regex("""(\d+)\^(\d*)""").findAll(text).toList()
+            if (marks.isEmpty()) return listOfNotNull(text.trim().takeIf { it.isNotEmpty() }?.let { Cue(0, it) })
+            val out = mutableListOf<Cue>()
+            text.substring(0, marks.first().range.first).trim().takeIf { it.isNotEmpty() }?.let { out += Cue(0, it) }
+            marks.forEachIndexed { i, m ->
+                val end = marks.getOrNull(i + 1)?.range?.first ?: text.length
+                val words = text.substring(m.range.last + 1, end).trim()
+                val at = m.groupValues[1].toIntOrNull() ?: return@forEachIndexed
+                if (words.isNotEmpty()) out += Cue(at, words, m.groupValues[2].toIntOrNull()?.let { at + it })
+            }
+            return out.sortedBy { it.atSec }
         }
 
         /**
@@ -117,13 +147,14 @@ class IntervalsIcu(private val athleteId: String, private val apiKey: String) {
             val pctValue = unit?.let { written?.optDoubleOrNull("value")?.roundToInt() }
             val pctLow = unit?.let { written?.optDoubleOrNull("start")?.roundToInt() } ?: pctValue
             val pctHigh = unit?.let { written?.optDoubleOrNull("end")?.roundToInt() } ?: pctValue
+            val cues = cuesOf(step)
             if (ramp && low != null && high != null) {
-                return PlanStep(duration, low, high, ramp = true, hr = hr, pctUnit = unit, pctLow = pctLow, pctHigh = pctHigh)
+                return PlanStep(duration, low, high, ramp = true, hr = hr, pctUnit = unit, pctLow = pctLow, pctHigh = pctHigh, cues = cues)
             }
             val target = resolvedOr("value") ?: if (low != null && high != null) (low + high) / 2 else 0
             return PlanStep(
                 duration, target, target, rangeLow = low, rangeHigh = high, isRange = writtenAsRange, hr = hr,
-                pctUnit = unit, pctLow = pctLow, pctHigh = pctHigh,
+                pctUnit = unit, pctLow = pctLow, pctHigh = pctHigh, cues = cues,
             )
         }
 

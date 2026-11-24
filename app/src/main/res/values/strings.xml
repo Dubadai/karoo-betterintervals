@@ -11,6 +11,9 @@
     <string name="workout_complete">Workout complete</string>
     <string name="paused">Paused</string>
     <string name="interval_of">Interval %1$d / %2$d</string>
+    <!-- The interval row with the coach's words for the step (intervals.icu step text): "3/9 · Hold steady" -->
+    <string name="interval_cue">%1$d/%2$d · %3$s</string>
+    <string name="next_up_cue">Next up · %1$s</string>
     <string name="next_label">Next · Interval %1$d / %2$d</string>
     <string name="next_last">Last interval</string>
     <string name="lap_avg">Lap avg</string>

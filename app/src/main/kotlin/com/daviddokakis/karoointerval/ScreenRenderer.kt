@@ -352,7 +352,12 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
                 v.setTextViewText(R.id.interval_label, context.getString(R.string.workout_complete))
                 v.setTextColor(R.id.interval_label, color(R.color.watts_in_range))
             } else {
-                v.setTextViewText(R.id.interval_label, relLine(context.getString(R.string.interval_of, s.stepIndex + 1, s.stepCount).uppercase()))
+                // The coach's words for this step, if any, take the line: "3/9 · HOLD STEADY" (timed
+                // prompts change it mid-step). Without words: "INTERVAL 3 / 9".
+                val cue = s.currentStep?.cueAt(s.elapsedInStepSec)?.takeIf { !cueOnTargetLine(s, gaugeMode) }
+                val line = if (cue != null) context.getString(R.string.interval_cue, s.stepIndex + 1, s.stepCount, cue)
+                else context.getString(R.string.interval_of, s.stepIndex + 1, s.stepCount)
+                v.setTextViewText(R.id.interval_label, relLine(line.uppercase()))
                 v.setTextColor(R.id.interval_label, color(R.color.text))
             }
         }
@@ -399,7 +404,8 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
                     v.setTextColor(R.id.next_value, color(R.color.text))
                 }
                 next != null -> {
-                    v.setTextViewText(R.id.next_label, context.getString(R.string.next_up))
+                    // The next step's words, so you know what's coming: "NEXT UP · SURGE"
+                    v.setTextViewText(R.id.next_label, next.cue?.let { context.getString(R.string.next_up_cue, it) } ?: context.getString(R.string.next_up))
                     v.setViewVisibility(R.id.next_label, View.VISIBLE)
                     v.setTextViewText(R.id.next_value, relLine(summary(next, s)))
                     v.setTextColor(R.id.next_value, color(R.color.text))
@@ -665,7 +671,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         v.setViewVisibility(R.id.select_fill, View.GONE)
         v.setTextViewText(
             R.id.next_label,
-            if (index == 0) context.getString(R.string.first_up) else context.getString(R.string.start_at, index + 1, s.stepCount),
+            (if (index == 0) context.getString(R.string.first_up) else context.getString(R.string.start_at, index + 1, s.stepCount)).let { label ->
+                plan.steps.getOrNull(index)?.cue?.let { "$label · $it" } ?: label
+            },
         )
         v.setViewVisibility(R.id.next_label, View.VISIBLE)
         v.setTextViewText(R.id.next_value, relLine(plan.steps.getOrNull(index)?.let { summary(it, s) } ?: ""))
@@ -1092,6 +1100,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
      * ramp icon and where it goes, start-end, like a range but a ramp. Heart-rate steps: bpm or %.
      * Relative for the number (Karoo values), Plex Medium 24 px for the unit (the smallest text).
      */
+    /** The step's words go on the target line under the watts when there is one, else on the interval row. */
+    private fun cueOnTargetLine(s: ScreenState, gaugeMode: Boolean) = !gaugeMode && s.underWatts == TopRow.TARGET
+
     private fun targetLine(v: RemoteViews, s: ScreenState, onTint: Boolean) {
         val step = s.currentStep
         val w = config.viewSize.first
@@ -1110,7 +1121,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
             else -> "bpm"
         }
         val green = color(if (onTint) R.color.text else R.color.karoo_green)
-        smallLine(v, value, unit, if (ramp) 30f else 26f, "${context.getString(R.string.target)} $value $unit") { c, x, base, digitH, iconW ->
+        // The coach's words for the step right after its target (visible paused too; timed prompts switch here)
+        val cue = step.cueAt(s.elapsedInStepSec)
+        smallLine(v, value, unit, if (ramp) 30f else 26f, "${context.getString(R.string.target)} $value $unit" + (cue?.let { ", $it" } ?: ""), cue) { c, x, base, digitH, iconW ->
             if (ramp) {
                 // A ramp: a wedge rising to the right (falling for a ramp down), the chart's own shape
                 val up = step.endWatts >= step.startWatts
@@ -1136,7 +1149,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
      * dp), the number in Relative 40 px (Karoo values), the unit in Plex Medium 24 px, centred.
      */
     private fun smallLine(
-        v: RemoteViews, value: String, unit: String, iconDp: Float, description: String,
+        v: RemoteViews, value: String, unit: String, iconDp: Float, description: String, cue: String? = null,
         drawIcon: (c: android.graphics.Canvas, x: Float, base: Float, digitH: Float, iconW: Float) -> Unit,
     ) {
         val w = config.viewSize.first
@@ -1150,7 +1163,18 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         }
         val iconW = iconDp * k
         val gap = 10 * k
-        val total = iconW + gap + num.measureText(value) + 6 * k + unitP.measureText(unit)
+        var total = iconW + gap + num.measureText(value) + 6 * k + unitP.measureText(unit)
+        // The step's words after the unit, in capitals like the Karoo's labels, cut with … to fit
+        val cueP = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL); textSize = 24 * k; color = color(R.color.text)
+        }
+        val cueGap = 14 * k
+        val cueText = cue?.let {
+            val room = w - 16 * k - total - cueGap
+            if (room < 60 * k) null
+            else android.text.TextUtils.ellipsize("· " + it.uppercase(), cueP, room, android.text.TextUtils.TruncateAt.END).toString().takeIf { t -> t.length > 3 }
+        }
+        if (cueText != null) total += cueGap + cueP.measureText(cueText)
         val bmp = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
         val c = android.graphics.Canvas(bmp)
         val digits = android.graphics.Rect(); num.getTextBounds("8", 0, 1, digits)
@@ -1161,6 +1185,7 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         c.drawText(value, x, base, num)
         x += num.measureText(value) + 6 * k
         c.drawText(unit, x, base, unitP)
+        if (cueText != null) c.drawText(cueText, x + unitP.measureText(unit) + cueGap, base, cueP)
         v.setImageViewBitmap(R.id.target_line, bmp)
         v.setContentDescription(R.id.target_line, description)
         v.setViewVisibility(R.id.target_line, View.VISIBLE)
