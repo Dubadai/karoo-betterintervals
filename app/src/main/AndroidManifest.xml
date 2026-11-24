@@ -19,6 +19,8 @@
     <queries>
         <package android:name="com.dsi.ant.plugins.antplus" />
         <package android:name="com.dsi.ant.service.socket" />
+        <!-- Settings › Trainer: "Open Karoo Sensors" -->
+        <package android:name="io.hammerhead.settingsapp" />
         <intent>
             <action android:name="com.dsi.ant.plugins.antplus.queryalreadyconnecteddevices" />
         </intent>

@@ -550,6 +550,9 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
         bigEmpty(v, R.id.watts, R.id.watts_empty, s.powerSensor, config.viewSize.first.toFloat(), 0f + config.viewSize.second)
         // Outdoor profile with a trainer, before the ride: the orange hint (docs/design/indoor-erg/trainer-hint)
         val trainerHint = !s.indoor && s.trainerOutdoor && s.rideIdle && s.countdown == null && s.resumeFromSec == null
+        // Indoors with ERG on, before the ride: what's wrong in the Karoo's sensors (ErgSetup), in amber on
+        // the INDOOR SESSION line, so nothing on the screen moves; Settings (the gear) has the whole story.
+        val setupHint = s.ergSetupHint?.takeIf { s.indoor && s.rideIdle && s.countdown == null && s.resumeFromSec == null }
         // Every start screen (indoor and outdoor): the watts sit in the top row until the countdown.
         val wattsUp = s.countdown == null && s.resumeFromSec == null
         if (wattsUp) {
@@ -595,7 +598,10 @@ class ScreenRenderer(private val context: Context, private val config: ViewConfi
 
         // Indoors, until the workout starts: INDOOR SESSION with the trainer icon above the name
         v.setViewVisibility(R.id.indoor_label, if (s.indoor) View.VISIBLE else View.GONE)
-        v.setInt(R.id.indoor_icon, "setColorFilter", color(R.color.settings_help))
+        val labelColor = color(if (setupHint != null) R.color.settings_warn else R.color.settings_help)
+        v.setInt(R.id.indoor_icon, "setColorFilter", labelColor)
+        v.setTextColor(R.id.indoor_text, labelColor)
+        v.setTextViewText(R.id.indoor_text, setupHint ?: context.getString(R.string.indoor_session))
         v.setViewVisibility(R.id.trainer_hint, if (trainerHint) View.VISIBLE else View.GONE)
         if (trainerHint) {
             v.setInt(R.id.trainer_hint_icon, "setColorFilter", color(R.color.settings_warn))

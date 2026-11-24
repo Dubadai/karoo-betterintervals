@@ -78,9 +78,31 @@
     <string name="erg_connection_ant">ANT+</string>
     <string name="erg_connection_bluetooth_help">The Karoo stays on the trainer (set its trainer card to Read-Only so only this app sets ERG); the app controls it over Bluetooth.</string>
     <string name="erg_connection_ant_help">For trainers the app can\'t reach over Bluetooth, like the original Tacx NEO. The app connects over ANT+ itself; the Karoo can\'t share that, so add the trainer from this app in Karoo Sensors instead of the Karoo\'s own ANT+ trainer.</string>
-    <string name="erg_ant_no_trainer">No ANT+ trainer yet. Karoo Sensors › Add sensor: pick the trainer listed by BetterIntervals.</string>
-    <string name="erg_ant_karoo_holds">The Karoo is connected to %1$s over ANT+ on this profile, so the app can\'t reach it. In Karoo Sensors, switch the Karoo\'s ANT+ trainer off for this profile.</string>
-    <string name="erg_ant_add_sensor">To record the trainer\'s power from this connection: Karoo Sensors › Add sensor › the trainer listed by BetterIntervals.</string>
+    <!-- ERG setup checklist (ErgSetup) -->
+    <string name="erg_check_trainer_on">Trainer: %1$s, on for this profile</string>
+    <string name="erg_check_trainer_on_warn">No trainer on for this profile. Pair it in Karoo Sensors and switch it on for this profile.</string>
+    <string name="erg_check_permission">Nearby devices allowed</string>
+    <string name="erg_check_permission_warn">Allow Nearby devices (Bluetooth): tap here.</string>
+    <string name="erg_check_bluetooth_free">Nothing else on the trainer\'s Bluetooth</string>
+    <string name="erg_check_bluetooth_free_warn">The Karoo\'s Bluetooth sensor “%1$s” can take the trainer\'s only Bluetooth connection. Switch it off for this profile.</string>
+    <string name="erg_check_our_sensor_warn">“%1$s” is for ANT+: switch it off for this profile, or pick ANT+ above.</string>
+    <string name="erg_check_read_only">Every ride: swipe down › trainer card › Read-Only, so only this app sets ERG.</string>
+    <string name="erg_check_trainer_known">Trainer: %1$s</string>
+    <string name="erg_check_trainer_known_warn">No trainer yet. Karoo Sensors › Add sensor › Extensions: pick the trainer BetterIntervals lists. Not listed? Pair it over ANT+ on the Karoo first.</string>
+    <string name="erg_check_karoo_ant">The Karoo\'s own ANT+ trainer is off for this profile</string>
+    <string name="erg_check_karoo_ant_warn">Switch the Karoo\'s ANT+ trainer “%1$s” off for this profile (Sensors › %1$s › Enabled on). The Karoo can\'t share it with the app.</string>
+    <string name="erg_check_power">The Karoo records the trainer through “%1$s”</string>
+    <string name="erg_check_power_other">The Karoo records power from “%1$s”. To record the trainer itself, add the BetterIntervals trainer sensor.</string>
+    <string name="erg_check_power_warn">Add the BetterIntervals trainer sensor (Karoo Sensors › Add sensor › Extensions), or the ride records no power.</string>
+    <string name="erg_open_sensors">Open Karoo Sensors</string>
+    <!-- The same, one line on the indoor start screen in place of INDOOR SESSION (in capitals; the gear opens Settings) -->
+    <string name="erg_hint_no_trainer">ERG: no trainer</string>
+    <string name="erg_hint_permission">ERG: allow Bluetooth</string>
+    <string name="erg_hint_bluetooth_taken">ERG: trainer BT in use</string>
+    <string name="erg_hint_our_sensor">ERG: app sensor is on</string>
+    <string name="erg_hint_add_trainer">ERG: add the trainer</string>
+    <string name="erg_hint_karoo_ant">ERG: Karoo ANT+ is on</string>
+    <string name="erg_hint_add_sensor">ERG: add trainer sensor</string>
     <string name="sensor_name">%1$s (BetterIntervals)</string>
     <string name="sensor_trainer_number">Trainer %1$d</string>
     <string name="erg_no_permission">Allow Nearby devices so the app can reach the trainer.</string>

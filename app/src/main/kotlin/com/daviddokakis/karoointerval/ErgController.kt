@@ -31,7 +31,7 @@ import timber.log.Timber
  * workout loaded. Every way out hands the trainer back.
  */
 class ErgController(
-    context: Context,
+    private val context: Context,
     private val karoo: KarooSystemService,
     private val workout: WorkoutSession,
     private val store: PlanStore,
@@ -114,6 +114,12 @@ class ErgController(
         if (st.finished) afterFinish = true else if (st.plan != null && !st.notStarted) afterFinish = false
         // Also without a workout while a ride records: ERG holds the When paused watts between workouts.
         val wanted = indoor.value && store.ergOn.value && (st.plan != null || recording.value)
+        // Indoors with ERG on and a workout: say on the start screen what's wrong in the Karoo's sensors.
+        workout.setErgSetupHint(
+            devices?.takeIf { indoor.value && store.ergOn.value && st.plan != null }
+                ?.let { ErgSetup.firstProblem(ErgSetup.check(it, store.ergConnection.value, hasBluetoothPermission())) }
+                ?.let { context.getString(screenHint(it.kind)) },
+        )
         if (!wanted || m == null) {
             if (trainer.link.value != ErgLink.OFF || radioHeld != null) {
                 Timber.i("ERG: off (indoor=%s ergOn=%s plan=%s trainer=%s)", indoor.value, store.ergOn.value, st.plan != null, m != null)
@@ -215,6 +221,20 @@ class ErgController(
         store.pmBands = PmMatcher.encode(mm.bands())
         store.setPmLastRide(PmLastRide(pmName = pmName, summary = summary))
         Timber.i("Match PM: saved %s", summary)
+    }
+
+    private fun hasBluetoothPermission() = android.os.Build.VERSION.SDK_INT < 31 ||
+        (context.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED &&
+            context.checkSelfPermission(android.Manifest.permission.BLUETOOTH_SCAN) == android.content.pm.PackageManager.PERMISSION_GRANTED)
+
+    private fun screenHint(k: ErgSetup.Kind) = when (k) {
+        ErgSetup.Kind.TRAINER_ON -> R.string.erg_hint_no_trainer
+        ErgSetup.Kind.PERMISSION -> R.string.erg_hint_permission
+        ErgSetup.Kind.BLUETOOTH_FREE -> R.string.erg_hint_bluetooth_taken
+        ErgSetup.Kind.OUR_SENSOR_OFF -> R.string.erg_hint_our_sensor
+        ErgSetup.Kind.TRAINER_KNOWN -> R.string.erg_hint_add_trainer
+        ErgSetup.Kind.KAROO_ANT_OFF -> R.string.erg_hint_karoo_ant
+        ErgSetup.Kind.POWER_RECORDED, ErgSetup.Kind.READ_ONLY -> R.string.erg_hint_add_sensor
     }
 
     private fun holdRadio(link: TrainerLink?) {

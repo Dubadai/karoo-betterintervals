@@ -46,6 +46,13 @@ Setting up ANT+:
    (Sensors › the trainer › Enabled on › untick the profile). Settings says so when it's in the way.
 
 Settings then shows the trainer with *ANT+ from this app*. No Bluetooth permission is needed.
+
+**Settings checks the setup for you.** Under *Connection*, each step shows green when it's right
+and amber with the fix when it isn't: the trainer on (or off) for the profile, the trainer's
+Bluetooth not taken by a Karoo sensor, the BetterIntervals sensor on or off as the connection
+needs, and something recording power. *Open Karoo Sensors* takes you straight there. Before an
+indoor ride the start screen shows the first problem in amber on the INDOOR SESSION line (for
+example *ERG: Karoo ANT+ is on*); the gear opens Settings.
 Tip: copy your indoor profile and do this on the copy, so the original keeps the Karoo's own
 trainer control.
 
