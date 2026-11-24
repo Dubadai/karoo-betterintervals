@@ -28,13 +28,16 @@ import java.util.UUID
 enum class ErgLink { OFF, CONNECTING, READY, LOST }
 
 /**
- * The smart trainer over Bluetooth FTMS (Fitness Machine Service): find it, connect, take control,
- * set target power, hand it back. The Karoo itself only controls trainers over ANT+, so the
- * trainer's Bluetooth side is free (docs/design/indoor-erg).
+ * The smart trainer over Bluetooth: find it, connect, take control, set target power, hand it
+ * back. The Karoo itself only controls trainers over ANT+, so the trainer's Bluetooth side is free
+ * (docs/design/indoor-erg). Two ways to talk to it: FTMS (Fitness Machine Service, the standard;
+ * Wahoo, newer Tacx) and, for trainers without it, ANT+ FE-C tunnelled over Bluetooth (Tacx,
+ * [FecBle]). FTMS wins when a trainer has both.
  *
  * The trainer is the one paired on the Karoo: a Bluetooth trainer by its address, an ANT+ one by
- * its device number, which Wahoo trainers also put in their Bluetooth name ("KICKR CORE 6F14" is
- * ANT+ 28436). Never a trainer we can't match: in a gym that could be someone else's.
+ * its device number, which trainers also put in their Bluetooth name ("KICKR CORE 6F14" is
+ * ANT+ 28436, [FecBle.nameMatches]). Never a trainer we can't match: in a gym that could be
+ * someone else's.
  *
  * GATT operations run one at a time on the main thread. Reconnects by itself while [want] is set.
  */
@@ -65,6 +68,8 @@ class ErgTrainer(context: Context) {
     private var ready = false
     private var retryMs = RETRY_MIN_MS
     private var pending: Int? = null
+    /** How we talk to the connected trainer: FE-C over Bluetooth instead of FTMS. */
+    private var fec = false
 
     /** The trainer to look for: a Bluetooth address, or an ANT+ device number. */
     data class Match(val address: String? = null, val antNumber: Int? = null)
@@ -79,13 +84,23 @@ class ErgTrainer(context: Context) {
     /** Sends [watts] as soon as the trainer is ready (only the newest counts). */
     fun setTarget(watts: Int) = main.post {
         pending = watts
-        if (controlled) flush() else if (ready) writeCp(byteArrayOf(OP_REQUEST_CONTROL))
+        if (controlled) flush() else if (ready) requestControl()
     }
 
-    /** Hands the trainer back (FTMS reset) but stays connected. */
+    /** Hands the trainer back (FTMS reset; FE-C: a flat road) but stays connected. */
     fun release() = main.post {
         pending = null
-        if (controlled) { Timber.i("ERG: handed the trainer back"); writeCp(byteArrayOf(OP_RESET)); controlled = false }
+        if (controlled) { Timber.i("ERG: handed the trainer back"); writeCmd(handBack()); controlled = false }
+    }
+
+    private fun handBack(): ByteArray = if (fec) FecBle.flatRoad() else byteArrayOf(OP_RESET)
+
+    /** FTMS asks for control and waits for the answer; FE-C has no such step. */
+    private fun requestControl() {
+        if (!fec) return writeCp(byteArrayOf(OP_REQUEST_CONTROL))
+        Timber.i("ERG: controlling the trainer over FE-C")
+        controlled = true
+        flush()
     }
 
     /** Hands back and disconnects. */
@@ -99,9 +114,9 @@ class ErgTrainer(context: Context) {
         gatt?.let { g ->
             if (controlled) {
                 // Best effort: the reset goes out before the disconnect when the link is up.
-                gatt?.getService(FTMS)?.getCharacteristic(CONTROL_POINT)?.let { c ->
-                    c.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-                    c.value = byteArrayOf(OP_RESET)
+                commandChar(g)?.let { c ->
+                    c.writeType = writeTypeOf(c)
+                    c.value = handBack()
                     g.writeCharacteristic(c)
                 }
             }
@@ -135,19 +150,19 @@ class ErgTrainer(context: Context) {
     private fun scan() {
         val scanner = adapter()?.bluetoothLeScanner ?: return lost("no Bluetooth scanner")
         val number = want?.antNumber ?: return lost("trainer has no number")
-        val suffix = "%04X".format(number and 0xFFFF)
+        val seen = mutableSetOf<String>()
         val cb = object : ScanCallback() {
             override fun onScanResult(type: Int, r: ScanResult) {
                 val name = r.scanRecord?.deviceName ?: r.device.name ?: return
-                if (!name.uppercase().endsWith(suffix)) return
+                if (!FecBle.nameMatches(name, number)) { if (seen.add(name)) Timber.i("ERG: saw %s, not trainer %d", name, number); return }
                 Timber.i("ERG: found %s (%s)", name, r.device.address)
                 main.post { stopScan(); knownAddress = r.device.address; connect(r.device.address) }
             }
             override fun onScanFailed(code: Int) { main.post { lost("scan failed $code") } }
         }
         scanCb = cb
-        val filter = ScanFilter.Builder().setServiceUuid(ParcelUuid(FTMS)).build()
-        scanner.startScan(listOf(filter), ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), cb)
+        val filters = listOf(FTMS, FecBle.SERVICE).map { ScanFilter.Builder().setServiceUuid(ParcelUuid(it)).build() }
+        scanner.startScan(filters,ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), cb)
         main.postDelayed({ if (scanCb === cb) { stopScan(); lost("trainer not found") } }, SCAN_MS)
     }
 
@@ -176,8 +191,13 @@ class ErgTrainer(context: Context) {
 
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
             main.post {
-                val svc = g.getService(FTMS) ?: return@post lost("no FTMS on this trainer")
-                for (u in listOf(CONTROL_POINT, STATUS, INDOOR_BIKE_DATA)) {
+                if (g !== gatt) return@post
+                val ftms = g.getService(FTMS)?.takeIf { it.getCharacteristic(CONTROL_POINT) != null }
+                val fecSvc = g.getService(FecBle.SERVICE)?.takeIf { it.getCharacteristic(FecBle.TX) != null }
+                val svc = ftms ?: fecSvc ?: return@post lost("no FTMS or FE-C on this trainer")
+                fec = ftms == null
+                val subs = if (fec) listOf(FecBle.RX) else listOf(CONTROL_POINT, STATUS, INDOOR_BIKE_DATA)
+                for (u in subs) {
                     val c = svc.getCharacteristic(u) ?: continue
                     enqueue { gg ->
                         gg.setCharacteristicNotification(c, true)
@@ -186,13 +206,16 @@ class ErgTrainer(context: Context) {
                         gg.writeDescriptor(d)
                     }
                 }
-                Timber.i("ERG: connected to the trainer (power data: %s)", svc.getCharacteristic(INDOOR_BIKE_DATA) != null)
+                Timber.i(
+                    "ERG: connected to the trainer over %s (power data: %s)", if (fec) "FE-C" else "FTMS",
+                    svc.getCharacteristic(if (fec) FecBle.RX else INDOOR_BIKE_DATA) != null,
+                )
                 ready = true
                 retryMs = RETRY_MIN_MS
                 problem = null
                 _link.value = ErgLink.READY
                 // Control only once there's a target: before START the trainer stays free.
-                if (pending != null) writeCp(byteArrayOf(OP_REQUEST_CONTROL))
+                if (pending != null) requestControl()
             }
         }
 
@@ -204,6 +227,7 @@ class ErgTrainer(context: Context) {
             main.post {
                 when (c.uuid) {
                     INDOOR_BIKE_DATA -> parsePower(v)?.let { watts = it; wattsAtMs = System.currentTimeMillis() }
+                    FecBle.RX -> FecBle.parsePower(v)?.let { watts = it; wattsAtMs = System.currentTimeMillis() }
                     CONTROL_POINT -> onResponse(v.getOrNull(1)?.toInt() ?: -1, v.getOrNull(2)?.toInt() ?: -1)
                     STATUS -> if ((v.getOrNull(0)?.toInt() ?: 0) and 0xFF == 0xFF) {
                         Timber.w("ERG: trainer says control was lost")
@@ -236,7 +260,8 @@ class ErgTrainer(context: Context) {
     private fun flush() {
         val w = pending ?: return
         val clamped = w.coerceIn(0, ErgPlanner.MAX_WATTS)
-        writeCp(byteArrayOf(OP_TARGET_POWER, (clamped and 0xFF).toByte(), (clamped shr 8 and 0xFF).toByte()))
+        if (fec) writeCmd(FecBle.targetPower(clamped))
+        else writeCp(byteArrayOf(OP_TARGET_POWER, (clamped and 0xFF).toByte(), (clamped shr 8 and 0xFF).toByte()))
     }
 
     private fun lost(why: String) {
@@ -256,10 +281,23 @@ class ErgTrainer(context: Context) {
 
     // ---- queue ---------------------------------------------------------------------------------
 
-    private fun writeCp(bytes: ByteArray) {
-        val c = gatt?.getService(FTMS)?.getCharacteristic(CONTROL_POINT) ?: return
+    /** An FTMS control point op (only on an FTMS trainer). */
+    private fun writeCp(bytes: ByteArray) { if (!fec) writeCmd(bytes) }
+
+    /** The FTMS control point, or FE-C's write characteristic. */
+    private fun commandChar(g: BluetoothGatt): BluetoothGattCharacteristic? =
+        if (fec) g.getService(FecBle.SERVICE)?.getCharacteristic(FecBle.TX)
+        else g.getService(FTMS)?.getCharacteristic(CONTROL_POINT)
+
+    /** With a response where the trainer offers it (some FE-C trainers only take writes without). */
+    private fun writeTypeOf(c: BluetoothGattCharacteristic): Int =
+        if (c.properties and BluetoothGattCharacteristic.PROPERTY_WRITE != 0) BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+        else BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+
+    private fun writeCmd(bytes: ByteArray) {
+        val c = gatt?.let { commandChar(it) } ?: return
         enqueue { g ->
-            c.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            c.writeType = writeTypeOf(c)
             c.value = bytes
             g.writeCharacteristic(c)
         }
