@@ -23,7 +23,9 @@ fun Context.stepName(json: JSONObject?, st: PlanStep, ftp: Int?): String {
     val za = if (st.hr) null else Zones.zoneOf(st.startWatts, ftp)
     val zb = if (st.hr) null else Zones.zoneOf(st.endWatts, ftp)
     return when {
-        json != null && json.optString("text").isNotBlank() -> json.optString("text").trim()
+        // Timed prompts read as words, without their markers: "Get ready · Surge now!"
+        json != null && json.optString("text").isNotBlank() ->
+            IntervalsIcu.cuesOfText(json.optString("text")).joinToString(" · ") { it.text }.ifBlank { json.optString("text").trim() }
         json?.optBoolean("warmup") == true -> getString(R.string.warm_up)
         json?.optBoolean("cooldown") == true -> getString(R.string.cool_down)
         za != null -> getString(WorkoutDetailsActivity.ZONE_NAMES[maxOf(za, zb ?: za) - 1])
