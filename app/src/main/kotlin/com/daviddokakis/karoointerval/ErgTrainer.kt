@@ -42,20 +42,20 @@ enum class ErgLink { OFF, CONNECTING, READY, LOST }
  * GATT operations run one at a time on the main thread. Reconnects by itself while [want] is set.
  */
 @SuppressLint("MissingPermission")
-class ErgTrainer(context: Context) {
+class ErgTrainer(context: Context) : TrainerLink {
     private val app = context.applicationContext
     private val main = Handler(Looper.getMainLooper())
 
     private val _link = MutableStateFlow(ErgLink.OFF)
-    val link: StateFlow<ErgLink> = _link
+    override val link: StateFlow<ErgLink> = _link
     /** The trainer's own watts (FTMS Indoor Bike Data) and when they came, for Match PM. */
-    @Volatile var watts: Int? = null
+    @Volatile override var watts: Int? = null
         private set
-    @Volatile var wattsAtMs = 0L
+    @Volatile override var wattsAtMs = 0L
         private set
 
     /** Why the link is [ErgLink.LOST], for the log and Settings. */
-    @Volatile var problem: String? = null
+    @Volatile override var problem: String? = null
         private set
 
     private var want: Match? = null
@@ -71,26 +71,37 @@ class ErgTrainer(context: Context) {
     /** How we talk to the connected trainer: FE-C over Bluetooth instead of FTMS. */
     private var fec = false
 
-    /** The trainer to look for: a Bluetooth address, or an ANT+ device number. */
-    data class Match(val address: String? = null, val antNumber: Int? = null)
+    /**
+     * The trainer to look for: a Bluetooth address, or an ANT+ device number. [overAnt]: drive it
+     * over ANT+ FE-C ourselves ([AntFecTrainer]), because the Karoo has it paired but switched off
+     * on this profile, so its ANT+ channel is free ([ErgController.trainerIn]). Otherwise an ANT+
+     * number is found on the trainer's Bluetooth side by name.
+     */
+    data class Match(val address: String? = null, val antNumber: Int? = null, val overAnt: Boolean = false)
 
-    fun start(match: Match) = main.post {
-        if (want == match && _link.value != ErgLink.OFF) return@post
-        stopNow()
-        want = match
-        connectOrScan()
+    override fun start(match: Match) {
+        main.post {
+            if (want == match && _link.value != ErgLink.OFF) return@post
+            stopNow()
+            want = match
+            connectOrScan()
+        }
     }
 
     /** Sends [watts] as soon as the trainer is ready (only the newest counts). */
-    fun setTarget(watts: Int) = main.post {
-        pending = watts
-        if (controlled) flush() else if (ready) requestControl()
+    override fun setTarget(watts: Int) {
+        main.post {
+            pending = watts
+            if (controlled) flush() else if (ready) requestControl()
+        }
     }
 
     /** Hands the trainer back (FTMS reset; FE-C: a flat road) but stays connected. */
-    fun release() = main.post {
-        pending = null
-        if (controlled) { Timber.i("ERG: handed the trainer back"); writeCmd(handBack()); controlled = false }
+    override fun release() {
+        main.post {
+            pending = null
+            if (controlled) { Timber.i("ERG: handed the trainer back"); writeCmd(handBack()); controlled = false }
+        }
     }
 
     private fun handBack(): ByteArray = if (fec) FecBle.flatRoad() else byteArrayOf(OP_RESET)
@@ -104,7 +115,7 @@ class ErgTrainer(context: Context) {
     }
 
     /** Hands back and disconnects. */
-    fun stop() = main.post { stopNow() }
+    override fun stop() { main.post { stopNow() } }
 
     private fun stopNow() {
         main.removeCallbacksAndMessages(null)

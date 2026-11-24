@@ -33,7 +33,10 @@ class ErgController(
     private val store: PlanStore,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private val trainer = ErgTrainer(context)
+    private val bluetooth = ErgTrainer(context)
+    private val antFec = AntFecTrainer(context)
+    /** The link in use: ANT+ FE-C for a trainer the Karoo leaves to us, Bluetooth otherwise. */
+    private var trainer: TrainerLink = bluetooth
     private val planner = ErgPlanner()
     private val pacer = ErgSendPacer()
 
@@ -60,7 +63,14 @@ class ErgController(
     fun start() {
         scope.launch { karoo.consumerFlow<ActiveRideProfile>().collect { indoor.value = it.profile.indoor } }
         scope.launch { karoo.consumerFlow<RideState>().collect { onRecording(it !is RideState.Idle) } }
-        scope.launch { karoo.consumerFlow<SavedDevices>().collect { devices = it; match.value = trainerIn(it) } }
+        scope.launch {
+            karoo.consumerFlow<SavedDevices>().collect {
+                devices = it
+                val m = trainerIn(it)
+                if (m != match.value) Timber.i("ERG: trainer from the Karoo's sensors: %s", m)
+                match.value = m
+            }
+        }
         scope.launch {
             karoo.streamDataFlow(DataType.Type.POWER).collect { s ->
                 val p = (s as? StreamState.Streaming)?.dataPoint ?: return@collect
@@ -86,7 +96,7 @@ class ErgController(
         val src = pmSource
         workout.setTrainerOutdoor(
             !indoor.value && !recording.value && st.plan != null && st.notStarted &&
-                m != null && src != null && isTrainer(src, m) && System.currentTimeMillis() - pmAtMs < FRESH_MS,
+                m != null && src != null && isTrainer(src, m, devices) && System.currentTimeMillis() - pmAtMs < FRESH_MS,
         )
         if (st.finished) afterFinish = true else if (st.plan != null && !st.notStarted) afterFinish = false
         // Also without a workout while a ride records: ERG holds the When paused watts between workouts.
@@ -99,6 +109,8 @@ class ErgController(
             workout.setErg(null, null)
             return
         }
+        val link = if (m.overAnt) antFec else bluetooth
+        if (link !== trainer) { trainer.stop(); trainer = link }
         trainer.start(m)
         // Turned off on the screen: hand the trainer back, stay connected for the way back on.
         val cmd = planner.next(
@@ -159,7 +171,7 @@ class ErgController(
         val now = System.currentTimeMillis()
         val source = pmSource
         if (source != loggedSource) { loggedSource = source; Timber.i("Match PM: Karoo power from %s", source) }
-        pmIsTrainer = source != null && isTrainer(source, m)
+        pmIsTrainer = source != null && isTrainer(source, m, devices)
         if (pmIsTrainer) return target
         if (source != null) devices?.devices?.firstOrNull { it.id == source }?.name?.let { pmName = it }
         val steady = !st.paused && !st.workoutPaused && !st.finished && st.currentStep?.isRamp != true
@@ -200,22 +212,45 @@ class ErgController(
         private const val FRESH_MS = 3_000L
         private const val LOG_EVERY_MS = 5_000L
 
-        /** The Karoo's power comes from the trainer itself: an ANT+ id with its device number, or its address. */
-        fun isTrainer(source: String, m: ErgTrainer.Match): Boolean =
-            (m.antNumber != null && source.startsWith("${m.antNumber}-")) ||
-                (m.address != null && source.equals(m.address, ignoreCase = true))
+        /**
+         * The Karoo's power comes from the trainer itself: an ANT+ id with its device number, its
+         * address, or its Bluetooth side, which trainers name after the ANT+ number ("Tacx Neo 22877").
+         */
+        fun isTrainer(source: String, m: ErgTrainer.Match, devices: SavedDevices? = null): Boolean {
+            if (m.antNumber != null && source.startsWith("${m.antNumber}-")) return true
+            if (m.address != null && source.equals(m.address, ignoreCase = true)) return true
+            val n = m.antNumber ?: return false
+            val d = devices?.devices?.firstOrNull { it.id.equals(source, ignoreCase = true) } ?: return false
+            return d.connectionType == "BLE" && FecBle.nameMatches(d.name, n)
+        }
 
         /**
-         * The trainer paired on the Karoo: an enabled sensor with trainer data. Bluetooth: its
-         * address. ANT+: the device number (the id's first part, "28436-17-5").
+         * The trainer paired on the Karoo: a sensor with trainer data.
+         *
+         * - Switched on (the Karoo connects to it): Bluetooth, its address; ANT+, the device
+         *   number (the id's first part, "28436-17-5"), found on the trainer's Bluetooth side by name.
+         * - None switched on, but an ANT+ trainer switched off on this profile: we drive it over
+         *   ANT+ ourselves ([AntFecTrainer]). The Karoo's own ANT+ channel to a trainer leaves no
+         *   room for ours, so this is how the rider hands the ANT+ side to the app (the original
+         *   Tacx NEO has no other way: its Bluetooth is the Karoo's power sensor).
          */
-        fun trainerIn(devices: SavedDevices): ErgTrainer.Match? {
-            val t = devices.devices.firstOrNull { it.enabled && "TYPE_TRAINER_ID" in it.supportedDataTypes } ?: return null
-            return when (t.connectionType) {
-                "BLE" -> ErgTrainer.Match(address = t.id)
-                "ANT_PLUS" -> t.id.substringBefore('-').toIntOrNull()?.let { ErgTrainer.Match(antNumber = it) }
-                else -> null
+        fun trainerIn(devices: SavedDevices): ErgTrainer.Match? = trainerDevice(devices)?.second
+
+        /** [trainerIn] with the sensor it came from, for its name in Settings. */
+        fun trainerDevice(devices: SavedDevices): Pair<SavedDevices.SavedDevice, ErgTrainer.Match>? {
+            val trainers = devices.devices.filter { "TYPE_TRAINER_ID" in it.supportedDataTypes }
+            trainers.firstOrNull { it.enabled }?.let { t ->
+                val m = when (t.connectionType) {
+                    "BLE" -> ErgTrainer.Match(address = t.id)
+                    "ANT_PLUS" -> antNumberOf(t)?.let { ErgTrainer.Match(antNumber = it) }
+                    else -> null
+                }
+                return m?.let { t to it }
             }
+            val off = trainers.firstOrNull { !it.enabled && it.connectionType == "ANT_PLUS" && antNumberOf(it) != null } ?: return null
+            return off to ErgTrainer.Match(antNumber = antNumberOf(off), overAnt = true)
         }
+
+        private fun antNumberOf(d: SavedDevices.SavedDevice): Int? = d.id.substringBefore('-').toIntOrNull()
     }
 }

@@ -357,6 +357,35 @@ keep a notice driven by power-vs-target (needs a rider to tune).
 (`ErgSendPacer`), and the "Karoo is controlling the trainer" notice and the `ERG !` pill state are
 dropped. Settings keeps the one-line hint "Set the Karoo's trainer card to Read-Only".
 
+### ANT+ after all: one channel per trainer (2026-11-24, issue #23)
+
+Rider with an original Tacx NEO (T2800) on a Karoo 3 (Android 12, ANT adapter "BLJ07.00.01" on an
+nRF chip, ANT Radio Service 4.15.20, ANT+ Plugins 3.7.00). The NEO's one Bluetooth connection was
+the Karoo's (power, "Tacx Neo 22877"), so FE-C over Bluetooth never found it; the Karoo controls it
+over ANT+ (FE-C `22877-17-5`).
+
+Why the ANT+ spike above failed, found with a raw-channel probe (ANT Radio Service, `antradio`
+log in system_server):
+
+1. A raw slave channel for FE-C 22877 on the ANT+ network: `RX_SEARCH_TIMEOUT` after 25 s, while
+   the Karoo's own channel 2 received the same trainer at 4 Hz.
+2. A background scan on the ANT+ network heard other ANT+ devices at once, but never the trainer.
+   So the radio and the network key are fine.
+3. **The chip gives each message to the one channel tracking that master.** The trainer's
+   messages always land in the Karoo's channel's slot, so a second channel to the same trainer
+   (ours, or the Plugin Service's) can never find it. That's also why the plugin couldn't open the
+   KICKR's FE-C *or* its power: the Karoo tracked both.
+4. Trainer switched off on the indoor profile in Karoo Sensors: our channel found it in 0.5 s.
+   Page 49 (150 W) went out, page 71 echoed it (`last=0x31 status=0 data=…58 02`). The Plugin
+   Service (`AntPlusFitnessEquipmentPcc.requestNewOpenAccess` by device number) worked too:
+   `setTargetPower` answered `SUCCESS`.
+
+Built: `AntFecTrainer` (ANT+ Plugin Library 3.9.0, `app/libs/`). `trainerIn` picks it when no
+trainer is switched on but an ANT+ trainer is paired and switched off on the profile
+(`SavedDevices` still lists it, `enabled = false`). A trainer the Karoo uses still goes over
+Bluetooth. The trainer's Bluetooth power named after its ANT+ number counts as the trainer for
+Match PM and the outdoor hint.
+
 ### ErgPlanner (logic, no trainer yet)
 
 `ErgPlanner.kt`, tested in `ErgPlannerTest`: one command a second from the workout state.

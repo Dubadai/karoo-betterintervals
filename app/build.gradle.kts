@@ -65,6 +65,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.timber)
+    // ANT+ Plugin Library 3.9.0 (ant-wireless/ANT-Android-SDKs, ANT+ Shared Source License,
+    // libs/ANT-LICENSE.txt): indoor ERG over ANT+ FE-C (AntFecTrainer).
+    implementation(files("libs/antpluginlib_3-9-0.aar"))
 }
 
 // manifest.json for the GitHub release (upload it next to betterintervals.apk). The Karoo's

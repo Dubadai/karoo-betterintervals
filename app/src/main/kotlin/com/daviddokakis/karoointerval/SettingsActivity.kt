@@ -26,6 +26,8 @@ class SettingsActivity : AppearanceActivity() {
     private lateinit var karoo: KarooSystemService
     /** The trainer paired on the Karoo, as Settings names it; null: none (or not heard yet). */
     private var trainerName: String? = null
+    /** The trainer goes over ANT+ from this app: no Bluetooth needed. */
+    private var trainerOverAnt = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,9 +55,19 @@ class SettingsActivity : AppearanceActivity() {
         karoo.connect { connected ->
             if (!connected) return@connect
             karoo.addConsumer<SavedDevices> { e ->
-                val t = e.devices.firstOrNull { it.enabled && "TYPE_TRAINER_ID" in it.supportedDataTypes }
-                val name = t?.let { getString(R.string.erg_trainer_found, it.name, if (it.connectionType == "BLE") "Bluetooth" else "ANT+") }
-                if (name != trainerName) { trainerName = name; runOnUiThread { render() } }
+                val found = ErgController.trainerDevice(e)
+                val name = found?.let { (t, m) ->
+                    getString(
+                        R.string.erg_trainer_found, t.name,
+                        when {
+                            m.overAnt -> getString(R.string.erg_over_ant)
+                            t.connectionType == "BLE" -> "Bluetooth"
+                            else -> "ANT+"
+                        },
+                    )
+                }
+                val ant = found?.second?.overAnt == true
+                if (name != trainerName || ant != trainerOverAnt) { trainerName = name; trainerOverAnt = ant; runOnUiThread { render() } }
             }
         }
     }
@@ -181,7 +193,7 @@ class SettingsActivity : AppearanceActivity() {
         )
         if (store.ergOn.value) {
             when {
-                !hasBluetoothPermission() -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, getString(R.string.erg_no_permission), SettingsTone.WARN))
+                !trainerOverAnt && !hasBluetoothPermission() -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, getString(R.string.erg_no_permission), SettingsTone.WARN))
                 trainerName == null -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, getString(R.string.erg_no_trainer), SettingsTone.WARN))
                 else -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, trainerName!!, SettingsTone.OK))
             }

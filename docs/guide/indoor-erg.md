@@ -1,9 +1,10 @@
 # Indoor with a trainer (ERG)
 
 On an **indoor ride profile**, BetterIntervals controls your smart trainer: the trainer holds each
-interval's watts (ERG), so you just pedal. It talks to the trainer over Bluetooth: FTMS, the
-standard most smart trainers support, or FE-C over Bluetooth for Tacx trainers without FTMS. Tested
-on a Wahoo KICKR CORE; Tacx not yet tested on a real trainer.
+interval's watts (ERG), so you just pedal. It talks to the trainer over Bluetooth (FTMS, the
+standard most smart trainers support, or FE-C over Bluetooth for Tacx trainers without FTMS) or over
+ANT+ FE-C ([below](#over-ant-original-tacx-neo-t2800)). Tested on a Wahoo KICKR CORE over Bluetooth
+and an original Tacx NEO (T2800) over ANT+.
 
 <img src="../images/indoor-erg.png" alt="The indoor start (PRESS START TO BEGIN, ERG READY), riding with ERG, and the Indoor ride card on the Workouts page">
 
@@ -20,6 +21,23 @@ on a Wahoo KICKR CORE; Tacx not yet tested on a real trainer.
 
 **When paused** sets what the trainer holds while the workout is paused or between workouts:
 40, 50 or 60 % of your FTP.
+
+## Over ANT+ (original Tacx NEO, T2800)
+
+Some trainers can't be reached over Bluetooth: the original Tacx NEO takes one Bluetooth
+connection, and that's usually the Karoo's (its power), and it has no FTMS. BetterIntervals can
+drive those over ANT+ instead. The Karoo can't share a trainer's ANT+ connection with an app, so
+the Karoo hands it over:
+
+1. Pair the trainer on the Karoo over **ANT+** (Sensors, it shows as a trainer, e.g. "Trainer 22877").
+2. Open it in **Sensors** and switch it **off for the indoor profile** (Enabled on › untick Indoor).
+3. Keep another power source on that profile for the ride file: the trainer's Bluetooth power
+   ("Tacx Neo 22877") or your power meter.
+
+**Settings › Trainer (indoors)** then shows the trainer with *ANT+ from this app*. No Bluetooth
+permission is needed for it. The Karoo's own trainer card is gone on that profile, so there's
+nothing to set to Read-Only. To give the trainer back to the Karoo, switch it on again for the
+profile: BetterIntervals goes back to Bluetooth.
 
 ## Starting
 

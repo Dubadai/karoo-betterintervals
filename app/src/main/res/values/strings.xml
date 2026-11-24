@@ -72,10 +72,11 @@
     <string name="erg_on">ERG on indoor rides</string>
     <string name="erg_trainer_found">%1$s · %2$s</string>
     <string name="erg_no_trainer">No trainer paired. Add it in the Karoo\'s Sensors.</string>
+    <string name="erg_over_ant">ANT+ from this app</string>
     <string name="erg_no_permission">Allow Nearby devices so the app can reach the trainer.</string>
     <string name="erg_when_paused">When paused</string>
     <string name="erg_pct_ftp">%1$d %% FTP</string>
-    <string name="erg_help">The trainer follows the workout on an indoor ride profile. Set the Karoo\'s trainer card to Read-Only so only this app sets ERG.</string>
+    <string name="erg_help">The trainer follows the workout on an indoor ride profile. Set the Karoo\'s trainer card to Read-Only so only this app sets ERG. Trainers the app can\'t reach over Bluetooth (the original Tacx NEO): pair it over ANT+ and switch it off on the indoor profile, and the app drives it over ANT+.</string>
     <string name="erg_card_title">ERG</string>
     <string name="erg_card_label">Indoor ride</string>
     <string name="erg_card_ready">%1$s · ERG READY</string>
