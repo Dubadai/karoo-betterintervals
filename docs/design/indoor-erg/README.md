@@ -380,11 +380,21 @@ log in system_server):
    Service (`AntPlusFitnessEquipmentPcc.requestNewOpenAccess` by device number) worked too:
    `setTargetPower` answered `SUCCESS`.
 
-Built: `AntFecTrainer` (ANT+ Plugin Library 3.9.0, `app/libs/`). `trainerIn` picks it when no
-trainer is switched on but an ANT+ trainer is paired and switched off on the profile
-(`SavedDevices` still lists it, `enabled = false`). A trainer the Karoo uses still goes over
-Bluetooth. The trainer's Bluetooth power named after its ANT+ number counts as the trainer for
-Match PM and the outdoor hint.
+Built:
+
+- **Settings › Trainer › Connection** (`ErgConnection`): Bluetooth (default, unchanged) or ANT+.
+  Bluetooth stays the default: it lets the Karoo keep its own trainer pairing (Read-Only) and
+  record from it, which ANT+ can't.
+- `AntFecTrainer` (ANT+ Plugin Library 3.9.0, `app/libs/`): one ANT+ connection shared by ERG
+  and the trainer sensor, open while either wants it.
+- `TrainerSensor`: the extension now scans devices. With Connection › ANT+, Karoo Sensors › Add
+  sensor lists the trainer (the ANT+ trainers in `SavedDevices`, plus the first FE-C heard by a
+  wildcard plugin search) and the Karoo gets power, cadence and speed from the app's connection,
+  so the ride records the trainer the app controls without the Karoo's own ANT+ pairing.
+- `trainerPick`: ANT+ takes the number from the app's sensor in the Karoo's list, else from an ANT+
+  trainer paired on the Karoo, and flags when the Karoo's own ANT+ trainer is on (it would take
+  the trainer's messages). `SavedDevices` lists a sensor switched off on the profile with
+  `enabled = false`.
 
 ### ErgPlanner (logic, no trainer yet)
 

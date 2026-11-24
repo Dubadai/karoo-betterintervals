@@ -74,7 +74,7 @@ class SetupActivity : AppearanceActivity() {
         karoo.connect { connected ->
             if (!connected) return@connect
             karoo.addConsumer<SavedDevices> { e ->
-                val name = ErgController.trainerDevice(e)?.first?.name
+                val name = ErgController.trainerPick(e, store.ergConnection.value)?.name
                 if (name != trainerName) { trainerName = name; runOnUiThread { render() } }
             }
         }

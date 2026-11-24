@@ -31,11 +31,12 @@ class ErgController(
     private val karoo: KarooSystemService,
     private val workout: WorkoutSession,
     private val store: PlanStore,
+    /** The app's ANT+ connection, shared with the trainer sensor ([TrainerSensor]). */
+    private val antFec: AntFecTrainer,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val bluetooth = ErgTrainer(context)
-    private val antFec = AntFecTrainer(context)
-    /** The link in use: ANT+ FE-C for a trainer the Karoo leaves to us, Bluetooth otherwise. */
+    /** The link in use: Settings › Trainer › Connection ([ErgConnection]). */
     private var trainer: TrainerLink = bluetooth
     private val planner = ErgPlanner()
     private val pacer = ErgSendPacer()
@@ -43,7 +44,9 @@ class ErgController(
     private val indoor = MutableStateFlow(false)
     private val recording = MutableStateFlow(false)
     private val match = MutableStateFlow<ErgTrainer.Match?>(null)
-    private var devices: SavedDevices? = null
+    /** The Karoo's saved sensors, latest. */
+    @Volatile var devices: SavedDevices? = null
+        private set
 
     // Match PM (docs/design/indoor-erg/powermatch): the Karoo's power, where it comes from, and the
     // matcher for this ride (made when recording starts, saved when it ends).
@@ -63,14 +66,8 @@ class ErgController(
     fun start() {
         scope.launch { karoo.consumerFlow<ActiveRideProfile>().collect { indoor.value = it.profile.indoor } }
         scope.launch { karoo.consumerFlow<RideState>().collect { onRecording(it !is RideState.Idle) } }
-        scope.launch {
-            karoo.consumerFlow<SavedDevices>().collect {
-                devices = it
-                val m = trainerIn(it)
-                if (m != match.value) Timber.i("ERG: trainer from the Karoo's sensors: %s", m)
-                match.value = m
-            }
-        }
+        scope.launch { karoo.consumerFlow<SavedDevices>().collect { devices = it; pickTrainer() } }
+        scope.launch { store.ergConnection.collect { pickTrainer() } }
         scope.launch {
             karoo.streamDataFlow(DataType.Type.POWER).collect { s ->
                 val p = (s as? StreamState.Streaming)?.dataPoint ?: return@collect
@@ -83,6 +80,13 @@ class ErgController(
                 delay(1_000)
             }
         }
+    }
+
+    private fun pickTrainer() {
+        val d = devices ?: return
+        val pick = trainerPick(d, store.ergConnection.value)
+        if (pick?.match != match.value) Timber.i("ERG: trainer %s", pick)
+        match.value = pick?.match
     }
 
     private fun tick() {
@@ -214,42 +218,68 @@ class ErgController(
 
         /**
          * The Karoo's power comes from the trainer itself: an ANT+ id with its device number, its
-         * address, or its Bluetooth side, which trainers name after the ANT+ number ("Tacx Neo 22877").
+         * address, the app's own trainer sensor ([TrainerSensor]), or the trainer's Bluetooth side,
+         * which trainers name after the ANT+ number ("Tacx Neo 22877").
          */
         fun isTrainer(source: String, m: ErgTrainer.Match, devices: SavedDevices? = null): Boolean {
             if (m.antNumber != null && source.startsWith("${m.antNumber}-")) return true
             if (m.address != null && source.equals(m.address, ignoreCase = true)) return true
             val n = m.antNumber ?: return false
+            if (TrainerSensor.numberOf(source) == n) return true
             val d = devices?.devices?.firstOrNull { it.id.equals(source, ignoreCase = true) } ?: return false
             return d.connectionType == "BLE" && FecBle.nameMatches(d.name, n)
         }
 
-        /**
-         * The trainer paired on the Karoo: a sensor with trainer data.
-         *
-         * - Switched on (the Karoo connects to it): Bluetooth, its address; ANT+, the device
-         *   number (the id's first part, "28436-17-5"), found on the trainer's Bluetooth side by name.
-         * - None switched on, but an ANT+ trainer switched off on this profile: we drive it over
-         *   ANT+ ourselves ([AntFecTrainer]). The Karoo's own ANT+ channel to a trainer leaves no
-         *   room for ours, so this is how the rider hands the ANT+ side to the app (the original
-         *   Tacx NEO has no other way: its Bluetooth is the Karoo's power sensor).
-         */
-        fun trainerIn(devices: SavedDevices): ErgTrainer.Match? = trainerDevice(devices)?.second
+        /** The trainer ERG uses, its name for Settings, and what stands in the way. */
+        data class TrainerPick(
+            val name: String,
+            val match: ErgTrainer.Match,
+            /** ANT+: the Karoo is connected to this trainer over ANT+ itself, which leaves no room for ours. */
+            val karooHoldsAnt: Boolean = false,
+            /** ANT+: the app's trainer sensor is in the Karoo's list, so the Karoo records this connection. */
+            val inKarooSensors: Boolean = false,
+        )
 
-        /** [trainerIn] with the sensor it came from, for its name in Settings. */
-        fun trainerDevice(devices: SavedDevices): Pair<SavedDevices.SavedDevice, ErgTrainer.Match>? {
-            val trainers = devices.devices.filter { "TYPE_TRAINER_ID" in it.supportedDataTypes }
-            trainers.firstOrNull { it.enabled }?.let { t ->
+        fun trainerIn(devices: SavedDevices, connection: ErgConnection = ErgConnection.BLUETOOTH): ErgTrainer.Match? =
+            trainerPick(devices, connection)?.match
+
+        /**
+         * - **Bluetooth** (default): the trainer the Karoo uses, a sensor with trainer data that's
+         *   switched on. Paired over Bluetooth: its address. Over ANT+: the device number (the id's
+         *   first part, "28436-17-5"), found on the trainer's Bluetooth side by name.
+         * - **ANT+**: the app's trainer sensor in the Karoo's list, else an ANT+ trainer paired on
+         *   the Karoo (switched on or off). Its number, over the app's own ANT+ connection
+         *   ([AntFecTrainer]). If the Karoo is connected to it over ANT+ itself, ours can't be.
+         */
+        fun trainerPick(devices: SavedDevices, connection: ErgConnection): TrainerPick? {
+            val antTrainers = devices.devices.filter { "TYPE_TRAINER_ID" in it.supportedDataTypes && it.connectionType == "ANT_PLUS" && antNumberOf(it) != null }
+            if (connection == ErgConnection.BLUETOOTH) {
+                val t = devices.devices.firstOrNull { it.enabled && "TYPE_TRAINER_ID" in it.supportedDataTypes } ?: return null
                 val m = when (t.connectionType) {
                     "BLE" -> ErgTrainer.Match(address = t.id)
                     "ANT_PLUS" -> antNumberOf(t)?.let { ErgTrainer.Match(antNumber = it) }
                     else -> null
                 }
-                return m?.let { t to it }
+                return m?.let { TrainerPick(t.name, it) }
             }
-            val off = trainers.firstOrNull { !it.enabled && it.connectionType == "ANT_PLUS" && antNumberOf(it) != null } ?: return null
-            return off to ErgTrainer.Match(antNumber = antNumberOf(off), overAnt = true)
+            val ours = devices.devices.filter { TrainerSensor.numberOf(it.id) != null }.sortedByDescending { it.enabled }.firstOrNull()
+            val n = ours?.let { TrainerSensor.numberOf(it.id) }
+                ?: (antTrainers.firstOrNull { !it.enabled } ?: antTrainers.firstOrNull())?.let { antNumberOf(it) }
+                ?: return null
+            val native = antTrainers.filter { antNumberOf(it) == n }
+            return TrainerPick(
+                name = ours?.name ?: native.first().name,
+                match = ErgTrainer.Match(antNumber = n, overAnt = true),
+                karooHoldsAnt = native.any { it.enabled },
+                inKarooSensors = ours != null,
+            )
         }
+
+        /** The ANT+ trainers paired on the Karoo: number and name (for the sensor scan). */
+        fun antTrainers(devices: SavedDevices?): List<Pair<Int, String>> =
+            devices?.devices.orEmpty()
+                .filter { "TYPE_TRAINER_ID" in it.supportedDataTypes && it.connectionType == "ANT_PLUS" }
+                .mapNotNull { d -> antNumberOf(d)?.let { it to d.name } }
 
         private fun antNumberOf(d: SavedDevices.SavedDevice): Int? = d.id.substringBefore('-').toIntOrNull()
     }

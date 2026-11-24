@@ -5,7 +5,7 @@
     displayName="@string/extension_name"
     icon="@drawable/ic_interval"
     id="intervalscreen"
-    scansDevices="false">
+    scansDevices="true">
 
     <DataType
         description="@string/field_description"

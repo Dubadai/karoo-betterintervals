@@ -230,6 +230,19 @@ class PlanStore private constructor(context: Context) {
         _ergOn.value = on
     }
 
+    private val _ergConnection = MutableStateFlow(ErgConnection.decode(prefs.getString(KEY_ERG_CONNECTION, null)))
+
+    /**
+     * Settings › Trainer › Connection: Bluetooth (the default: the trainer the Karoo uses, reached
+     * on its Bluetooth side) or ANT+ (the app connects to the trainer itself, see [AntFecTrainer]).
+     */
+    val ergConnection: StateFlow<ErgConnection> = _ergConnection
+
+    fun setErgConnection(c: ErgConnection) {
+        prefs.edit().putString(KEY_ERG_CONNECTION, c.name).apply()
+        _ergConnection.value = c
+    }
+
     private val _matchPm = MutableStateFlow(prefs.getBoolean(KEY_MATCH_PM, false))
 
     /** Settings › Trainer › Match PM: ERG makes the bike's power meter show the target. */
@@ -448,6 +461,7 @@ class PlanStore private constructor(context: Context) {
         private const val KEY_ERG_ON = "erg_on"
         private const val KEY_ERG_RECOVERY = "erg_recovery_pct"
         private const val KEY_MATCH_PM = "match_pm"
+        private const val KEY_ERG_CONNECTION = "erg_connection"
         private const val KEY_PM_BANDS = "match_pm_bands"
         private const val KEY_PM_LAST = "match_pm_last"
         private const val KEY_POWER_SMOOTHING = "power_smoothing"

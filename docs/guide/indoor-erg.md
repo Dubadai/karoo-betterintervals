@@ -24,20 +24,30 @@ and an original Tacx NEO (T2800) over ANT+.
 
 ## Over ANT+ (original Tacx NEO, T2800)
 
-Some trainers can't be reached over Bluetooth: the original Tacx NEO takes one Bluetooth
-connection, and that's usually the Karoo's (its power), and it has no FTMS. BetterIntervals can
-drive those over ANT+ instead. The Karoo can't share a trainer's ANT+ connection with an app, so
-the Karoo hands it over:
+**Settings › Trainer (indoors) › Connection** picks how the app reaches the trainer:
 
-1. Pair the trainer on the Karoo over **ANT+** (Sensors, it shows as a trainer, e.g. "Trainer 22877").
-2. Open it in **Sensors** and switch it **off for the indoor profile** (Enabled on › untick Indoor).
-3. Keep another power source on that profile for the ride file: the trainer's Bluetooth power
-   ("Tacx Neo 22877") or your power meter.
+- **Bluetooth** (default, everything above): the Karoo stays on the trainer over ANT+ (trainer
+  card in Read-Only) and the app controls it on its Bluetooth side. The trainer's Bluetooth has to
+  be free for the app: don't also pair it on the Karoo over Bluetooth (the original NEO takes one
+  Bluetooth connection).
+- **ANT+**: the app connects to the trainer over ANT+ itself. For trainers it can't reach over
+  Bluetooth. The Karoo can't share a trainer's ANT+ connection with an app, so the Karoo's own
+  ANT+ trainer has to be off on that profile, and the app adds the trainer to the Karoo's sensors
+  instead.
 
-**Settings › Trainer (indoors)** then shows the trainer with *ANT+ from this app*. No Bluetooth
-permission is needed for it. The Karoo's own trainer card is gone on that profile, so there's
-nothing to set to Read-Only. To give the trainer back to the Karoo, switch it on again for the
-profile: BetterIntervals goes back to Bluetooth.
+Setting up ANT+:
+
+1. **Settings › Trainer › Connection › ANT+.**
+2. **Karoo Sensors › Add sensor:** BetterIntervals lists the trainer, e.g. *Tacx NEO trainer
+   (BetterIntervals)* (the ANT+ trainers paired on the Karoo, and the first one it hears nearby).
+   Add it. The Karoo now gets power, cadence and speed from the app's connection: the ride file
+   records the trainer the app controls.
+3. If the Karoo has its own ANT+ pairing of the trainer, switch it **off for the indoor profile**
+   (Sensors › the trainer › Enabled on › untick the profile). Settings says so when it's in the way.
+
+Settings then shows the trainer with *ANT+ from this app*. No Bluetooth permission is needed.
+Tip: copy your indoor profile and do this on the copy, so the original keeps the Karoo's own
+trainer control.
 
 ## Starting
 

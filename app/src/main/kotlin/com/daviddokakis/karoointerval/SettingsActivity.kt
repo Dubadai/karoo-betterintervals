@@ -24,10 +24,8 @@ class SettingsActivity : AppearanceActivity() {
     private lateinit var form: LinearLayout
     private lateinit var example: ExampleCard
     private lateinit var karoo: KarooSystemService
-    /** The trainer paired on the Karoo, as Settings names it; null: none (or not heard yet). */
-    private var trainerName: String? = null
-    /** The trainer goes over ANT+ from this app: no Bluetooth needed. */
-    private var trainerOverAnt = false
+    /** The Karoo's saved sensors, for the Trainer section; null: not heard yet. */
+    private var devices: SavedDevices? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,19 +53,7 @@ class SettingsActivity : AppearanceActivity() {
         karoo.connect { connected ->
             if (!connected) return@connect
             karoo.addConsumer<SavedDevices> { e ->
-                val found = ErgController.trainerDevice(e)
-                val name = found?.let { (t, m) ->
-                    getString(
-                        R.string.erg_trainer_found, t.name,
-                        when {
-                            m.overAnt -> getString(R.string.erg_over_ant)
-                            t.connectionType == "BLE" -> "Bluetooth"
-                            else -> "ANT+"
-                        },
-                    )
-                }
-                val ant = found?.second?.overAnt == true
-                if (name != trainerName || ant != trainerOverAnt) { trainerName = name; trainerOverAnt = ant; runOnUiThread { render() } }
+                if (e != devices) { devices = e; runOnUiThread { render() } }
             }
         }
     }
@@ -192,10 +178,31 @@ class SettingsActivity : AppearanceActivity() {
             },
         )
         if (store.ergOn.value) {
+            // Connection: Bluetooth (the trainer the Karoo uses) or the app's own ANT+ connection.
+            val conn = store.ergConnection.value
+            form.addView(settingsSubLabel(getString(R.string.erg_connection)))
+            form.addView(
+                settingsSegmented(
+                    listOf(getString(R.string.erg_connection_bluetooth) to ErgConnection.BLUETOOTH, getString(R.string.erg_connection_ant) to ErgConnection.ANT),
+                    conn,
+                ) { c ->
+                    store.setErgConnection(c)
+                    if (c == ErgConnection.BLUETOOTH && !hasBluetoothPermission() && Build.VERSION.SDK_INT >= 31) requestPermissions(BLUETOOTH_PERMISSIONS, 1)
+                    render()
+                },
+            )
+            form.addView(settingsIntro(getString(if (conn == ErgConnection.ANT) R.string.erg_connection_ant_help else R.string.erg_connection_bluetooth_help)))
+            val pick = devices?.let { ErgController.trainerPick(it, conn) }
+            fun row(text: String, tone: SettingsTone) = form.addView(settingsInfoRow(R.drawable.ic_settings_info, text, tone))
             when {
-                !trainerOverAnt && !hasBluetoothPermission() -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, getString(R.string.erg_no_permission), SettingsTone.WARN))
-                trainerName == null -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, getString(R.string.erg_no_trainer), SettingsTone.WARN))
-                else -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, trainerName!!, SettingsTone.OK))
+                conn == ErgConnection.BLUETOOTH && !hasBluetoothPermission() -> row(getString(R.string.erg_no_permission), SettingsTone.WARN)
+                pick == null -> row(getString(if (conn == ErgConnection.ANT) R.string.erg_ant_no_trainer else R.string.erg_no_trainer), SettingsTone.WARN)
+                pick.karooHoldsAnt -> row(getString(R.string.erg_ant_karoo_holds, pick.name), SettingsTone.WARN)
+                conn == ErgConnection.ANT -> {
+                    row(getString(R.string.erg_trainer_found, pick.name, getString(R.string.erg_over_ant)), SettingsTone.OK)
+                    if (!pick.inKarooSensors) row(getString(R.string.erg_ant_add_sensor), SettingsTone.NEUTRAL)
+                }
+                else -> row(getString(R.string.erg_trainer_found, pick.name, if (pick.match.address != null) "Bluetooth" else "ANT+"), SettingsTone.OK)
             }
             form.addView(settingsSubLabel(getString(R.string.erg_when_paused)))
             form.addView(

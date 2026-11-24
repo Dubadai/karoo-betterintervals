@@ -22,34 +22,70 @@ class TrainerPickTest {
     private val neoBle = dev("CF:0B:B9:B6:97:29", "BLE", "Tacx Neo 22877", true, power)
     private val neoAnt = dev("22877-17-5", "ANT_PLUS", "Tacx NEO trainer", false, trainerType, power)
 
-    @Test fun `ANT+ trainer the Karoo uses is found over Bluetooth by its number`() {
-        val m = ErgController.trainerIn(SavedDevices(listOf(neoBle, neoAnt.copy(enabled = true))))
+    private val bt = ErgConnection.BLUETOOTH
+    private val ant = ErgConnection.ANT
+    /** The app's trainer sensor as the Karoo lists it once added (Sensors › Add sensor). */
+    private val ours = dev("intervalscreen::fec-22877", "EXTENSION", "Tacx NEO trainer (BetterIntervals)", true, power, "TYPE_CAD_CADENCE_ID", "TYPE_SPD_SPEED_ID")
+
+    @Test fun `Bluetooth - the ANT+ trainer the Karoo uses is found over Bluetooth by its number`() {
+        val m = ErgController.trainerIn(SavedDevices(listOf(neoBle, neoAnt.copy(enabled = true))), bt)
         assertEquals(ErgTrainer.Match(antNumber = 22877), m)
     }
 
-    @Test fun `ANT+ trainer switched off on the Karoo is driven over ANT+ by the app`() {
-        val m = ErgController.trainerIn(SavedDevices(listOf(neoBle, neoAnt)))
-        assertEquals(ErgTrainer.Match(antNumber = 22877, overAnt = true), m)
+    @Test fun `Bluetooth - a trainer switched off isn't used (the developer's default stays as it was)`() {
+        assertNull(ErgController.trainerIn(SavedDevices(listOf(neoBle, neoAnt)), bt))
+        assertNull(ErgController.trainerIn(SavedDevices(listOf(dev("AA:BB", "BLE", "KICKR", false, trainerType))), bt))
+        val ble = dev("E9:04:D3:0C:93:5D", "BLE", "KICKR CORE 6F14", true, trainerType)
+        assertEquals(ErgTrainer.Match(address = "E9:04:D3:0C:93:5D"), ErgController.trainerIn(SavedDevices(listOf(neoAnt, ble)), bt))
     }
 
-    @Test fun `a trainer the Karoo uses wins over one switched off`() {
-        val kickr = dev("28436-17-5", "ANT_PLUS", "Trainer 28436", true, trainerType)
-        assertEquals(ErgTrainer.Match(antNumber = 28436), ErgController.trainerIn(SavedDevices(listOf(neoAnt, kickr))))
-        val ble = dev("E9:04:D3:0C:93:5D", "BLE", "KICKR CORE 6F14", true, trainerType)
-        assertEquals(ErgTrainer.Match(address = "E9:04:D3:0C:93:5D"), ErgController.trainerIn(SavedDevices(listOf(neoAnt, ble))))
+    @Test fun `ANT+ - the Karoo's ANT+ trainer switched off, driven by the app`() {
+        val p = ErgController.trainerPick(SavedDevices(listOf(neoBle, neoAnt)), ant)!!
+        assertEquals(ErgTrainer.Match(antNumber = 22877, overAnt = true), p.match)
+        assertTrue(!p.karooHoldsAnt)
+        assertTrue(!p.inKarooSensors)
+    }
+
+    @Test fun `ANT+ - the Karoo still on the trainer over ANT+ is flagged`() {
+        val p = ErgController.trainerPick(SavedDevices(listOf(neoAnt.copy(enabled = true))), ant)!!
+        assertEquals(22877, p.match.antNumber)
+        assertTrue(p.karooHoldsAnt)
+    }
+
+    @Test fun `ANT+ - the app's sensor in the Karoo's list gives the trainer, even without the Karoo's own pairing`() {
+        val p = ErgController.trainerPick(SavedDevices(listOf(ours)), ant)!!
+        assertEquals(ErgTrainer.Match(antNumber = 22877, overAnt = true), p.match)
+        assertTrue(p.inKarooSensors)
+        assertEquals("Tacx NEO trainer (BetterIntervals)", p.name)
+        assertTrue(!ErgController.trainerPick(SavedDevices(listOf(ours, neoAnt)), ant)!!.karooHoldsAnt)
+        assertTrue(ErgController.trainerPick(SavedDevices(listOf(ours, neoAnt.copy(enabled = true))), ant)!!.karooHoldsAnt)
     }
 
     @Test fun `no trainer, no ERG`() {
-        assertNull(ErgController.trainerIn(SavedDevices(listOf(neoBle))))
-        // A Bluetooth trainer switched off: nothing to drive it with but Bluetooth, which the Karoo doesn't hold.
-        assertNull(ErgController.trainerIn(SavedDevices(listOf(dev("AA:BB", "BLE", "KICKR", false, trainerType)))))
+        assertNull(ErgController.trainerIn(SavedDevices(listOf(neoBle)), bt))
+        assertNull(ErgController.trainerIn(SavedDevices(listOf(neoBle)), ant))
     }
 
-    @Test fun `the trainer's Bluetooth power counts as the trainer`() {
-        val devices = SavedDevices(listOf(neoBle, neoAnt))
+    @Test fun `the trainer's Bluetooth power and the app's sensor count as the trainer`() {
+        val devices = SavedDevices(listOf(neoBle, neoAnt, ours))
         val m = ErgTrainer.Match(antNumber = 22877, overAnt = true)
         assertTrue(ErgController.isTrainer("CF:0B:B9:B6:97:29", m, devices))
         assertTrue(ErgController.isTrainer("22877-11-5", m, devices))
+        assertTrue(ErgController.isTrainer("intervalscreen::fec-22877", m, devices))
+        assertTrue(ErgController.isTrainer("fec-22877", m, devices))
         assertTrue(!ErgController.isTrainer("49752-11-5", m, devices))
+    }
+
+    @Test fun `sensor ids`() {
+        assertEquals("fec-22877", TrainerSensor.uid(22877))
+        assertEquals(22877, TrainerSensor.numberOf("intervalscreen::fec-22877"))
+        assertNull(TrainerSensor.numberOf("22877-17-5"))
+        assertEquals("Tacx", TrainerSensor.makerName(89))
+    }
+
+    @Test fun `connection setting decodes, Bluetooth by default`() {
+        assertEquals(ErgConnection.BLUETOOTH, ErgConnection.decode(null))
+        assertEquals(ErgConnection.BLUETOOTH, ErgConnection.decode("junk"))
+        assertEquals(ErgConnection.ANT, ErgConnection.decode("ANT"))
     }
 }

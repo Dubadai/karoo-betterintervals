@@ -25,3 +25,15 @@ interface TrainerLink {
     /** Hands back and disconnects. */
     fun stop()
 }
+
+/** How ERG reaches the trainer: Settings › Trainer › Connection. */
+enum class ErgConnection {
+    /** The trainer the Karoo uses, reached over Bluetooth (FTMS or FE-C over Bluetooth). */
+    BLUETOOTH,
+    /** The app's own ANT+ FE-C connection; the Karoo leaves the trainer's ANT+ side to it. */
+    ANT;
+
+    companion object {
+        fun decode(s: String?): ErgConnection = entries.firstOrNull { it.name == s } ?: BLUETOOTH
+    }
+}

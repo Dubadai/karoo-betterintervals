@@ -4,6 +4,9 @@ import com.dubadai.karoo.common.*
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.extension.KarooExtension
+import io.hammerhead.karooext.internal.Emitter
+import io.hammerhead.karooext.models.Device
+import io.hammerhead.karooext.models.DeviceEvent
 import timber.log.Timber
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +21,8 @@ class IntervalExtension : KarooExtension(EXTENSION_ID, "1") {
     private lateinit var karoo: KarooSystemService
     private lateinit var workout: WorkoutSession
     private lateinit var erg: ErgController
+    private lateinit var antFec: AntFecTrainer
+    private lateinit var trainerSensor: TrainerSensor
     private var syncJob: Job? = null
     private val updateScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -34,7 +39,9 @@ class IntervalExtension : KarooExtension(EXTENSION_ID, "1") {
         session = workout
         karoo.connect { connected -> Timber.i("Karoo system connected: $connected") }
         workout.start()
-        erg = ErgController(this, karoo, workout, store).also { it.start() }
+        antFec = AntFecTrainer(this)
+        erg = ErgController(this, karoo, workout, store, antFec).also { it.start() }
+        trainerSensor = TrainerSensor(this, extension, antFec, store) { ErgController.antTrainers(erg.devices) }
 
         // Not riding: tell the rider when a newer release is on GitHub (see UpdateCheck).
         UpdateCheck(this, karoo, appName = "BetterIntervals").start(updateScope)
@@ -47,6 +54,11 @@ class IntervalExtension : KarooExtension(EXTENSION_ID, "1") {
             }
         }
     }
+
+    /** Karoo Sensors › Add sensor: the trainer over the app's ANT+ connection (Connection › ANT+ only). */
+    override fun startScan(emitter: Emitter<Device>) = trainerSensor.scan(emitter)
+
+    override fun connectDevice(uid: String, emitter: Emitter<DeviceEvent>) = trainerSensor.connect(uid, emitter)
 
     override fun onBonusAction(actionId: String) {
         when (actionId) {
