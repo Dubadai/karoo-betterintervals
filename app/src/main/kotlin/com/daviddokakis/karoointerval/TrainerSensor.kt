@@ -54,10 +54,16 @@ class TrainerSensor(
     fun scan(emitter: Emitter<Device>) {
         if (store.ergConnection.value != ErgConnection.ANT) return
         val offered = java.util.Collections.synchronizedSet(HashSet<Int>())
-        fun offer(n: Int, name: String) { if (offered.add(n)) emitter.onNext(device(n, name)) }
-        knownTrainers().forEach { (n, name) -> offer(n, name) }
+        fun offer(n: Int, name: String) {
+            if (!offered.add(n)) return
+            Timber.i("Sensor scan: offering trainer %d (%s)", n, name)
+            emitter.onNext(device(n, name))
+        }
+        // Not inside the Karoo's startScan call: it only listens once that returns (its sample waits too).
+        val known = Runnable { knownTrainers().forEach { (n, name) -> offer(n, name) } }
+        main.postDelayed(known, 1_000)
         var handle: PccReleaseHandle<AntPlusFitnessEquipmentPcc>? = null
-        main.post {
+        main.postDelayed({
             handle = runCatching {
                 AntPlusFitnessEquipmentPcc.requestNewOpenAccess(
                     context.applicationContext, 0, 0,
@@ -73,8 +79,8 @@ class TrainerSensor(
                     { _, _, _, _ -> },
                 )
             }.onFailure { Timber.w(it, "Sensor scan") }.getOrNull()
-        }
-        emitter.setCancellable { main.post { runCatching { handle?.close() } } }
+        }, 1_000)
+        emitter.setCancellable { main.removeCallbacks(known); main.post { runCatching { handle?.close() } } }
     }
 
     /** The Karoo connects to the sensor (whenever the profile has it on, riding or not). */
