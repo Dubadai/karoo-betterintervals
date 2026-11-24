@@ -1,8 +1,9 @@
 # Indoor with a trainer (ERG)
 
 On an **indoor ride profile**, BetterIntervals controls your smart trainer: the trainer holds each
-interval's watts (ERG), so you just pedal. It talks to the trainer over Bluetooth (FTMS), the
-standard most smart trainers support. Tested on a Wahoo KICKR CORE.
+interval's watts (ERG), so you just pedal. It talks to the trainer over Bluetooth: FTMS, the
+standard most smart trainers support, or FE-C over Bluetooth for Tacx trainers without FTMS. Tested
+on a Wahoo KICKR CORE; Tacx not yet tested on a real trainer.
 
 <img src="../images/indoor-erg.png" alt="The indoor start (PRESS START TO BEGIN, ERG READY), riding with ERG, and the Indoor ride card on the Workouts page">
 
