@@ -53,6 +53,10 @@ class AntFecTrainer(context: Context) : TrainerLink {
     private var controlled = false
     /** A plugin request is out (the plugin takes one at a time); since when, in case it never answers. */
     private var busySinceMs = 0L
+    /** The plugin needs a moment after each answer before it takes the next request. */
+    private var nextOkAtMs = 0L
+    private var sentAtMs = 0L
+    private val flushLater = Runnable { flush() }
     private var retryMs = RETRY_MIN_MS
     private val reopen = Runnable { if (number != null && pcc == null) open() }
 
@@ -157,6 +161,9 @@ class AntFecTrainer(context: Context) : TrainerLink {
         val w = (pending ?: return).coerceIn(0, ErgPlanner.MAX_WATTS)
         val now = System.currentTimeMillis()
         if (busySinceMs != 0L && now - busySinceMs < BUSY_MS) return // its answer sends the newest
+        // FE-C targets stay until changed and nobody else drives the trainer: no keep-alive needed.
+        if (w == sent && now - sentAtMs < RESEND_MS) return
+        if (now < nextOkAtMs) { h.removeCallbacks(flushLater); h.postDelayed(flushLater, nextOkAtMs - now); return }
         busySinceMs = now
         val ok = runCatching {
             p.trainerMethods.requestSetTargetPower(BigDecimal(w)) { status -> h.post { onSent(w, status) } }
@@ -165,12 +172,15 @@ class AntFecTrainer(context: Context) : TrainerLink {
     }
 
     private fun onSent(w: Int, status: RequestStatus) {
+        val now = System.currentTimeMillis()
         busySinceMs = 0L
+        nextOkAtMs = now + GAP_MS
         if (status == RequestStatus.SUCCESS) {
             if (sent != w) Timber.i("ERG: trainer at %d W (ANT+)", w)
-            sent = w
+            sent = w; sentAtMs = now
         } else {
-            Timber.w("ERG: %d W answered %s", w, status)
+            // Busy: the plugin was still confirming the one before; the newest goes after the gap.
+            if (status != RequestStatus.FAIL_ALREADY_BUSY_EXTERNAL) Timber.w("ERG: %d W answered %s", w, status)
             sent = null
         }
         // A newer target came in meanwhile.
@@ -181,13 +191,23 @@ class AntFecTrainer(context: Context) : TrainerLink {
     /** Page 51 at 0 %: FE-C has no "hand back", so the trainer rides like a flat road. */
     private fun flatRoad(tries: Int) {
         val p = pcc ?: return
+        if (controlled) return // a new target came in meanwhile
+        val now = System.currentTimeMillis()
+        val wait = maxOf(nextOkAtMs - now, if (busySinceMs != 0L && now - busySinceMs < BUSY_MS) 500L else 0L)
+        if (wait > 0) { h.postDelayed({ flatRoad(tries) }, wait); return }
+        busySinceMs = now
         val ok = runCatching {
             p.trainerMethods.requestSetTrackResistance(BigDecimal.ZERO, ROLLING) { status ->
-                if (status != RequestStatus.SUCCESS) Timber.w("ERG: flat road answered %s", status)
+                h.post {
+                    busySinceMs = 0L
+                    nextOkAtMs = System.currentTimeMillis() + GAP_MS
+                    if (status != RequestStatus.SUCCESS && tries > 1) flatRoad(tries - 1)
+                    else if (status != RequestStatus.SUCCESS) Timber.w("ERG: flat road answered %s", status)
+                }
             }
         }.getOrDefault(false)
         sent = null
-        if (!ok && tries > 1) h.postDelayed({ if (!controlled) flatRoad(tries - 1) }, 500)
+        if (!ok) { busySinceMs = 0L; if (tries > 1) h.postDelayed({ flatRoad(tries - 1) }, 500) }
     }
 
     private fun lost(why: String) {
@@ -205,7 +225,8 @@ class AntFecTrainer(context: Context) : TrainerLink {
     private fun closeHandle(delayMs: Long) {
         generation++
         val old = handle
-        handle = null; pcc = null; sent = null; busySinceMs = 0L
+        handle = null; pcc = null; sent = null; busySinceMs = 0L; nextOkAtMs = 0L
+        h.removeCallbacks(flushLater)
         if (old != null) h.postDelayed({ runCatching { old.close() } }, delayMs)
     }
 
@@ -214,6 +235,10 @@ class AntFecTrainer(context: Context) : TrainerLink {
         private val ROLLING = BigDecimal("0.004")
         private const val FLAT_TRIES = 3
         private const val BUSY_MS = 5_000L
+        /** Between plugin requests: at 4 Hz the trainer acknowledges and confirms in about a second. */
+        private const val GAP_MS = 1_000L
+        /** The same target again only after this long (in case the trainer missed it). */
+        private const val RESEND_MS = 10_000L
         private const val RETRY_MIN_MS = 3_000L
         private const val RETRY_MAX_MS = 30_000L
     }
