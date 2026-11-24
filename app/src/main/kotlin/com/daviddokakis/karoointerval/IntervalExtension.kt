@@ -41,7 +41,7 @@ class IntervalExtension : KarooExtension(EXTENSION_ID, "1") {
         workout.start()
         antFec = AntFecTrainer(this)
         erg = ErgController(this, karoo, workout, store, antFec).also { it.start() }
-        trainerSensor = TrainerSensor(this, extension, antFec, store) { ErgController.antTrainers(erg.devices) }
+        trainerSensor = TrainerSensor(this, extension, antFec, store, karoo) { ErgController.antTrainers(erg.devices) }
 
         // Not riding: tell the rider when a newer release is on GitHub (see UpdateCheck).
         UpdateCheck(this, karoo, appName = "BetterIntervals").start(updateScope)

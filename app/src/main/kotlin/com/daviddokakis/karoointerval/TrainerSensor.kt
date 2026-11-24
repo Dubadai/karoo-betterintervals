@@ -6,6 +6,7 @@ import android.os.Looper
 import com.dsi.ant.plugins.antplus.pcc.AntPlusFitnessEquipmentPcc
 import com.dsi.ant.plugins.antplus.pcc.defines.RequestAccessResult
 import com.dsi.ant.plugins.antplus.pccbase.PccReleaseHandle
+import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.internal.Emitter
 import io.hammerhead.karooext.models.ConnectionStatus
 import io.hammerhead.karooext.models.DataPoint
@@ -16,6 +17,8 @@ import io.hammerhead.karooext.models.ManufacturerInfo
 import io.hammerhead.karooext.models.OnConnectionStatus
 import io.hammerhead.karooext.models.OnDataPoint
 import io.hammerhead.karooext.models.OnManufacturerInfo
+import io.hammerhead.karooext.models.ReleaseAnt
+import io.hammerhead.karooext.models.RequestAnt
 import timber.log.Timber
 
 /**
@@ -32,6 +35,7 @@ class TrainerSensor(
     private val extension: String,
     private val link: AntFecTrainer,
     private val store: PlanStore,
+    private val karoo: KarooSystemService,
     /** The ANT+ trainers paired on the Karoo: device number and name. */
     private val knownTrainers: () -> List<Pair<Int, String>>,
 ) {
@@ -111,12 +115,14 @@ class TrainerSensor(
             }
         }
         Timber.i("Sensor: Karoo connects to trainer %d", n)
+        karoo.dispatch(RequestAnt(RADIO_ID))
         link.attachSensor(n, l)
         main.post(tick)
         emitter.setCancellable {
             Timber.i("Sensor: Karoo lets go of trainer %d", n)
             main.removeCallbacks(tick)
             link.detachSensor(l)
+            karoo.dispatch(ReleaseAnt(RADIO_ID))
         }
     }
 
@@ -126,6 +132,7 @@ class TrainerSensor(
     companion object {
         private const val PREFIX = "fec-"
         private const val STALE_MS = 3_000L
+        private const val RADIO_ID = "trainer-sensor"
 
         fun uid(number: Int) = "$PREFIX$number"
 

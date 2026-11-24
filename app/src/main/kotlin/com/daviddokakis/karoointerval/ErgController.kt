@@ -5,6 +5,10 @@ import com.dubadai.karoo.common.*
 import android.content.Context
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.ActiveRideProfile
+import io.hammerhead.karooext.models.ReleaseAnt
+import io.hammerhead.karooext.models.ReleaseBluetooth
+import io.hammerhead.karooext.models.RequestAnt
+import io.hammerhead.karooext.models.RequestBluetooth
 import io.hammerhead.karooext.models.DataType
 import io.hammerhead.karooext.models.StreamState
 import io.hammerhead.karooext.models.RideState
@@ -38,6 +42,11 @@ class ErgController(
     private val bluetooth = ErgTrainer(context)
     /** The link in use: Settings › Trainer › Connection ([ErgConnection]). */
     private var trainer: TrainerLink = bluetooth
+    /**
+     * The radio we asked the Karoo to keep on for [trainer]. The Karoo turns Bluetooth off when no
+     * Bluetooth sensor is on the profile (seen on a Karoo 3 with the trainer on ANT+ only).
+     */
+    private var radioHeld: TrainerLink? = null
     private val planner = ErgPlanner()
     private val pacer = ErgSendPacer()
 
@@ -106,15 +115,17 @@ class ErgController(
         // Also without a workout while a ride records: ERG holds the When paused watts between workouts.
         val wanted = indoor.value && store.ergOn.value && (st.plan != null || recording.value)
         if (!wanted || m == null) {
-            if (trainer.link.value != ErgLink.OFF) {
+            if (trainer.link.value != ErgLink.OFF || radioHeld != null) {
                 Timber.i("ERG: off (indoor=%s ergOn=%s plan=%s trainer=%s)", indoor.value, store.ergOn.value, st.plan != null, m != null)
                 trainer.stop()
+                holdRadio(null)
             }
             workout.setErg(null, null)
             return
         }
         val link = if (m.overAnt) antFec else bluetooth
         if (link !== trainer) { trainer.stop(); trainer = link }
+        holdRadio(trainer)
         trainer.start(m)
         // Turned off on the screen: hand the trainer back, stay connected for the way back on.
         val cmd = planner.next(
@@ -206,14 +217,30 @@ class ErgController(
         Timber.i("Match PM: saved %s", summary)
     }
 
+    private fun holdRadio(link: TrainerLink?) {
+        if (link === radioHeld) return
+        when (radioHeld) {
+            bluetooth -> karoo.dispatch(ReleaseBluetooth(RADIO_ID))
+            antFec -> karoo.dispatch(ReleaseAnt(RADIO_ID))
+        }
+        when (link) {
+            bluetooth -> karoo.dispatch(RequestBluetooth(RADIO_ID))
+            antFec -> karoo.dispatch(RequestAnt(RADIO_ID))
+        }
+        radioHeld = link
+        Timber.i("ERG: radio %s", if (link === bluetooth) "Bluetooth" else if (link === antFec) "ANT" else "released")
+    }
+
     fun stop() {
         saveMatch()
         trainer.stop()
+        holdRadio(null)
         scope.cancel()
     }
 
     companion object {
         private const val FRESH_MS = 3_000L
+        private const val RADIO_ID = "erg"
         private const val LOG_EVERY_MS = 5_000L
 
         /**
