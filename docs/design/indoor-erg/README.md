@@ -357,6 +357,48 @@ keep a notice driven by power-vs-target (needs a rider to tune).
 (`ErgSendPacer`), and the "Karoo is controlling the trainer" notice and the `ERG !` pill state are
 dropped. Settings keeps the one-line hint "Set the Karoo's trainer card to Read-Only".
 
+### ANT+ after all: one channel per trainer (2026-11-24, issue #23)
+
+Rider with an original Tacx NEO (T2800) on a Karoo 3 (Android 12, ANT adapter "BLJ07.00.01" on an
+nRF chip, ANT Radio Service 4.15.20, ANT+ Plugins 3.7.00). The NEO's one Bluetooth connection was
+the Karoo's (power, "Tacx Neo 22877"), so FE-C over Bluetooth never found it; the Karoo controls it
+over ANT+ (FE-C `22877-17-5`).
+
+Why the ANT+ spike above failed, found with a raw-channel probe (ANT Radio Service, `antradio`
+log in system_server):
+
+1. A raw slave channel for FE-C 22877 on the ANT+ network: `RX_SEARCH_TIMEOUT` after 25 s, while
+   the Karoo's own channel 2 received the same trainer at 4 Hz.
+2. A background scan on the ANT+ network heard other ANT+ devices at once, but never the trainer.
+   So the radio and the network key are fine.
+3. **The chip gives each message to the one channel tracking that master.** The trainer's
+   messages always land in the Karoo's channel's slot, so a second channel to the same trainer
+   (ours, or the Plugin Service's) can never find it. That's also why the plugin couldn't open the
+   KICKR's FE-C *or* its power: the Karoo tracked both.
+4. Trainer switched off on the indoor profile in Karoo Sensors: our channel found it in 0.5 s.
+   Page 49 (150 W) went out, page 71 echoed it (`last=0x31 status=0 data=…58 02`). The Plugin
+   Service (`AntPlusFitnessEquipmentPcc.requestNewOpenAccess` by device number) worked too:
+   `setTargetPower` answered `SUCCESS`.
+
+Built:
+
+- **Settings › Trainer › Connection** (`ErgConnection`): Bluetooth (default, unchanged) or ANT+.
+  Bluetooth stays the default: it lets the Karoo keep its own trainer pairing (Read-Only) and
+  record from it, which ANT+ can't.
+- `AntFecTrainer` (ANT+ Plugin Library 3.9.0, `app/libs/`): one ANT+ connection shared by ERG
+  and the trainer sensor, open while either wants it.
+- `TrainerSensor`: the extension now scans devices. With Connection › ANT+, Karoo Sensors › Add
+  sensor lists the trainer (the ANT+ trainers in `SavedDevices`, plus the first FE-C heard by a
+  wildcard plugin search) and the Karoo gets power, cadence and speed from the app's connection,
+  so the ride records the trainer the app controls without the Karoo's own ANT+ pairing.
+  Speed alone doesn't make the Karoo add up distance (the ride stays at 0 km), so the sensor also
+  sends `TYPE_SPD_DISTANCE_DIFF_ID`, the metres since its last reading: the trainer's own FE-C
+  distance count, else speed × time (`DistanceSteps`).
+- `trainerPick`: ANT+ takes the number from the app's sensor in the Karoo's list, else from an ANT+
+  trainer paired on the Karoo, and flags when the Karoo's own ANT+ trainer is on (it would take
+  the trainer's messages). `SavedDevices` lists a sensor switched off on the profile with
+  `enabled = false`.
+
 ### ErgPlanner (logic, no trainer yet)
 
 `ErgPlanner.kt`, tested in `ErgPlannerTest`: one command a second from the workout state.

@@ -37,7 +37,7 @@ you can jump forward **and back** between intervals.
   Karoo or stays fixed.
 - **Remote button actions:** next interval, previous interval, pause or resume the workout.
 - **Indoor with a smart trainer (ERG):** on an indoor ride profile the trainer follows the workout
-  over Bluetooth. The Karoo's start button starts the ride and the workout together; **Match PM**
+  over Bluetooth, or over ANT+ (original Tacx NEO). The Karoo's start button starts the ride and the workout together; **Match PM**
   corrects the trainer so your power meter shows the target. [More in the guide](docs/guide/indoor-erg.md).
 
 ### Without a workout

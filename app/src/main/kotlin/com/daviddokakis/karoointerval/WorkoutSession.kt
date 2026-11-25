@@ -143,6 +143,11 @@ class WorkoutSession(
         if (_state.value.trainerOutdoor != on) _state.update { it.copy(trainerOutdoor = on) }
     }
 
+    /** What's wrong with the ERG setup, for the indoor start screen (from [ErgController]); null: nothing. */
+    fun setErgSetupHint(text: String?) {
+        if (_state.value.ergSetupHint != text) _state.update { it.copy(ergSetupHint = text) }
+    }
+
     fun viewStarted() { viewsActive.incrementAndGet() }
     fun viewStopped() { viewsActive.decrementAndGet() }
 

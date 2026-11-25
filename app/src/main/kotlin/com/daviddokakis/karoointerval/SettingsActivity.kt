@@ -24,8 +24,8 @@ class SettingsActivity : AppearanceActivity() {
     private lateinit var form: LinearLayout
     private lateinit var example: ExampleCard
     private lateinit var karoo: KarooSystemService
-    /** The trainer paired on the Karoo, as Settings names it; null: none (or not heard yet). */
-    private var trainerName: String? = null
+    /** The Karoo's saved sensors, for the Trainer section; null: not heard yet. */
+    private var devices: SavedDevices? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,9 +53,7 @@ class SettingsActivity : AppearanceActivity() {
         karoo.connect { connected ->
             if (!connected) return@connect
             karoo.addConsumer<SavedDevices> { e ->
-                val t = e.devices.firstOrNull { it.enabled && "TYPE_TRAINER_ID" in it.supportedDataTypes }
-                val name = t?.let { getString(R.string.erg_trainer_found, it.name, if (it.connectionType == "BLE") "Bluetooth" else "ANT+") }
-                if (name != trainerName) { trainerName = name; runOnUiThread { render() } }
+                if (e != devices) { devices = e; runOnUiThread { render() } }
             }
         }
     }
@@ -63,6 +61,35 @@ class SettingsActivity : AppearanceActivity() {
     override fun onDestroy() {
         karoo.disconnect()
         super.onDestroy()
+    }
+
+    private fun checkText(st: ErgSetup.Step): String {
+        val n = st.name.orEmpty()
+        val warn = st.state == ErgSetup.State.WARN
+        return when (st.kind) {
+            ErgSetup.Kind.TRAINER_ON -> if (warn) getString(R.string.erg_check_trainer_on_warn) else getString(R.string.erg_check_trainer_on, n)
+            ErgSetup.Kind.PERMISSION -> getString(if (warn) R.string.erg_check_permission_warn else R.string.erg_check_permission)
+            ErgSetup.Kind.BLUETOOTH_FREE -> if (warn) getString(R.string.erg_check_bluetooth_free_warn, n) else getString(R.string.erg_check_bluetooth_free)
+            ErgSetup.Kind.OUR_SENSOR_OFF -> getString(R.string.erg_check_our_sensor_warn, n)
+            ErgSetup.Kind.READ_ONLY -> getString(R.string.erg_check_read_only)
+            ErgSetup.Kind.TRAINER_KNOWN -> if (warn) getString(R.string.erg_check_trainer_known_warn) else getString(R.string.erg_check_trainer_known, n)
+            ErgSetup.Kind.KAROO_ANT_OFF -> if (warn) getString(R.string.erg_check_karoo_ant_warn, n) else getString(R.string.erg_check_karoo_ant)
+            ErgSetup.Kind.POWER_RECORDED -> when (st.state) {
+                ErgSetup.State.OK -> getString(R.string.erg_check_power, n)
+                ErgSetup.State.INFO -> getString(R.string.erg_check_power_other, n)
+                ErgSetup.State.WARN -> getString(R.string.erg_check_power_warn)
+            }
+        }
+    }
+
+    /** The Karoo's sensor list, where the checklist's fixes are made. */
+    private fun openKarooSensors() {
+        runCatching {
+            startActivity(
+                android.content.Intent().setComponent(android.content.ComponentName("io.hammerhead.settingsapp", "io.hammerhead.settingsapp.sensorList.SensorListActivity"))
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }.onFailure { timber.log.Timber.w(it, "Couldn't open Karoo Sensors") }
     }
 
     private fun hasBluetoothPermission() = Build.VERSION.SDK_INT < 31 ||
@@ -180,10 +207,32 @@ class SettingsActivity : AppearanceActivity() {
             },
         )
         if (store.ergOn.value) {
-            when {
-                !hasBluetoothPermission() -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, getString(R.string.erg_no_permission), SettingsTone.WARN))
-                trainerName == null -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, getString(R.string.erg_no_trainer), SettingsTone.WARN))
-                else -> form.addView(settingsInfoRow(R.drawable.ic_settings_info, trainerName!!, SettingsTone.OK))
+            // Connection: Bluetooth (the trainer the Karoo uses) or the app's own ANT+ connection.
+            val conn = store.ergConnection.value
+            form.addView(settingsSubLabel(getString(R.string.erg_connection)))
+            form.addView(
+                settingsSegmented(
+                    listOf(getString(R.string.erg_connection_bluetooth) to ErgConnection.BLUETOOTH, getString(R.string.erg_connection_ant) to ErgConnection.ANT),
+                    conn,
+                ) { c ->
+                    store.setErgConnection(c)
+                    if (c == ErgConnection.BLUETOOTH && !hasBluetoothPermission() && Build.VERSION.SDK_INT >= 31) requestPermissions(BLUETOOTH_PERMISSIONS, 1)
+                    render()
+                },
+            )
+            form.addView(settingsIntro(getString(if (conn == ErgConnection.ANT) R.string.erg_connection_ant_help else R.string.erg_connection_bluetooth_help)))
+            // The setup checklist (ErgSetup): every step for this connection, from the Karoo's sensors.
+            val steps = devices?.let { ErgSetup.check(it, conn, hasBluetoothPermission()) }.orEmpty()
+            for (st in steps) {
+                val tone = when (st.state) { ErgSetup.State.OK -> SettingsTone.OK; ErgSetup.State.WARN -> SettingsTone.WARN; ErgSetup.State.INFO -> SettingsTone.NEUTRAL }
+                val row = settingsInfoRow(R.drawable.ic_settings_info, checkText(st), tone)
+                if (st.kind == ErgSetup.Kind.PERMISSION && st.state == ErgSetup.State.WARN && Build.VERSION.SDK_INT >= 31) {
+                    row.setOnClickListener { requestPermissions(BLUETOOTH_PERMISSIONS, 1) }
+                }
+                form.addView(row)
+            }
+            if (steps.any { it.state == ErgSetup.State.WARN && it.kind != ErgSetup.Kind.PERMISSION }) {
+                form.addView(settingsButton(SettingsButton.ADD, getString(R.string.erg_open_sensors)) { openKarooSensors() })
             }
             form.addView(settingsSubLabel(getString(R.string.erg_when_paused)))
             form.addView(

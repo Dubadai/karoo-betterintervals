@@ -143,6 +143,8 @@ data class ScreenState(
     val startFlash: Boolean = false,
     /** A trainer sends the Karoo's power on an outdoor profile: before the ride, a hint to pick an indoor one. */
     val trainerOutdoor: Boolean = false,
+    /** Indoors with ERG on: what's in the way in the Karoo's sensors ([ErgSetup]), for the start screen. */
+    val ergSetupHint: String? = null,
 )
  {
     val workoutLoaded: Boolean get() = plan != null
