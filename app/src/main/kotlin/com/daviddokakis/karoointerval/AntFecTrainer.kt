@@ -44,7 +44,14 @@ class AntFecTrainer(context: Context) : TrainerLink {
         private set
 
     /** What the trainer sends, for the Karoo sensor. */
-    data class Reading(val watts: Int?, val cadence: Int?, val speedMps: Double?, val atMs: Long)
+    data class Reading(
+        val watts: Int?,
+        val cadence: Int?,
+        val speedMps: Double?,
+        val atMs: Long,
+        /** The trainer's own distance count in metres since the connection opened, if it keeps one. */
+        val distanceM: Long? = null,
+    )
 
     /** The sensor side: connection changes and readings. Called on the link's thread. */
     interface Listener {
@@ -75,6 +82,7 @@ class AntFecTrainer(context: Context) : TrainerLink {
     private var retryMs = RETRY_MIN_MS
     private var cadence: Int? = null
     private var speedMps: Double? = null
+    private var distanceM: Long? = null
     private val reopen = Runnable { if (number != null && pcc == null) open() }
     private val flushLater = Runnable { flush() }
 
@@ -191,8 +199,12 @@ class AntFecTrainer(context: Context) : TrainerLink {
         result.trainerMethods.subscribeRawTrainerDataEvent { _, _, _, cad, power, _ ->
             h.post { if (gen == generation) onTrainerData(power, cad) }
         }
-        result.subscribeGeneralFitnessEquipmentDataEvent { _, _, _, _, speed, _, _, _ ->
-            h.post { if (gen == generation) speedMps = speed?.toDouble()?.takeIf { it >= 0 } }
+        result.subscribeGeneralFitnessEquipmentDataEvent { _, _, _, distance, speed, _, _, _ ->
+            h.post {
+                if (gen != generation) return@post
+                speedMps = speed?.toDouble()?.takeIf { it >= 0 }
+                distanceM = distance.takeIf { it >= 0 }
+            }
         }
         result.subscribeManufacturerIdentificationEvent { _, _, _, maker, model ->
             h.post { if (gen == generation) listener?.onMaker(maker, model) }
@@ -208,7 +220,7 @@ class AntFecTrainer(context: Context) : TrainerLink {
         val now = System.currentTimeMillis()
         if (power >= 0) { watts = power; wattsAtMs = now }
         cadence = cad.takeIf { it in 0..254 }
-        listener?.onReading(Reading(watts, cadence, speedMps, now))
+        listener?.onReading(Reading(watts, cadence, speedMps, now, distanceM))
     }
 
     private fun onState(state: DeviceState) {
@@ -309,7 +321,7 @@ class AntFecTrainer(context: Context) : TrainerLink {
         generation++
         val old = handle
         handle = null; pcc = null; sent = null; busySinceMs = 0L; nextOkAtMs = 0L
-        watts = null; cadence = null; speedMps = null
+        watts = null; cadence = null; speedMps = null; distanceM = null
         h.removeCallbacks(flushLater)
         if (old != null) h.postDelayed({ runCatching { old.close() } }, delayMs)
     }

@@ -391,6 +391,9 @@ Built:
   sensor lists the trainer (the ANT+ trainers in `SavedDevices`, plus the first FE-C heard by a
   wildcard plugin search) and the Karoo gets power, cadence and speed from the app's connection,
   so the ride records the trainer the app controls without the Karoo's own ANT+ pairing.
+  Speed alone doesn't make the Karoo add up distance (the ride stays at 0 km), so the sensor also
+  sends `TYPE_SPD_DISTANCE_DIFF_ID`, the metres since its last reading: the trainer's own FE-C
+  distance count, else speed × time (`DistanceSteps`).
 - `trainerPick`: ANT+ takes the number from the app's sensor in the Karoo's list, else from an ANT+
   trainer paired on the Karoo, and flags when the Karoo's own ANT+ trainer is on (it would take
   the trainer's messages). `SavedDevices` lists a sensor switched off on the profile with

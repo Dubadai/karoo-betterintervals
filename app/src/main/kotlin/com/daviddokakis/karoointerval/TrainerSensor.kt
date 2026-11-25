@@ -43,7 +43,7 @@ class TrainerSensor(
 
     fun device(number: Int, name: String) = Device(
         extension, uid(number),
-        listOf(DataType.Source.POWER, DataType.Source.CADENCE, DataType.Source.SPEED),
+        listOf(DataType.Source.POWER, DataType.Source.CADENCE, DataType.Source.SPEED, DISTANCE_STEP),
         context.getString(R.string.sensor_name, name),
     )
 
@@ -109,13 +109,20 @@ class TrainerSensor(
             }
         }
         // The Karoo wants a reading every second, even if unchanged; nothing when the trainer is quiet.
+        val steps = DistanceSteps()
         val tick = object : Runnable {
             override fun run() {
                 val r = l.last
-                if (r != null && System.currentTimeMillis() - r.atMs < STALE_MS) {
+                val now = System.currentTimeMillis()
+                if (r != null && now - r.atMs < STALE_MS) {
                     r.watts?.let { emitter.onNext(point(DataType.Source.POWER, DataType.Field.POWER, it.toDouble(), uid)) }
                     r.cadence?.let { emitter.onNext(point(DataType.Source.CADENCE, DataType.Field.CADENCE, it.toDouble(), uid)) }
                     r.speedMps?.let { emitter.onNext(point(DataType.Source.SPEED, DataType.Field.SPEED, it, uid)) }
+                    // Speed alone doesn't add up the ride's distance: the Karoo wants the metres since the last reading.
+                    val metres = steps.next(r.distanceM, r.speedMps, now)
+                    if (metres > 0) emitter.onNext(point(DISTANCE_STEP, DataType.Field.DISTANCE, metres, uid))
+                } else {
+                    steps.reset()
                 }
                 main.postDelayed(this, 1_000)
             }
@@ -140,6 +147,12 @@ class TrainerSensor(
         private const val STALE_MS = 3_000L
         private const val RADIO_ID = "trainer-sensor"
 
+        /**
+         * The metres a speed sensor covered since its last reading: what the Karoo adds up as the
+         * ride's distance (it isn't in karoo-ext's [DataType.Source]; karoo-wattspeed uses it too).
+         */
+        const val DISTANCE_STEP = "TYPE_SPD_DISTANCE_DIFF_ID"
+
         fun uid(number: Int) = "$PREFIX$number"
 
         /** The ANT+ number from the sensor's uid, or from its id in the Karoo's list ("intervalscreen::fec-22877"). */
@@ -156,5 +169,44 @@ class TrainerSensor(
             89 -> "Tacx"
             else -> null
         }
+    }
+}
+
+/**
+ * The ride distance the sensor hands the Karoo, a step per reading: the trainer's own distance
+ * count when it keeps one (FE-C trainers do), else speed × time. No step for the first reading,
+ * after a gap or when the count goes back (the trainer or the connection restarted), so a dropout
+ * never adds a jump.
+ */
+class DistanceSteps {
+    private var lastM: Long? = null
+    private var lastAtMs: Long? = null
+
+    /** Metres since the previous reading. */
+    fun next(distanceM: Long?, speedMps: Double?, nowMs: Long): Double {
+        val prevM = lastM
+        val prevAtMs = lastAtMs
+        lastM = distanceM
+        lastAtMs = nowMs
+        if (prevAtMs == null) return 0.0
+        val sec = (nowMs - prevAtMs) / 1000.0
+        if (sec <= 0 || sec > MAX_GAP_S) return 0.0
+        if (distanceM != null) {
+            if (prevM == null) return 0.0
+            val metres = (distanceM - prevM).toDouble()
+            return if (metres in 0.0..MAX_MPS * sec) metres else 0.0
+        }
+        return (speedMps ?: 0.0).coerceIn(0.0, MAX_MPS) * sec
+    }
+
+    fun reset() {
+        lastM = null
+        lastAtMs = null
+    }
+
+    companion object {
+        private const val MAX_GAP_S = 3.0
+        /** 108 km/h: anything faster between two readings is a glitch. */
+        private const val MAX_MPS = 30.0
     }
 }

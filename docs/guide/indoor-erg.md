@@ -40,8 +40,8 @@ Setting up ANT+:
 1. **Settings › Trainer › Connection › ANT+.**
 2. **Karoo Sensors › Add sensor:** BetterIntervals lists the trainer, e.g. *Tacx NEO trainer
    (BetterIntervals)* (the ANT+ trainers paired on the Karoo, and the first one it hears nearby).
-   Add it. The Karoo now gets power, cadence and speed from the app's connection: the ride file
-   records the trainer the app controls.
+   Add it. The Karoo now gets power, cadence, speed and distance from the app's connection: the
+   ride file records the trainer the app controls.
 3. If the Karoo has its own ANT+ pairing of the trainer, switch it **off for the indoor profile**
    (Sensors › the trainer › Enabled on › untick the profile). Settings says so when it's in the way.
 
